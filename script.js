@@ -271,11 +271,13 @@ function buildMenu(){
 function toggleMobileNucleoMenu(){
  const picker=mobileNucleoMenu?.parentElement; if(!picker || !mobileNucleoBtn) return;
  const open=picker.classList.toggle('open');
+ document.body.classList.toggle('mobileNucleoMenuOpen', open);
  mobileNucleoBtn.setAttribute('aria-expanded',String(open));
 }
 function closeMobileNucleoMenu(){
  const picker=mobileNucleoMenu?.parentElement; if(!picker || !mobileNucleoBtn) return;
  picker.classList.remove('open');
+ document.body.classList.remove('mobileNucleoMenuOpen');
  mobileNucleoBtn.setAttribute('aria-expanded','false');
 }
 function setActive(key){

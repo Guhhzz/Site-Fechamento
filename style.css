@@ -597,6 +597,11 @@ body.authReady .authShell{display:none}
     backdrop-filter:blur(10px);
     -webkit-backdrop-filter:blur(10px);
   }
+  body.mobileNucleoMenuOpen .mobileSectionNav{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
   .mobileSectionNav::-webkit-scrollbar{display:none}
   .mobileSectionNav a{
     flex:0 0 auto;
