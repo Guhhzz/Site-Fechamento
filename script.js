@@ -140,7 +140,7 @@ function initAuth(){
 }
 
 const subtitles = {ofertadas:'Chamadas recebidas no período',atendidas:'Chamadas efetivamente atendidas',abandonadas:'Chamadas abandonadas',callback:'Retornos registrados na fila do núcleo',whatsapp:'Tickets via WhatsApp'};
-const select=document.getElementById('nucleoSelect'), mobileNucleoSelect=document.getElementById('mobileNucleoSelect'), customSelect=document.getElementById('customSelect'), customSelectBtn=document.getElementById('customSelectBtn'), customSelectMenu=document.getElementById('customSelectMenu'), nav=document.getElementById('nav'), content=document.getElementById('content'), pageTitle=document.getElementById('pageTitle'), pageDesc=document.getElementById('pageDesc'), activeBadge=document.getElementById('activeBadge'), tooltip=document.getElementById('tooltip'), chartModal=document.getElementById('chartModal'), modalTitle=document.getElementById('modalTitle'), modalSubtitle=document.getElementById('modalSubtitle'), modalCanvas=document.getElementById('modalCanvas'), closeModal=document.getElementById('closeModal');
+const select=document.getElementById('nucleoSelect'), mobileNucleoSelect=document.getElementById('mobileNucleoSelect'), mobileNucleoBtn=document.getElementById('mobileNucleoBtn'), mobileNucleoMenu=document.getElementById('mobileNucleoMenu'), customSelect=document.getElementById('customSelect'), customSelectBtn=document.getElementById('customSelectBtn'), customSelectMenu=document.getElementById('customSelectMenu'), nav=document.getElementById('nav'), content=document.getElementById('content'), pageTitle=document.getElementById('pageTitle'), pageDesc=document.getElementById('pageDesc'), activeBadge=document.getElementById('activeBadge'), tooltip=document.getElementById('tooltip'), chartModal=document.getElementById('chartModal'), modalTitle=document.getElementById('modalTitle'), modalSubtitle=document.getElementById('modalSubtitle'), modalCanvas=document.getElementById('modalCanvas'), closeModal=document.getElementById('closeModal');
 let currentViewKey = 'geral';
 let menuBaseEventsBound = false;
 const fmt = new Intl.NumberFormat('pt-BR');
@@ -151,7 +151,7 @@ function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&
 function kpiCard(label,value,sub,extra=''){return `<div class="kpi"><div class="label">${esc(label)}</div><div class="value">${fmt.format(Math.round(+value||0))}</div><div class="sub">${esc(sub||'')}</div>${extra||''}</div>`}
 function pct(v){ return (v||0).toFixed(1).replace('.',',')+'%'; }
 function rateBadge(value, label, goodWhen='above'){
- const cls = goodWhen==='below' ? (value<=10?'good':'warn') : (value>=90?'good':'warn');
+ const cls = goodWhen==='below' ? 'warn' : (value>=90?'good':'warn');
  return `<div class="kpiRate ${cls}">${pct(value)} · ${esc(label)}</div>${goodWhen==='above'?'<span class="kpiGoal">Meta mínima: 90% atendidas</span>':''}`;
 }
 function hasNps(channel){ return Number.isFinite(Number(channel?.nps)); }
@@ -249,10 +249,12 @@ function buildMenu(){
  const opts=[{name:'Visão Geral',key:'geral'}].concat(DATA.sheets.map(s=>({name:s.name,key:s.name,status:s.status})));
  if(select) select.innerHTML=opts.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('');
  if(mobileNucleoSelect) mobileNucleoSelect.innerHTML=opts.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}${o.status==='parcial'?' - parcial':''}</option>`).join('');
+ if(mobileNucleoMenu) mobileNucleoMenu.innerHTML=opts.map(o=>`<button type="button" class="mobileNucleoOption" role="option" data-key="${escAttr(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<small>parcial</small>':''}</button>`).join('');
  if(customSelectMenu) customSelectMenu.innerHTML=opts.map(o=>`<button type="button" class="customOption" data-key="${escAttr(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<span class="miniPill">parcial</span>':''}</button>`).join('');
  nav.innerHTML=opts.map(o=>`<button data-key="${esc(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<span class="pill">parcial</span>':''}</button>`).join('');
  nav.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.key)));
  if(mobileNucleoSelect) mobileNucleoSelect.onchange=e=>setView(e.target.value);
+ if(mobileNucleoMenu) mobileNucleoMenu.querySelectorAll('.mobileNucleoOption').forEach(btn=>btn.addEventListener('click',()=>{closeMobileNucleoMenu();setView(btn.dataset.key);}));
  if(customSelectMenu && customSelect){
    customSelectMenu.querySelectorAll('.customOption').forEach(btn=>btn.addEventListener('click',()=>{customSelect.classList.remove('open');setView(btn.dataset.key);}));
  }
@@ -260,16 +262,31 @@ function buildMenu(){
    if(customSelectBtn && customSelect) customSelectBtn.addEventListener('click',()=>customSelect.classList.toggle('open'));
    if(customSelect) document.addEventListener('click',e=>{if(!customSelect.contains(e.target)) customSelect.classList.remove('open');});
    if(select) select.addEventListener('change',e=>setView(e.target.value));
+   if(mobileNucleoBtn) mobileNucleoBtn.addEventListener('click',()=>toggleMobileNucleoMenu());
+   if(mobileNucleoMenu) document.addEventListener('click',e=>{if(!mobileNucleoMenu.parentElement?.contains(e.target)) closeMobileNucleoMenu();});
+   document.addEventListener('keydown',e=>{if(e.key==='Escape') closeMobileNucleoMenu();});
    menuBaseEventsBound = true;
  }
+}
+function toggleMobileNucleoMenu(){
+ const picker=mobileNucleoMenu?.parentElement; if(!picker || !mobileNucleoBtn) return;
+ const open=picker.classList.toggle('open');
+ mobileNucleoBtn.setAttribute('aria-expanded',String(open));
+}
+function closeMobileNucleoMenu(){
+ const picker=mobileNucleoMenu?.parentElement; if(!picker || !mobileNucleoBtn) return;
+ picker.classList.remove('open');
+ mobileNucleoBtn.setAttribute('aria-expanded','false');
 }
 function setActive(key){
  currentViewKey=key;
  if(select) select.value=key;
  if(mobileNucleoSelect) mobileNucleoSelect.value=key;
  const selectedName = key==='geral' ? 'Visão Geral' : (DATA.sheets.find(s=>s.name===key)?.name || key);
+ if(mobileNucleoBtn) mobileNucleoBtn.querySelector('span').textContent=selectedName;
  if(customSelectBtn) customSelectBtn.textContent=selectedName;
  nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.key===key));
+ if(mobileNucleoMenu) mobileNucleoMenu.querySelectorAll('.mobileNucleoOption').forEach(b=>{const active=b.dataset.key===key;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
  if(customSelectMenu) customSelectMenu.querySelectorAll('.customOption').forEach(b=>b.classList.toggle('active', b.dataset.key===key));
 }
 function generalView(){
@@ -277,8 +294,7 @@ function generalView(){
  const g=DATA.general;
  const npsAvg=averageNps(DATA.sheets);
  const generalChannel = npsAvg===null ? g : {...g,nps:npsAvg};
- content.innerHTML = mobileSectionNav([{id:'mobileSummary',label:'Síntese'},{id:'kpisSection',label:'KPIs'},{id:'insightsSection',label:'Insights'}]) +
- executiveSummary(generalChannel,'general') +
+ content.innerHTML = mobileSectionNav([{id:'kpisSection',label:'KPIs'},{id:'insightsSection',label:'Insights'}]) +
  `<section id="kpisSection">` + sectionHeader('Canais de Atendimento · Geral','A visão geral apresenta os KPIs consolidados e os principais pontos de leitura do fechamento mensal.') +
  `<div class="kpis">${kpisForChannel(generalChannel)}</div></section>` + generalInsights();
 }
@@ -301,14 +317,12 @@ function nucleoView(name){
  let kpis = (s.channel && Object.values(s.channel).some(v=>+v)) ? kpisForChannel(s.channel) : '';
  // KPI de Total do período removido dos núcleos; o total permanece visível nos gráficos.
  const hasCharts=!!(s.charts && s.charts.length), hasTable=s.name==='Assistência' && (s.brandTable||[]).length;
- let html = mobileSectionNav([{id:'mobileSummary',label:'Síntese'},{id:'kpisSection',label:'KPIs'},...(hasCharts?[{id:'chartsSection',label:'Gráficos'}]:[]),...(hasTable?[{id:'tablesSection',label:'Tabela'}]:[])]) +
- executiveSummary(s.channel,'nucleo') +
+ let html = mobileSectionNav([{id:'kpisSection',label:'KPIs'},...(hasCharts?[{id:'chartsSection',label:'Gráficos'}]:[]),...(hasTable?[{id:'tablesSection',label:'Tabela'}]:[])]) +
  `<section id="kpisSection">` + sectionHeader('Resumo do Núcleo','Ao selecionar um núcleo, a visão geral sai de tela e entram os indicadores específicos disponíveis.') + (kpis?`<div class="kpis">${kpis}</div>`:'<div class="empty"><strong>Sem KPIs de canal preenchidos</strong>Esta aba não possui os campos consolidados de ligações/WhatsApp no arquivo atual.</div>') + `</section>`;
  if(s.charts && s.charts.length){
    html += `<section id="chartsSection">` + sectionHeader('Gráficos do Núcleo','');
    html += `<div class="chartGrid">` + s.charts.map((c,i)=>{
-     const rows=chartData(c), condensed=rows.length>5 && c.type!=='pie' && c.type!=='ufMap';
-     return `<article class="chartCard ${condensed?'mobileCondensed':''}"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">Total: ${fmt.format(Math.round(chartTotal(c)))}</div><button class="exportBtn" onclick="exportChartExcel('${escAttr(s.name)}',${i})">⬇ Excel</button><button class="expandBtn" onclick="openChartModal('${escAttr(s.name)}',${i})">⤢ Expandir</button></div></div>${mobileChartPreview(c)}<div class="chartCanvas ${(c.data||[]).length>10?'tall':''}" id="chart_${slug(s.name)}_${i}"></div></article>`;
+     return `<article class="chartCard"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">Total: ${fmt.format(Math.round(chartTotal(c)))}</div><button class="exportBtn" onclick="exportChartExcel('${escAttr(s.name)}',${i})">⬇ Excel</button><button class="expandBtn" onclick="openChartModal('${escAttr(s.name)}',${i})">⤢ Expandir</button></div></div><div class="chartCanvas ${(c.data||[]).length>10?'tall':''}" id="chart_${slug(s.name)}_${i}"></div></article>`;
    }).join('') + `</div></section>`;
    if(s.name==='Assistência') html += `<section id="tablesSection">${assistanceBrandTable(s)}</section>`;
  } else {

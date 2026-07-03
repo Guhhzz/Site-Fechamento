@@ -61,8 +61,16 @@ select{display:none}
 .nav button.active{background:linear-gradient(135deg,rgba(121,169,238,.35),rgba(255,255,255,.12));border-color:rgba(157,212,255,.28);transform:translateX(4px);box-shadow:0 14px 30px rgba(0,16,44,.24),inset 0 1px 0 rgba(255,255,255,.18),0 0 22px rgba(0,153,255,.22);color:#FFFFFF}
 .mobileNucleoPicker{display:none;position:relative}
 .mobileNucleoPicker label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#BFE1FF;font-weight:950;margin-bottom:7px}
-.mobileNucleoPicker select{display:block;width:100%;border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:13px 42px 13px 14px;background:linear-gradient(180deg,#FFFFFF,#EAF4FF);color:#0B2E5E;font-size:15px;font-weight:950;box-shadow:0 12px 26px rgba(0,18,48,.18),inset 0 1px 0 rgba(255,255,255,.95);outline:none;appearance:none;-webkit-appearance:none}
-.mobileNucleoPicker:after{content:"";position:absolute;right:16px;bottom:19px;width:9px;height:9px;border-right:2px solid #0B2E5E;border-bottom:2px solid #0B2E5E;transform:rotate(45deg);pointer-events:none}
+.mobileNucleoPicker select{display:none}
+.mobileNucleoBtn{width:100%;border:1px solid rgba(255,255,255,.26);border-radius:17px;padding:14px 46px 14px 15px;background:linear-gradient(180deg,#FFFFFF,#EAF4FF);color:#0B2E5E;font-size:15px;font-weight:1000;text-align:left;box-shadow:0 12px 26px rgba(0,18,48,.18),inset 0 1px 0 rgba(255,255,255,.95);outline:none;position:relative;cursor:pointer}
+.mobileNucleoBtn:after{content:"";position:absolute;right:17px;top:50%;width:10px;height:10px;border-right:2px solid #0B2E5E;border-bottom:2px solid #0B2E5E;transform:translateY(-65%) rotate(45deg);transition:.18s}
+.mobileNucleoPicker.open .mobileNucleoBtn:after{transform:translateY(-35%) rotate(225deg)}
+.mobileNucleoMenu{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:120;display:grid;gap:6px;padding:8px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(236,246,255,.98));border:1px solid rgba(188,218,250,.95);border-radius:18px;box-shadow:0 24px 60px rgba(0,18,48,.34),inset 0 1px 0 rgba(255,255,255,.95);max-height:320px;overflow:auto;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transition:.16s}
+.mobileNucleoPicker.open .mobileNucleoMenu{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.mobileNucleoOption{border:0;border-radius:13px;padding:11px 12px;background:transparent;color:#143D69;text-align:left;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.mobileNucleoOption small{border-radius:999px;padding:3px 7px;background:#EAF4FF;color:#0057B8;font-size:10px;font-weight:1000}
+.mobileNucleoOption.active{background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;box-shadow:0 10px 22px rgba(0,87,184,.24)}
+.mobileNucleoOption.active small{background:rgba(255,255,255,.20);color:#fff}
 .pill{font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.1);color:#F1F7FF;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
 .main{padding:32px 38px 54px;overflow:hidden}
 .hero{border-radius:31px;background:linear-gradient(135deg,var(--gazin-blue),#003A7A 70%,#05214A);color:#fff;padding:34px;box-shadow:var(--shadow);position:relative;overflow:hidden}
@@ -455,6 +463,7 @@ body.authReady .authShell{display:none}
     border-radius:0 0 28px 28px;
     box-shadow:0 18px 42px rgba(6,26,54,.18);
   }
+  .main{overflow:hidden}
   .userPanel{margin-bottom:14px}
   .nav{
     display:grid;
@@ -480,6 +489,16 @@ body.authReady .authShell{display:none}
 
 @media (max-width:760px){
   body{background:#F3F8FF}
+  .app,
+  .sidebar,
+  .main,
+  #content,
+  .hero,
+  section,
+  .kpi,
+  .chartCard,
+  .tableCard,
+  .insightCard{max-width:100%}
   .sidebar{
     padding:10px 10px 12px;
     border-radius:0 0 22px 22px;
@@ -660,6 +679,10 @@ body.authReady .authShell{display:none}
     min-height:360px;
     overflow:hidden;
   }
+  .chartCard,
+  .chartTop,
+  .chartCanvas{min-width:0}
+  .chartCanvas svg{display:block;max-width:100%}
   .chartTop{display:block;margin-bottom:12px}
   .chartTitle{font-size:17px;line-height:1.18}
   .chartSubtitle{font-size:12px;line-height:1.35}
@@ -669,7 +692,6 @@ body.authReady .authShell{display:none}
     margin-top:12px;
     gap:8px;
   }
-  .chartActions .exportBtn{display:none}
   .chartTotal,
   .exportBtn,
   .expandBtn{
