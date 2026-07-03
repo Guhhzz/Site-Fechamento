@@ -79,6 +79,9 @@ select{display:none}
 .kpiRate{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:950;border:1px solid rgba(0,87,184,.12);background:#EAF4FF;color:#0057B8;position:relative;z-index:2}
 .kpiRate.good{background:#EAF8EF;color:#157347;border-color:rgba(21,115,71,.16)}
 .kpiRate.warn{background:#FFF1F1;color:#C83333;border-color:rgba(200,51,51,.16)}
+.kpiRate.nps.excellence,.kpiRate.nps.quality{background:#EAF8EF;color:#157347;border-color:rgba(21,115,71,.16)}
+.kpiRate.nps.improve{background:#FFF7E6;color:#A15C00;border-color:rgba(161,92,0,.18)}
+.kpiRate.nps.critical{background:#FFF1F1;color:#C83333;border-color:rgba(200,51,51,.16)}
 .kpiGoal{display:block;margin-top:6px;font-size:11px;font-weight:850;color:#6B83A0;position:relative;z-index:2}
 
 .insightsGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px}
