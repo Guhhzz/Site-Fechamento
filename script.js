@@ -140,7 +140,7 @@ function initAuth(){
 }
 
 const subtitles = {ofertadas:'Chamadas recebidas no período',atendidas:'Chamadas efetivamente atendidas',abandonadas:'Chamadas abandonadas',callback:'Retornos registrados na fila do núcleo',whatsapp:'Tickets via WhatsApp'};
-const select=document.getElementById('nucleoSelect'), customSelect=document.getElementById('customSelect'), customSelectBtn=document.getElementById('customSelectBtn'), customSelectMenu=document.getElementById('customSelectMenu'), nav=document.getElementById('nav'), content=document.getElementById('content'), pageTitle=document.getElementById('pageTitle'), pageDesc=document.getElementById('pageDesc'), activeBadge=document.getElementById('activeBadge'), tooltip=document.getElementById('tooltip'), chartModal=document.getElementById('chartModal'), modalTitle=document.getElementById('modalTitle'), modalSubtitle=document.getElementById('modalSubtitle'), modalCanvas=document.getElementById('modalCanvas'), closeModal=document.getElementById('closeModal');
+const select=document.getElementById('nucleoSelect'), mobileNucleoSelect=document.getElementById('mobileNucleoSelect'), customSelect=document.getElementById('customSelect'), customSelectBtn=document.getElementById('customSelectBtn'), customSelectMenu=document.getElementById('customSelectMenu'), nav=document.getElementById('nav'), content=document.getElementById('content'), pageTitle=document.getElementById('pageTitle'), pageDesc=document.getElementById('pageDesc'), activeBadge=document.getElementById('activeBadge'), tooltip=document.getElementById('tooltip'), chartModal=document.getElementById('chartModal'), modalTitle=document.getElementById('modalTitle'), modalSubtitle=document.getElementById('modalSubtitle'), modalCanvas=document.getElementById('modalCanvas'), closeModal=document.getElementById('closeModal');
 let currentViewKey = 'geral';
 let menuBaseEventsBound = false;
 const fmt = new Intl.NumberFormat('pt-BR');
@@ -248,9 +248,11 @@ function sectionHeader(title,desc){return `<div class="sectionHeader"><div><h3>$
 function buildMenu(){
  const opts=[{name:'Visão Geral',key:'geral'}].concat(DATA.sheets.map(s=>({name:s.name,key:s.name,status:s.status})));
  if(select) select.innerHTML=opts.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('');
+ if(mobileNucleoSelect) mobileNucleoSelect.innerHTML=opts.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}${o.status==='parcial'?' - parcial':''}</option>`).join('');
  if(customSelectMenu) customSelectMenu.innerHTML=opts.map(o=>`<button type="button" class="customOption" data-key="${escAttr(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<span class="miniPill">parcial</span>':''}</button>`).join('');
  nav.innerHTML=opts.map(o=>`<button data-key="${esc(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<span class="pill">parcial</span>':''}</button>`).join('');
  nav.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.key)));
+ if(mobileNucleoSelect) mobileNucleoSelect.onchange=e=>setView(e.target.value);
  if(customSelectMenu && customSelect){
    customSelectMenu.querySelectorAll('.customOption').forEach(btn=>btn.addEventListener('click',()=>{customSelect.classList.remove('open');setView(btn.dataset.key);}));
  }
@@ -264,6 +266,7 @@ function buildMenu(){
 function setActive(key){
  currentViewKey=key;
  if(select) select.value=key;
+ if(mobileNucleoSelect) mobileNucleoSelect.value=key;
  const selectedName = key==='geral' ? 'Visão Geral' : (DATA.sheets.find(s=>s.name===key)?.name || key);
  if(customSelectBtn) customSelectBtn.textContent=selectedName;
  nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.key===key));

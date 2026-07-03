@@ -59,6 +59,10 @@ select{display:none}
 .nav button:hover{background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(125,175,245,.10));border-color:rgba(255,255,255,.14);transform:translateX(4px);box-shadow:0 12px 26px rgba(2,18,45,.22),0 0 0 1px rgba(255,255,255,.05) inset,0 0 18px rgba(64,166,255,.18)}
 .nav button:hover:before{transform:translateX(100%)}
 .nav button.active{background:linear-gradient(135deg,rgba(121,169,238,.35),rgba(255,255,255,.12));border-color:rgba(157,212,255,.28);transform:translateX(4px);box-shadow:0 14px 30px rgba(0,16,44,.24),inset 0 1px 0 rgba(255,255,255,.18),0 0 22px rgba(0,153,255,.22);color:#FFFFFF}
+.mobileNucleoPicker{display:none;position:relative}
+.mobileNucleoPicker label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#BFE1FF;font-weight:950;margin-bottom:7px}
+.mobileNucleoPicker select{display:block;width:100%;border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:13px 42px 13px 14px;background:linear-gradient(180deg,#FFFFFF,#EAF4FF);color:#0B2E5E;font-size:15px;font-weight:950;box-shadow:0 12px 26px rgba(0,18,48,.18),inset 0 1px 0 rgba(255,255,255,.95);outline:none;appearance:none;-webkit-appearance:none}
+.mobileNucleoPicker:after{content:"";position:absolute;right:16px;bottom:19px;width:9px;height:9px;border-right:2px solid #0B2E5E;border-bottom:2px solid #0B2E5E;transform:rotate(45deg);pointer-events:none}
 .pill{font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.1);color:#F1F7FF;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
 .main{padding:32px 38px 54px;overflow:hidden}
 .hero{border-radius:31px;background:linear-gradient(135deg,var(--gazin-blue),#003A7A 70%,#05214A);color:#fff;padding:34px;box-shadow:var(--shadow);position:relative;overflow:hidden}
@@ -409,7 +413,7 @@ body.authReady .authShell{display:none}
 }
 .welcomeAvatarFrame.avatarMissing .welcomeAvatar{display:none}
 .welcomeAvatarFrame.avatarMissing .welcomeAvatarFallback{display:grid}
-.welcomeContent{padding:40px 42px;display:flex;flex-direction:column;justify-content:center}
+.welcomeContent{padding:40px 42px;display:flex;flex-direction:column;justify-content:center;min-width:0}
 .welcomeEyebrow{color:var(--gazin-blue);font-size:12px;font-weight:1000;text-transform:uppercase;letter-spacing:.12em}
 .welcomeContent h3{margin:8px 0 16px;color:var(--gazin-dark);font-size:30px;line-height:1.08}
 .welcomeContent p{margin:0 0 13px;color:#405873;font-size:15px;line-height:1.58}
@@ -489,28 +493,11 @@ body.authReady .authShell{display:none}
   }
   .userPanel span{max-width:185px}
   .userPanel button{padding:8px 9px}
-  .nav{
-    display:flex;
-    flex-direction:row;
-    gap:8px;
-    overflow-x:auto;
-    padding-bottom:8px;
-    margin:12px -2px 0;
-    scroll-snap-type:x proximity;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    mask-image:linear-gradient(90deg,#000 0,#000 86%,transparent 100%);
-    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 86%,transparent 100%);
+  .mobileNucleoPicker{
+    display:block;
+    margin:10px 0 8px;
   }
-  .nav::-webkit-scrollbar{display:none}
-  .nav button{
-    flex:0 0 auto;
-    width:auto;
-    min-width:150px;
-    padding:11px 12px;
-    font-size:13px;
-    scroll-snap-align:start;
-  }
+  .nav{display:none}
   .nav button:active,
   .historyBtn:active,
   .expandBtn:active,
@@ -838,25 +825,25 @@ body.authReady .authShell{display:none}
   .authForm input{font-size:16px}
   .welcomeModal{
     padding:12px;
-    align-items:stretch;
+    align-items:center;
   }
   .welcomePanel{
-    width:100%;
+    width:min(320px, calc(100vw - 24px));
+    max-width:calc(100vw - 24px);
     max-height:calc(100vh - 24px);
     grid-template-columns:1fr;
     border-radius:22px;
     overflow:auto;
   }
-  .welcomePresenter{
-    min-height:150px;
-    padding:12px 16px 0;
+  .welcomePresenter{display:none}
+  .welcomeContent{
+    padding:18px;
+    justify-content:flex-start;
+    min-width:0;
   }
-  .welcomeAvatarFrame{
-    width:140px;
-    min-height:150px;
-  }
-  .welcomeContent{padding:18px}
   .welcomeContent h3{font-size:22px;margin-bottom:10px}
+  .welcomeContent h3,
+  .welcomeContent p{overflow-wrap:anywhere}
   .welcomeContent p{font-size:13px;line-height:1.45;margin-bottom:9px}
   .welcomePrimary{
     width:100%;
