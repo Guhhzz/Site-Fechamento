@@ -17,8 +17,10 @@
   --radius:24px;
 }
 *{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
 body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(circle at 12% 0%,#DDEEFF 0,#F8FBFF 35%,#EEF6FF 100%);color:var(--text)}
 .app{min-height:100vh;display:grid;grid-template-columns:330px 1fr}
+.app,.main,#content,.hero,.kpis,.kpi,.insightsGrid,.insightCard,.chartGrid,.chartCard,.tableCard,.historyDock{min-width:0}
 .sidebar{background:linear-gradient(180deg,var(--gazin-dark),#0B2E5E 54%,var(--gazin-blue));color:#fff;padding:28px 22px;position:sticky;top:0;height:100vh;overflow:auto;box-shadow:18px 0 48px rgba(6,26,54,.18)}
 .sidebar>.brand{display:none}
 .brand{display:flex;gap:12px;align-items:center;margin-bottom:22px;min-width:0}
@@ -427,4 +429,313 @@ body.authReady .authShell{display:none}
   .welcomeAvatarFrame{width:190px;min-height:220px}
   .welcomeContent{padding:28px 24px}
   .welcomeContent h3{font-size:25px}
+}
+
+@media (max-width:1200px){
+  .app{grid-template-columns:280px 1fr}
+  .main{padding:28px 26px 46px}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+@media (max-width:1100px){
+  body{background:#F3F8FF}
+  .app{display:block}
+  .sidebar{
+    position:relative;
+    top:auto;
+    height:auto;
+    max-height:none;
+    padding:18px 18px 20px;
+    border-radius:0 0 28px 28px;
+    box-shadow:0 18px 42px rgba(6,26,54,.18);
+  }
+  .userPanel{margin-bottom:14px}
+  .nav{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(135px,1fr));
+    gap:8px;
+    margin-top:12px;
+  }
+  .nav button{
+    min-height:48px;
+    transform:none;
+  }
+  .nav button:hover,
+  .nav button.active{transform:none}
+  .historyDock{margin-top:16px}
+  .main{
+    padding:22px 20px 42px;
+    overflow:visible;
+  }
+  .hero{border-radius:24px;padding:28px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .chartCard{min-height:380px}
+}
+
+@media (max-width:760px){
+  body{background:#F3F8FF}
+  .sidebar{
+    padding:14px 12px 16px;
+    border-radius:0 0 22px 22px;
+    overflow:visible;
+  }
+  .userPanel{
+    gap:10px;
+    padding:10px;
+    border-radius:16px;
+  }
+  .userPanel span{max-width:185px}
+  .userPanel button{padding:8px 9px}
+  .nav{
+    display:flex;
+    flex-direction:row;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:8px;
+    margin:12px -2px 0;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{
+    flex:0 0 auto;
+    width:auto;
+    min-width:150px;
+    padding:11px 12px;
+    font-size:13px;
+    scroll-snap-align:start;
+  }
+  .pill{font-size:10px;padding:2px 7px}
+  .historyDock{
+    padding:14px;
+    margin-top:10px;
+    border-radius:20px;
+  }
+  .historyDock p{display:none}
+  .historyBtn{padding:12px;border-radius:17px}
+  .historyIcon{width:34px;height:34px;border-radius:12px}
+  .historyBtnText strong{font-size:13px}
+  .historyBtnText small{font-size:10px}
+  .main{
+    padding:16px 12px 30px;
+    overflow:visible;
+  }
+  .hero{
+    padding:22px;
+    border-radius:22px;
+  }
+  .heroContent{display:block}
+  .hero h2{font-size:30px}
+  .hero p{font-size:14px;line-height:1.5}
+  .badge{
+    display:inline-flex;
+    margin-top:16px;
+    white-space:normal;
+  }
+  .sectionHeader{
+    display:block;
+    margin:24px 0 12px;
+  }
+  .sectionHeader h3{font-size:21px}
+  .sectionHeader p{font-size:13px}
+  .sectionHeader p,
+  .hero p,
+  .insightText,
+  .chartSubtitle{overflow-wrap:anywhere}
+  .kpis{grid-template-columns:1fr;gap:12px}
+  .kpi{
+    padding:16px;
+    border-radius:18px;
+  }
+  .kpi .value{font-size:28px}
+  .insightsGrid{grid-template-columns:1fr;gap:12px}
+  .insightCard{
+    min-height:auto;
+    padding:18px;
+    border-radius:20px;
+  }
+  .chartGrid{gap:16px}
+  .chartCard{
+    padding:16px;
+    border-radius:20px;
+    min-height:360px;
+    overflow:hidden;
+  }
+  .chartTop{display:block;margin-bottom:12px}
+  .chartTitle{font-size:17px;line-height:1.18}
+  .chartSubtitle{font-size:12px;line-height:1.35}
+  .chartActions{
+    justify-content:flex-start;
+    align-items:center;
+    margin-top:12px;
+    gap:8px;
+  }
+  .chartTotal,
+  .exportBtn,
+  .expandBtn{
+    font-size:11px;
+    padding:8px 10px;
+  }
+  .chartCanvas{
+    min-height:300px;
+    overflow:hidden;
+  }
+  .chartCanvas.tall{min-height:390px}
+  .pieWrap{
+    min-height:300px;
+    gap:16px;
+    padding:0 0 12px;
+  }
+  .pieVisual{flex-basis:240px}
+  .pieSvg{width:min(260px,100%)}
+  .pieCenter{
+    width:96px;
+    height:96px;
+  }
+  .pieCenter strong{font-size:22px}
+  .pieLegendItem{
+    grid-template-columns:auto 1fr;
+    align-items:flex-start;
+  }
+  .pieLegendValue{
+    grid-column:2;
+    text-align:left;
+  }
+  .marketplaceCardWrap{min-height:300px;padding:24px 0 10px}
+  .marketplaceExecutiveCard{
+    width:100%;
+    border-radius:24px;
+    padding:44px 18px 22px;
+  }
+  .marketplaceExecutiveCard h4{font-size:21px}
+  .marketplaceRow{font-size:15px;gap:10px}
+  .marketplaceTotal{font-size:17px}
+  .ufMapWrapper{max-width:420px}
+  .ufMapLegend,
+  .ufMapNote{font-size:11px}
+  .tableCard{
+    padding:16px;
+    border-radius:20px;
+    margin-top:16px;
+  }
+  .tableHead{display:block;margin-bottom:12px}
+  .tableHead h4{font-size:18px}
+  .tableHead p{font-size:12px}
+  .tableHead .chartTotal{
+    display:inline-flex;
+    margin-top:10px;
+  }
+  .tableScroll{
+    margin:0 -4px;
+    padding-bottom:8px;
+  }
+  .executiveTable{
+    min-width:720px;
+    font-size:12px;
+  }
+  .executiveTable.brandTable{min-width:1040px}
+  .progressCell{min-width:160px}
+  .modal{
+    padding:10px;
+    align-items:stretch;
+  }
+  .modalPanel{
+    width:100%;
+    height:calc(100vh - 20px);
+    padding:16px;
+    border-radius:22px;
+  }
+  .modalHead{display:block}
+  .closeBtn{
+    width:100%;
+    margin-top:12px;
+  }
+  #modalCanvas{
+    min-height:0;
+    flex:1;
+    overflow:hidden;
+  }
+  .historyPanel{
+    min-height:0;
+    max-height:calc(100vh - 20px);
+  }
+  .historyIntro{
+    grid-template-columns:1fr;
+    padding:14px;
+  }
+  .historyIntroActions{justify-content:flex-start}
+  .historyList{grid-template-columns:1fr}
+  .baseTop{align-items:center}
+  .baseActions,
+  .baseAdminActions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .adminUnlocked .baseAdminActions{display:grid}
+  .baseDownload,
+  .baseRemove,
+  .baseSelect,
+  .baseEdit{
+    width:100%;
+  }
+  .authShell{
+    align-items:flex-start;
+    overflow:auto;
+    padding:16px;
+  }
+  .authPanel{
+    width:min(420px,100%);
+    padding:18px;
+  }
+  .authLogo{width:160px}
+  .authBrand h1{font-size:24px}
+  .authForm input{font-size:16px}
+  .welcomeModal{
+    padding:12px;
+    align-items:stretch;
+  }
+  .welcomePanel{
+    width:100%;
+    max-height:calc(100vh - 24px);
+    grid-template-columns:1fr;
+    border-radius:22px;
+    overflow:auto;
+  }
+  .welcomePresenter{
+    min-height:190px;
+    padding:18px 16px 0;
+  }
+  .welcomeAvatarFrame{
+    width:170px;
+    min-height:190px;
+  }
+  .welcomeContent{padding:22px 18px}
+  .welcomeContent h3{font-size:24px}
+  .welcomeContent p{font-size:14px;line-height:1.5}
+  .welcomePrimary{
+    width:100%;
+    align-self:stretch;
+  }
+}
+
+@media (max-width:420px){
+  .main{padding:12px 10px 26px}
+  .sidebar{padding-left:10px;padding-right:10px}
+  .hero{padding:18px;border-radius:20px}
+  .hero h2{font-size:26px}
+  .eyebrow{font-size:11px}
+  .nav button{min-width:132px;font-size:12px}
+  .chartCard,
+  .tableCard,
+  .insightCard{padding:14px}
+  .chartActions{gap:6px}
+  .chartTotal,
+  .exportBtn,
+  .expandBtn{padding:7px 9px}
+  .chartCanvas{min-height:280px}
+  .chartCanvas.tall{min-height:360px}
+  .marketplaceRow{font-size:14px}
+  .marketplaceBadge{width:70px;height:70px;font-size:18px}
+  .authPanel{border-radius:22px}
 }

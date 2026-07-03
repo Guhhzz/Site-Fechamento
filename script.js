@@ -367,34 +367,46 @@ function pieChart(el,data,expanded=false){
 }
 
 function barChart(el,data){
- const W=el.clientWidth||980,H=Math.max(el.clientHeight||360, 120 + (data||[]).length*34); const m={t:18,r:86,b:26,l:260}; const max=Math.max(...data.map(d=>+d.value||0),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" role="img">`;
+ const W=el.clientWidth||980,H=Math.max(el.clientHeight||360, 120 + (data||[]).length*34);
+ const compact=W<560;
+ const m=compact?{t:18,r:44,b:26,l:118}:{t:18,r:86,b:26,l:260};
+ const labelLimit=compact?18:34;
+ const labelFont=compact?10:12;
+ const valueFont=compact?11:12;
+ const max=Math.max(...data.map(d=>+d.value||0),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" role="img">`;
  svg += `<defs><linearGradient id="barGrad" x1="0" x2="1"><stop offset="0" stop-color="#0057B8"/><stop offset="1" stop-color="#00A3FF"/></linearGradient><filter id="softShadow"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0057B8" flood-opacity=".18"/></filter></defs>`;
  const gap=11; const bh=Math.max(17,(H-m.t-m.b-(data.length-1)*gap)/data.length);
- data.forEach((d,i)=>{ const y=m.t+i*(bh+gap); const w=(W-m.l-m.r)*(d.value/max); svg+=`<text x="${m.l-12}" y="${y+bh*.66}" text-anchor="end" font-size="12" fill="#294B70" font-weight="800">${esc(trunc(d.label,34))}</text><rect class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text x="${Math.min(m.l+w+10,W-48)}" y="${y+bh*.66}" font-size="12" fill="#061A36" font-weight="950">${fmt.format(Math.round(+d.value||0))}</text>`; });
+ data.forEach((d,i)=>{ const y=m.t+i*(bh+gap); const w=Math.max(0,(W-m.l-m.r)*(d.value/max)); svg+=`<text x="${m.l-10}" y="${y+bh*.66}" text-anchor="end" font-size="${labelFont}" fill="#294B70" font-weight="800">${esc(trunc(d.label,labelLimit))}</text><rect class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text x="${Math.min(m.l+w+8,W-36)}" y="${y+bh*.66}" font-size="${valueFont}" fill="#061A36" font-weight="950">${fmt.format(Math.round(+d.value||0))}</text>`; });
  svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
 }
 function groupedChart(el,data){
- const W=el.clientWidth||980,H=Math.max(el.clientHeight||360, 130 + (data||[]).length*62); const m={t:32,r:78,b:36,l:230}; const max=Math.max(...data.flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">`;
- svg+=`<text x="${m.l}" y="18" font-size="12" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+130}" y="18" font-size="12" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
+ const W=el.clientWidth||980,H=Math.max(el.clientHeight||360, 130 + (data||[]).length*62);
+ const compact=W<560;
+ const m=compact?{t:34,r:44,b:34,l:118}:{t:32,r:78,b:36,l:230};
+ const labelLimit=compact?17:28;
+ const labelFont=compact?10:12;
+ const max=Math.max(...data.flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">`;
+ svg+=`<text x="${m.l}" y="18" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+(compact?96:130)}" y="18" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
  const rowH=(H-m.t-m.b)/data.length;
- data.forEach((d,i)=>{ const y=m.t+i*rowH+8; svg+=`<text x="${m.l-14}" y="${y+22}" text-anchor="end" font-size="12" fill="#294B70" font-weight="800">${esc(trunc(d.label,28))}</text>`; [['sucesso','#0057B8','Com sucesso',0],['semSucesso','#E05252','Sem sucesso',25]].forEach(arr=>{ const key=arr[0],color=arr[1],lab=arr[2],off=arr[3]; const w=(W-m.l-m.r)*(d[key]/max); const yy=y+off; svg+=`<rect class="bar" data-tip="${esc(d.label)} · ${lab}: ${fmt.format(Math.round(+d[key]||0))}" x="${m.l}" y="${yy}" width="${Math.max(w,4)}" height="18" rx="9" fill="${color}"/><text x="${Math.min(m.l+w+9,W-48)}" y="${yy+13}" font-size="12" fill="#061A36" font-weight="950">${fmt.format(Math.round(+d[key]||0))}</text>`; }); });
+ data.forEach((d,i)=>{ const y=m.t+i*rowH+8; svg+=`<text x="${m.l-10}" y="${y+22}" text-anchor="end" font-size="${labelFont}" fill="#294B70" font-weight="800">${esc(trunc(d.label,labelLimit))}</text>`; [['sucesso','#0057B8','Com sucesso',0],['semSucesso','#E05252','Sem sucesso',25]].forEach(arr=>{ const key=arr[0],color=arr[1],lab=arr[2],off=arr[3]; const w=Math.max(0,(W-m.l-m.r)*(d[key]/max)); const yy=y+off; svg+=`<rect class="bar" data-tip="${esc(d.label)} · ${lab}: ${fmt.format(Math.round(+d[key]||0))}" x="${m.l}" y="${yy}" width="${Math.max(w,4)}" height="18" rx="9" fill="${color}"/><text x="${Math.min(m.l+w+8,W-36)}" y="${yy+13}" font-size="${compact?10:12}" fill="#061A36" font-weight="950">${fmt.format(Math.round(+d[key]||0))}</text>`; }); });
  svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
 }
 
 function groupedColumnChart(el,data){
  const W=el.clientWidth||980,H=Math.max(el.clientHeight||380,380);
- const m={t:76,r:32,b:88,l:54};
+ const compact=W<560;
+ const m=compact?{t:70,r:20,b:98,l:32}:{t:76,r:32,b:88,l:54};
  const defs='<defs><linearGradient id="colGradBlue" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0B7CE6"/><stop offset="1" stop-color="#0057B8"/></linearGradient><linearGradient id="colGradRed" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#FF7A7A"/><stop offset="1" stop-color="#E05252"/></linearGradient><filter id="colShadow"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0A4EA8" flood-opacity=".16"/></filter></defs>';
  const max=Math.max(...(data||[]).flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1);
  const innerW=W-m.l-m.r, innerH=H-m.t-m.b;
  const groupW=innerW/Math.max((data||[]).length,1);
- const barW=Math.min(44, groupW*0.22);
+ const barW=Math.min(compact?32:44, groupW*0.22);
  const gap=barW*0.38;
  const pairW=barW*2+gap;
  const x0=i=>m.l+i*groupW + (groupW-pairW)/2;
  const y=v=>H-m.b-(v/max)*innerH;
  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">${defs}`;
- svg+=`<text x="${m.l+10}" y="22" font-size="12" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+146}" y="22" font-size="12" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
+ svg+=`<text x="${m.l+6}" y="22" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+(compact?108:146)}" y="22" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
  // baseline
  svg+=`<line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#D8E4F2" stroke-width="2"/>`;
  (data||[]).forEach((d,i)=>{
@@ -407,17 +419,17 @@ function groupedColumnChart(el,data){
      const h=Math.max((b.val/max)*innerH, b.val>0?4:0);
      const yy=H-m.b-h;
      svg+=`<rect class="bar" data-tip="${esc(d.label)} · ${b.label}: ${fmt.format(Math.round(b.val))}" x="${b.x}" y="${yy}" width="${barW}" height="${h}" rx="10" fill="${b.color}" filter="url(#colShadow)"/>`;
-     svg+=`<text x="${b.x+barW/2}" y="${Math.max(m.t-8,yy-10)}" text-anchor="middle" font-size="12" fill="#061A36" font-weight="950">${fmt.format(Math.round(b.val))}</text>`;
+     svg+=`<text x="${b.x+barW/2}" y="${Math.max(m.t-8,yy-10)}" text-anchor="middle" font-size="${compact?10:12}" fill="#061A36" font-weight="950">${fmt.format(Math.round(b.val))}</text>`;
    });
    const cx=baseX+pairW/2;
    const lines=String(d.label||'').split(' ');
    if(lines.length>1){
      const first=esc(lines.slice(0,-1).join(' '));
      const last=esc(lines.slice(-1).join(' '));
-     svg+=`<text x="${cx}" y="${H-m.b+24}" text-anchor="middle" font-size="12" fill="#294B70" font-weight="800">${first}</text>`;
-     svg+=`<text x="${cx}" y="${H-m.b+40}" text-anchor="middle" font-size="12" fill="#294B70" font-weight="800">${last}</text>`;
+     svg+=`<text x="${cx}" y="${H-m.b+24}" text-anchor="middle" font-size="${compact?10:12}" fill="#294B70" font-weight="800">${first}</text>`;
+     svg+=`<text x="${cx}" y="${H-m.b+40}" text-anchor="middle" font-size="${compact?10:12}" fill="#294B70" font-weight="800">${last}</text>`;
    } else {
-     svg+=`<text x="${cx}" y="${H-m.b+28}" text-anchor="middle" font-size="12" fill="#294B70" font-weight="800">${esc(d.label)}</text>`;
+     svg+=`<text x="${cx}" y="${H-m.b+28}" text-anchor="middle" font-size="${compact?10:12}" fill="#294B70" font-weight="800">${esc(d.label)}</text>`;
    }
  });
  svg+=`</svg>`;
@@ -426,7 +438,8 @@ function groupedColumnChart(el,data){
 
 function lineChart(el,data,expanded=false){
  const W=el.clientWidth||980,H=el.clientHeight||380;
- const m=expanded?{t:74,r:70,b:122,l:68}:{t:34,r:48,b:52,l:58};
+ const compact=W<560;
+ const m=compact ? (expanded?{t:60,r:28,b:98,l:38}:{t:38,r:24,b:58,l:34}) : (expanded?{t:74,r:70,b:122,l:68}:{t:34,r:48,b:52,l:58});
  const vals=data.map(d=>+d.value||0); const max=Math.max(...vals,1), min=Math.min(...vals,0); const range=Math.max(max-min,1); const stepX=(W-m.l-m.r)/Math.max(data.length-1,1); const y=v=>H-m.b-((v-min)/range)*(H-m.t-m.b); let pts=data.map((d,i)=>[m.l+i*stepX,y(+d.value||0)]);
  let area=`M ${pts[0][0]} ${H-m.b} L `+pts.map(p=>p.join(' ')).join(' L ')+` L ${pts[pts.length-1][0]} ${H-m.b} Z`; let line='M '+pts.map(p=>p.join(' ')).join(' L ');
  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0072CE" stop-opacity=".24"/><stop offset="1" stop-color="#0072CE" stop-opacity="0"/></linearGradient></defs>`;
