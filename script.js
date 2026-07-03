@@ -198,8 +198,9 @@ function generalInsights(){
  const npsBest=npsEntries.slice().sort((a,b)=>b.value-a.value)[0];
  const npsZone=npsAvg!==null ? npsInfo(npsAvg) : null;
  const market=chartByTitle('Gazin.com','Marketplace');
- const topMarket=market?.data?.slice().sort((a,b)=>(+b.value||0)-(+a.value||0))[0];
- const marketTotal=(market?.data||[]).reduce((a,d)=>a+(+d.value||0),0);
+ const marketData=market ? chartData(market) : [];
+ const topMarket=marketData.slice().sort((a,b)=>(+b.value||0)-(+a.value||0))[0];
+ const marketTotal=chartTotal(market||{data:[]});
  const judicial=chartByTitle('Canais Especiais','Ações judiciais');
  const judicialTotal=(judicial?.data||[]).reduce((a,d)=>a+(+d.value||0),0);
  const judicialTop=judicial?.data?.slice().sort((a,b)=>(+b.value||0)-(+a.value||0))[0];
@@ -284,11 +285,19 @@ function assistanceBrandTable(s){
 }
 
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ')}
-function chartTotal(c){ if(c.type==='groupedBar' || c.type==='groupedColumn') return c.data.reduce((a,d)=>a+(+d.sucesso||0)+(+d.semSucesso||0),0); return (c.data||[]).reduce((a,d)=>a+(+d.value||0),0); }
+function isTotalRow(d){ return String(d?.label||'').trim().toLowerCase()==='total'; }
+function chartData(c){ return (c?.data||[]).filter(d=>!isTotalRow(d)); }
+function chartTotal(c){
+ const totalRow=(c?.data||[]).find(isTotalRow);
+ if(totalRow) return +totalRow.value||0;
+ const rows=chartData(c);
+ if(c.type==='groupedBar' || c.type==='groupedColumn') return rows.reduce((a,d)=>a+(+d.sucesso||0)+(+d.semSucesso||0),0);
+ return rows.reduce((a,d)=>a+(+d.value||0),0);
+}
 function slug(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]/g,'_')}
 function showTip(txt,x,y){tooltip.innerHTML=txt; tooltip.style.left=x+'px'; tooltip.style.top=y+'px'; tooltip.style.opacity=1;}
 function hideTip(){tooltip.style.opacity=0;}
-function renderChart(el,c,expanded=false){ if(!el) return; if(c.type==='line') return lineChart(el,c.data,expanded); if(c.type==='groupedBar') return groupedChart(el,c.data); if(c.type==='groupedColumn') return groupedColumnChart(el,c.data); if(c.type==='ufMap') return ufMapChart(el,c.data,expanded); if(c.type==='pie') return pieChart(el,c.data,expanded); return barChart(el,c.data); }
+function renderChart(el,c,expanded=false){ if(!el) return; const rows=chartData(c); if(c.type==='line') return lineChart(el,rows,expanded); if(c.type==='groupedBar') return groupedChart(el,rows); if(c.type==='groupedColumn') return groupedColumnChart(el,rows); if(c.type==='ufMap') return ufMapChart(el,rows,expanded); if(c.type==='pie') return pieChart(el,rows,expanded); return barChart(el,rows); }
 
 
 function marketLabelPretty(label){
