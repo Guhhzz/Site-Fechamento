@@ -11,6 +11,7 @@ const HISTORY_NAME_KEY = 'gazin_fechamento_bases_names_v1';
 let ADMIN_UNLOCKED = false;
 const AUTH_USERS_KEY = 'site_tech_analytics_users_v1';
 const AUTH_SESSION_KEY = 'site_tech_analytics_session_v1';
+const AUTH_WELCOME_SEEN_KEY = 'site_tech_analytics_welcome_seen_v1';
 const ADMIN_EMAILS = [
   'gustavo.salomao@gazin.com.br',
   'email-da-gerente@gazin.com.br',
@@ -26,6 +27,21 @@ function readAuthUsers(){
 function saveAuthUsers(users){
  try { localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users)); return true; }
  catch(e){ alert('Não foi possível salvar o cadastro neste navegador.'); return false; }
+}
+function readWelcomeSeen(){
+ try { return JSON.parse(localStorage.getItem(AUTH_WELCOME_SEEN_KEY) || '{}'); }
+ catch(e){ return {}; }
+}
+function markWelcomeSeen(email){
+ const key=normalizeEmail(email);
+ if(!key) return;
+ const seen=readWelcomeSeen();
+ seen[key]=true;
+ localStorage.setItem(AUTH_WELCOME_SEEN_KEY, JSON.stringify(seen));
+}
+function hasSeenWelcome(email){
+ const key=normalizeEmail(email);
+ return !!(key && readWelcomeSeen()[key]);
 }
 function isAdminEmail(email){ return ADMIN_EMAILS.map(normalizeEmail).includes(normalizeEmail(email)); }
 function canManageHistory(){ return !!(CURRENT_USER && isAdminEmail(CURRENT_USER.email)); }
@@ -73,6 +89,9 @@ function closeWelcomeModal(){
 }
 function maybeShowWelcome(){
  if(!CURRENT_USER) return;
+ const email=normalizeEmail(CURRENT_USER.email);
+ if(hasSeenWelcome(email)) return;
+ markWelcomeSeen(email);
  setTimeout(openWelcomeModal,220);
 }
 function signOut(){
