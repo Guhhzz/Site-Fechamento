@@ -183,7 +183,7 @@ select{display:none}
 .historyPanel{width:min(980px,96vw);height:auto;min-height:520px;max-height:92vh;overflow:auto}
 .historyIntro{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;margin-bottom:18px;padding:16px;border-radius:22px;background:linear-gradient(135deg,#F4FAFF,#EAF4FF);border:1px solid #D8E9FA;color:#315879}
 .historyIntro strong{display:block;color:#061A36;font-size:16px;margin-bottom:4px}.historyIntro span{font-size:13px;line-height:1.35}
-.historyUpload{position:relative;overflow:hidden}.historyUpload input{position:absolute;inset:0;opacity:0;cursor:pointer}.historyUploadBtn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid rgba(0,87,184,.15);background:#fff;color:var(--gazin-blue);font-weight:950;padding:10px 14px;box-shadow:0 10px 22px rgba(0,87,184,.10);white-space:nowrap}.historyIntroActions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.historyAdvancedBtn{border:1px solid rgba(0,87,184,.15);border-radius:999px;padding:10px 14px;background:linear-gradient(180deg,#FFFFFF,#EAF4FF);color:#0057B8;font-weight:950;box-shadow:0 10px 22px rgba(0,87,184,.10);cursor:pointer;white-space:nowrap;transition:.18s}.historyAdvancedBtn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(0,87,184,.16)}
+.historyUpload{position:relative;overflow:hidden}.historyUpload input{position:absolute;inset:0;opacity:0;cursor:pointer}.historyUploadBtn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid rgba(0,87,184,.15);background:#fff;color:var(--gazin-blue);font-weight:950;padding:10px 14px;box-shadow:0 10px 22px rgba(0,87,184,.10);white-space:nowrap}.historyIntroActions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .historyList{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.baseCard{border:1px solid rgba(0,87,184,.12);border-radius:22px;background:linear-gradient(180deg,#FFFFFF,#F8FBFF);box-shadow:0 16px 36px rgba(6,26,54,.10);padding:16px;position:relative;overflow:hidden}
 .baseCard:before{content:"";position:absolute;right:-38px;top:-38px;width:120px;height:120px;border-radius:50%;background:rgba(0,163,255,.08)}.baseTop{display:flex;gap:12px;align-items:flex-start;position:relative;z-index:1}.baseFileIcon{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,#0057B8,#00A3FF);color:#fff;font-weight:1000;box-shadow:0 12px 24px rgba(0,87,184,.22);flex:0 0 auto}.baseInfo{min-width:0}.baseInfo h4{margin:0;color:#061A36;font-size:16px;line-height:1.15}.baseInfo p{margin:6px 0 0;color:#5E748D;font-size:12px;line-height:1.35;word-break:break-word}.baseMeta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;position:relative;z-index:1}.basePill{font-size:11px;font-weight:900;color:#285B91;background:#EAF4FF;border:1px solid #D8E9FA;border-radius:999px;padding:6px 9px}.basePill.available{background:#EAF8EF;color:#157347;border-color:rgba(21,115,71,.18)}.baseActions{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}.baseDownload,.baseRemove,.baseSelect{border:none;border-radius:999px;padding:9px 12px;font-weight:950;cursor:pointer;transition:.18s}.baseDownload{background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;box-shadow:0 12px 22px rgba(0,87,184,.20)}.baseSelect{background:linear-gradient(135deg,#18A058,#27C46C);color:#fff;box-shadow:0 12px 22px rgba(24,160,88,.20)}.baseSelect:hover,.baseDownload:hover{transform:translateY(-1px)}
 .baseSelect.pending{
@@ -212,34 +212,8 @@ select{display:none}
 @media (max-width:1100px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.kpis{grid-template-columns:repeat(2,1fr)}.main{padding:22px}}
 @media (max-width:680px){.kpis{grid-template-columns:1fr}.heroContent{display:block}.hero h2{font-size:27px}.chartTop,.tableHead{display:block}.chartActions{justify-content:flex-start;margin-top:10px}.executiveTable{font-size:12px}}
 
-/* Ajustes do pop-up de acesso administrativo */
-#advancedModal{padding:22px;}
-#advancedModal .smallModalPanel{
-  width:min(460px,92vw) !important;
-  height:auto !important;
-  min-height:0 !important;
-  max-height:none !important;
-  padding:0 !important;
-  border-radius:28px !important;
-  overflow:hidden;
-  background:linear-gradient(180deg,#FFFFFF,#F7FBFF) !important;
-  box-shadow:0 34px 90px rgba(0,18,48,.42),0 0 0 1px rgba(255,255,255,.55) inset !important;
-  animation:adminPop .24s ease-out both;
-}
-#advancedModal .modalHead{padding:22px 22px 14px;margin:0;border-bottom:1px solid #E3EEF9;align-items:flex-start;}
-#advancedModal .modalHead h3{font-size:20px;}
-#advancedModal .modalHead p{font-size:13px;line-height:1.35;}
-#advancedModal .passwordBox{padding:18px 22px 22px;}
-#advancedModal .passwordBox label{display:block;font-size:12px;font-weight:950;color:#315879;margin-bottom:8px;}
-#advancedModal .passwordInput{width:100%;box-sizing:border-box;border:1px solid #CFE2F7;border-radius:16px;background:#F8FBFF;padding:13px 14px;font-size:14px;outline:none;transition:.18s;}
-#advancedModal .passwordInput:focus{border-color:#0072CE;box-shadow:0 0 0 4px rgba(0,114,206,.10);background:#fff;}
-#advancedModal .adminHint{font-size:12px;color:#657D99;line-height:1.45;margin-top:10px;}
-#advancedModal .passwordActions{display:flex;justify-content:flex-end;margin-top:18px;gap:10px;}
-#advancedModal #unlockAdvancedBtn{background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;box-shadow:0 12px 24px rgba(0,87,184,.20);}
-#advancedModal .closeBtn{white-space:nowrap;}
 .historyUpload{display:none;}
 body.adminUnlocked .historyUpload{display:inline-flex;}
-@keyframes adminPop{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
 
 body.authPending{overflow:hidden}
 body.authPending .app,
@@ -350,7 +324,6 @@ body.authReady .authShell{display:none}
 .userPanel span{display:block;font-size:13px;font-weight:950;color:#fff;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .userPanel small{display:block;margin-top:3px;color:#BBD7F7;font-size:11px;font-weight:850}
 .userPanel button{border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.10);color:#fff;font-weight:900;cursor:pointer}
-body:not(.adminUser) .historyAdvancedBtn{display:none}
 @media (max-width:680px){
   .authShell{align-items:flex-start;padding:18px;background:linear-gradient(180deg,#071B38 0%,#0C4486 42%,#EAF4FF 42%,#F8FBFF 100%)}
   .authPanel{padding:20px;border-radius:24px}

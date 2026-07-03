@@ -73,19 +73,8 @@
 <div class="modal" id="historyModal" aria-hidden="true">
   <div class="modalPanel historyPanel">
     <div class="modalHead"><div><h3>Histórico de Bases de Fechamento</h3><p>Arquivos Excel usados como base para os fechamentos mensais.</p></div><button class="closeBtn" id="closeHistoryModal">Fechar</button></div>
-    <div class="historyIntro"><div><strong>Bases disponíveis para exportação</strong><span>Repositório técnico das bases mensais utilizadas nos fechamentos. Use esta área para consultar, baixar e controlar as versões que alimentam o painel executivo.</span></div><div class="historyIntroActions"><button class="historyAdvancedBtn" id="advancedSettingsBtn" type="button">⚙ Configurações avançadas</button><label class="historyUpload"><span class="historyUploadBtn">＋ Adicionar base local</span><input type="file" id="historyFileInput" accept=".xlsx,.xls" /></label></div></div>
+    <div class="historyIntro"><div><strong>Bases disponíveis para exportação</strong><span>Repositório técnico das bases mensais utilizadas nos fechamentos. Use esta área para consultar, baixar e controlar as versões que alimentam o painel executivo.</span></div><div class="historyIntroActions"><label class="historyUpload"><span class="historyUploadBtn">＋ Adicionar base local</span><input type="file" id="historyFileInput" accept=".xlsx,.xls" /></label></div></div>
     <div class="historyList" id="historyList"></div>
-  </div>
-</div>
-<div class="modal" id="advancedModal" aria-hidden="true">
-  <div class="modalPanel smallModalPanel">
-    <div class="modalHead"><div><h3>Acesso Administrativo</h3><p>Informe a senha para liberar manutenção do histórico.</p></div><button class="closeBtn" id="closeAdvancedModal">Fechar</button></div>
-    <div class="passwordBox">
-      <label for="advancedPassword">Senha de acesso</label>
-      <input class="passwordInput" id="advancedPassword" type="password" placeholder="Digite a senha" autocomplete="off" />
-      <div class="adminHint">Após a validação, os botões de edição, exclusão e adição de bases serão exibidos nesta tela.</div>
-      <div class="passwordActions"><button class="closeBtn" id="unlockAdvancedBtn" type="button">Liberar acesso</button></div>
-    </div>
   </div>
 </div>
 <div class="welcomeModal" id="welcomeModal" aria-hidden="true">

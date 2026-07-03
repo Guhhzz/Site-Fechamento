@@ -519,32 +519,11 @@ function requestHistoryLoad(id){
 }
 function openHistory(){ const m=document.getElementById('historyModal'); if(!m) return; document.body.classList.toggle('adminUnlocked', canManageHistory()); renderHistoryBases(); m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
 function closeHistory(){ const m=document.getElementById('historyModal'); if(!m) return; m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
-function openAdvancedSettings(){ if(!canManageHistory()){ alert('Acesso restrito a administradores.'); return; } const m=document.getElementById('advancedModal'); if(!m) return; const input=document.getElementById('advancedPassword'); if(input) input.value=''; m.classList.add('open'); m.setAttribute('aria-hidden','false'); setTimeout(()=>input&&input.focus(),80); }
-function closeAdvancedSettings(){ const m=document.getElementById('advancedModal'); if(!m) return; m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
-function unlockAdvancedSettings(){
- if(!canManageHistory()){ alert('Acesso restrito a administradores.'); return; }
- const input=document.getElementById('advancedPassword'); const value=input?input.value:'';
- if(value==='Tmch@2026'){
-   ADMIN_UNLOCKED=true;
-   document.body.classList.add('adminUnlocked');
-   closeAdvancedSettings();
-   renderHistoryBases();
- } else {
-   alert('Senha inválida. Verifique a senha e tente novamente.');
-   if(input){ input.focus(); input.select(); }
- }
-}
 function setupHistoryModal(){
  const openBtn=document.getElementById('openHistoryBtn'), closeBtn=document.getElementById('closeHistoryModal'), modal=document.getElementById('historyModal'), fileInput=document.getElementById('historyFileInput');
- const advBtn=document.getElementById('advancedSettingsBtn'), advModal=document.getElementById('advancedModal'), advClose=document.getElementById('closeAdvancedModal'), unlockBtn=document.getElementById('unlockAdvancedBtn'), passInput=document.getElementById('advancedPassword');
  if(openBtn) openBtn.addEventListener('click',openHistory);
  if(closeBtn) closeBtn.addEventListener('click',closeHistory);
  if(modal) modal.addEventListener('click',e=>{if(e.target===modal) closeHistory();});
- if(advBtn) advBtn.addEventListener('click',openAdvancedSettings);
- if(advClose) advClose.addEventListener('click',closeAdvancedSettings);
- if(unlockBtn) unlockBtn.addEventListener('click',unlockAdvancedSettings);
- if(advModal) advModal.addEventListener('click',e=>{if(e.target===advModal) closeAdvancedSettings();});
- if(passInput) passInput.addEventListener('keydown',e=>{if(e.key==='Enter') unlockAdvancedSettings();});
  if(fileInput) fileInput.addEventListener('change',e=>{
    if(!canManageHistory()){ alert('Acesso restrito a administradores.'); e.target.value=''; return; }
    const file=e.target.files && e.target.files[0]; if(!file) return;
