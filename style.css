@@ -514,6 +514,7 @@ body.authReady .authShell{display:none}
     padding:10px 10px 12px;
     border-radius:0 0 22px 22px;
     overflow:visible;
+    z-index:240;
   }
   .userPanel{
     gap:10px;
@@ -528,8 +529,10 @@ body.authReady .authShell{display:none}
     width:220px !important;
     max-width:100% !important;
     margin:10px 0 8px;
+    z-index:260;
   }
   .mobileNucleoBtn{width:100% !important}
+  .mobileNucleoMenu{z-index:320}
   .nav{display:none}
   .nav button:active,
   .historyBtn:active,
@@ -589,7 +592,7 @@ body.authReady .authShell{display:none}
     scrollbar-width:none;
     position:sticky;
     top:0;
-    z-index:70;
+    z-index:40;
     background:linear-gradient(180deg,rgba(243,248,255,.98),rgba(243,248,255,.92));
     backdrop-filter:blur(10px);
     -webkit-backdrop-filter:blur(10px);
