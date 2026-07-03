@@ -167,6 +167,29 @@ function npsBadge(value){
  const info=npsInfo(value);
  return `<div class="kpiRate nps ${info.cls}">${formatNps(value)} · ${esc(info.label)}</div><span class="kpiGoal">Referência de mercado: ${esc(info.range)}</span>`;
 }
+function metricLine(label,value,detail='',tone=''){
+ return `<article class="mobileMetric ${tone}"><span>${esc(label)}</span><strong>${esc(value)}</strong>${detail?`<small>${esc(detail)}</small>`:''}</article>`;
+}
+function executiveSummary(channel,mode='general'){
+ if(!channel) return '';
+ const of=+channel.ofertadas||0, at=+channel.atendidas||0, ab=+channel.abandonadas||0, wp=+channel.whatsapp||0, cb=+channel.callback||0;
+ const atPct=of?at/of*100:0, abPct=of?ab/of*100:0;
+ const metrics=[
+   metricLine('Atendimento',pct(atPct),`${fmt.format(Math.round(at))} atendidas`,atPct>=90?'good':'warn'),
+   metricLine('Abandono',pct(abPct),`${fmt.format(Math.round(ab))} chamadas`,abPct<=10?'good':'danger')
+ ];
+ if(hasNps(channel)){
+   const info=npsInfo(channel.nps);
+   metrics.push(metricLine('NPS',formatNps(channel.nps),info.label,info.cls==='critical'?'danger':(info.cls==='improve'?'warn':'good')));
+ } else if(cb>0){
+   metrics.push(metricLine('Callback',fmt.format(Math.round(cb)),'retornos em fila',''));
+ }
+ metrics.push(metricLine('WhatsApp',fmt.format(Math.round(wp)),'tickets digitais',''));
+ return `<section class="mobileExecutiveSummary" id="mobileSummary" aria-label="Síntese executiva">${metrics.join('')}</section>`;
+}
+function mobileSectionNav(items){
+ return `<nav class="mobileSectionNav" aria-label="Seções do painel">${items.map(item=>`<a href="#${escAttr(item.id)}">${esc(item.label)}</a>`).join('')}</nav>`;
+}
 function getNpsEntries(sheets=DATA.sheets||[]){
  return sheets.filter(s=>hasNps(s.channel)).map(s=>({name:s.name,value:+s.channel.nps}));
 }
@@ -183,6 +206,11 @@ function kpisForChannel(channel){
 }
 function chartByTitle(sheet,titlePart){ const s=DATA.sheets.find(x=>x.name===sheet); return s?.charts?.find(c=>String(c.title).toLowerCase().includes(String(titlePart).toLowerCase())); }
 function insightCard(tag,title,text,value){ return `<article class="insightCard"><span class="insightTag">${esc(tag)}</span><h4 class="insightTitle">${esc(title)}</h4><p class="insightText">${text}</p>${value?`<div class="insightValue">${esc(value)}</div>`:''}</article>`; }
+function toggleInsights(btn){
+ const block=btn?.closest?.('.insightsBlock'); if(!block) return;
+ const expanded=block.classList.toggle('expanded');
+ btn.textContent=expanded?'Ver menos insights':'Ver todos os insights';
+}
 function generalInsights(){
  const sheets=DATA.sheets||[];
  const g=DATA.general||{};
@@ -214,7 +242,7 @@ function generalInsights(){
  if(highAb) cards += insightCard('Ponto de atenção','Abandono acima da média',`<strong>${esc(highAb.name)}</strong> teve a maior taxa de abandono entre os núcleos com volume relevante, indicando oportunidade de acompanhamento operacional.`,`${pct((highAb.channel.abandonadas/highAb.channel.ofertadas)*100)}`);
  if(topMarket) cards += insightCard('Gazin.com','Marketplace em evidência',`No Gazin.com, <strong>${esc(marketLabelPretty(topMarket.label))}</strong> foi o maior canal marketplace, com <strong>${pct((topMarket.value/(marketTotal||1))*100)}</strong> do volume.`,`${fmt.format(topMarket.value)} atendimentos`);
  if(judicialTop) cards += insightCard('Canais Especiais','Ações judiciais monitoradas',`Foram registrados <strong>${fmt.format(judicialTotal)}</strong> acionamentos, com maior volume em <strong>${esc(judicialTop.label)}</strong>.`,`${fmt.format(judicialTop.value)} casos`);
- return sectionHeader('Principais insights do fechamento','') + `<div class="insightsGrid">${cards}</div>`;
+ return `<section id="insightsSection">` + sectionHeader('Principais insights do fechamento','') + `<div class="insightsBlock"><div class="insightsGrid">${cards}</div><button class="mobileMoreBtn" type="button" onclick="toggleInsights(this)">Ver todos os insights</button></div></section>`;
 }
 function sectionHeader(title,desc){return `<div class="sectionHeader"><div><h3>${esc(title)}</h3>${desc?`<p>${esc(desc)}</p>`:''}</div></div>`}
 function buildMenu(){
@@ -246,19 +274,40 @@ function generalView(){
  const g=DATA.general;
  const npsAvg=averageNps(DATA.sheets);
  const generalChannel = npsAvg===null ? g : {...g,nps:npsAvg};
- content.innerHTML = sectionHeader('Canais de Atendimento · Geral','A visão geral apresenta os KPIs consolidados e os principais pontos de leitura do fechamento mensal.') +
- `<div class="kpis">${kpisForChannel(generalChannel)}</div>` + generalInsights();
+ content.innerHTML = mobileSectionNav([{id:'mobileSummary',label:'Síntese'},{id:'kpisSection',label:'KPIs'},{id:'insightsSection',label:'Insights'}]) +
+ executiveSummary(generalChannel,'general') +
+ `<section id="kpisSection">` + sectionHeader('Canais de Atendimento · Geral','A visão geral apresenta os KPIs consolidados e os principais pontos de leitura do fechamento mensal.') +
+ `<div class="kpis">${kpisForChannel(generalChannel)}</div></section>` + generalInsights();
+}
+function chartPreviewValue(c,d){
+ if(c.type==='groupedBar' || c.type==='groupedColumn') return (+d.sucesso||0)+(+d.semSucesso||0);
+ return +d.value||0;
+}
+function mobileChartPreview(c){
+ const rows=chartData(c);
+ if(!rows.length || rows.length<=5 || c.type==='pie' || c.type==='ufMap') return '';
+ const top=rows.slice().sort((a,b)=>chartPreviewValue(c,b)-chartPreviewValue(c,a)).slice(0,5);
+ return `<div class="mobileChartPreview">${top.map((d,i)=>{
+   const val=chartPreviewValue(c,d);
+   return `<div class="mobileChartRow"><span>${i+1}. ${esc(trunc(d.label||d.uf||'Item',28))}</span><strong>${fmt.format(Math.round(val))}</strong></div>`;
+ }).join('')}</div>`;
 }
 function nucleoView(name){
  const s=DATA.sheets.find(x=>x.name===name); if(!s) return generalView(); setActive(name);
  pageTitle.textContent=s.name; pageDesc.textContent='Indicadores, gráficos e destaques específicos do núcleo selecionado.'; activeBadge.textContent=s.status==='parcial'?'Dados parciais':DATA.month;
  let kpis = (s.channel && Object.values(s.channel).some(v=>+v)) ? kpisForChannel(s.channel) : '';
  // KPI de Total do período removido dos núcleos; o total permanece visível nos gráficos.
- let html = sectionHeader('Resumo do Núcleo','Ao selecionar um núcleo, a visão geral sai de tela e entram os indicadores específicos disponíveis.') + (kpis?`<div class="kpis">${kpis}</div>`:'<div class="empty"><strong>Sem KPIs de canal preenchidos</strong>Esta aba não possui os campos consolidados de ligações/WhatsApp no arquivo atual.</div>');
+ const hasCharts=!!(s.charts && s.charts.length), hasTable=s.name==='Assistência' && (s.brandTable||[]).length;
+ let html = mobileSectionNav([{id:'mobileSummary',label:'Síntese'},{id:'kpisSection',label:'KPIs'},...(hasCharts?[{id:'chartsSection',label:'Gráficos'}]:[]),...(hasTable?[{id:'tablesSection',label:'Tabela'}]:[])]) +
+ executiveSummary(s.channel,'nucleo') +
+ `<section id="kpisSection">` + sectionHeader('Resumo do Núcleo','Ao selecionar um núcleo, a visão geral sai de tela e entram os indicadores específicos disponíveis.') + (kpis?`<div class="kpis">${kpis}</div>`:'<div class="empty"><strong>Sem KPIs de canal preenchidos</strong>Esta aba não possui os campos consolidados de ligações/WhatsApp no arquivo atual.</div>') + `</section>`;
  if(s.charts && s.charts.length){
-   html += sectionHeader('Gráficos do Núcleo','');
-   html += `<div class="chartGrid">` + s.charts.map((c,i)=>`<article class="chartCard"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">Total: ${fmt.format(Math.round(chartTotal(c)))}</div><button class="exportBtn" onclick="exportChartExcel('${escAttr(s.name)}',${i})">⬇ Excel</button><button class="expandBtn" onclick="openChartModal('${escAttr(s.name)}',${i})">⤢ Expandir</button></div></div><div class="chartCanvas ${(c.data||[]).length>10?'tall':''}" id="chart_${slug(s.name)}_${i}"></div></article>`).join('') + `</div>`;
-   if(s.name==='Assistência') html += assistanceBrandTable(s);
+   html += `<section id="chartsSection">` + sectionHeader('Gráficos do Núcleo','');
+   html += `<div class="chartGrid">` + s.charts.map((c,i)=>{
+     const rows=chartData(c), condensed=rows.length>5 && c.type!=='pie' && c.type!=='ufMap';
+     return `<article class="chartCard ${condensed?'mobileCondensed':''}"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">Total: ${fmt.format(Math.round(chartTotal(c)))}</div><button class="exportBtn" onclick="exportChartExcel('${escAttr(s.name)}',${i})">⬇ Excel</button><button class="expandBtn" onclick="openChartModal('${escAttr(s.name)}',${i})">⤢ Expandir</button></div></div>${mobileChartPreview(c)}<div class="chartCanvas ${(c.data||[]).length>10?'tall':''}" id="chart_${slug(s.name)}_${i}"></div></article>`;
+   }).join('') + `</div></section>`;
+   if(s.name==='Assistência') html += `<section id="tablesSection">${assistanceBrandTable(s)}</section>`;
  } else {
    html += `<div class="empty" style="margin-top:20px"><strong>Gráficos pendentes</strong>Não foram encontrados dados tabulados suficientes para montar gráficos nesta aba. Os KPIs disponíveis acima foram preservados.</div>`;
  }
@@ -585,10 +634,29 @@ function setupHistoryModal(){
    reader.readAsDataURL(file); e.target.value='';
  });
 }
+function setupMobileTopButton(){
+ const btn=document.createElement('button');
+ btn.type='button';
+ btn.className='mobileTopBtn';
+ btn.setAttribute('aria-label','Voltar ao topo');
+ btn.textContent='↑';
+ btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+ document.body.appendChild(btn);
+ const sync=()=>btn.classList.toggle('visible',window.scrollY>640);
+ window.addEventListener('scroll',sync,{passive:true});
+ sync();
+}
 
 initAuth();
 buildMenu();
 setupHistoryModal();
-setView('geral');
+setupMobileTopButton();
+setView(initialViewFromHash());
 function setView(key){ key==='geral'?generalView():nucleoView(key); window.scrollTo({top:0,behavior:'smooth'}); }
+function initialViewFromHash(){
+ const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,'')).trim();
+ if(!raw || raw.toLowerCase()==='geral') return 'geral';
+ const found=(DATA.sheets||[]).find(s=>s.name===raw || slug(s.name)===raw);
+ return found ? found.name : 'geral';
+}
 window.addEventListener('resize',()=>{ const key=currentViewKey || 'geral'; key==='geral'?generalView():nucleoView(key); });

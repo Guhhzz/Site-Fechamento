@@ -20,7 +20,7 @@
 html,body{max-width:100%;overflow-x:hidden}
 body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(circle at 12% 0%,#DDEEFF 0,#F8FBFF 35%,#EEF6FF 100%);color:var(--text)}
 .app{min-height:100vh;display:grid;grid-template-columns:330px 1fr}
-.app,.main,#content,.hero,.kpis,.kpi,.insightsGrid,.insightCard,.chartGrid,.chartCard,.tableCard,.historyDock{min-width:0}
+.app,.main,#content,.hero,.kpis,.kpi,.mobileExecutiveSummary,.mobileMetric,.mobileSectionNav,.insightsGrid,.insightCard,.chartGrid,.chartCard,.tableCard,.historyDock{min-width:0}
 .sidebar{background:linear-gradient(180deg,var(--gazin-dark),#0B2E5E 54%,var(--gazin-blue));color:#fff;padding:28px 22px;position:sticky;top:0;height:100vh;overflow:auto;box-shadow:18px 0 48px rgba(6,26,54,.18)}
 .sidebar>.brand{display:none}
 .brand{display:flex;gap:12px;align-items:center;margin-bottom:22px;min-width:0}
@@ -93,6 +93,7 @@ select{display:none}
 .insightTitle{margin:14px 0 8px;font-size:18px;line-height:1.15;color:#061A36;font-weight:950}
 .insightText{margin:0;color:#4B617D;font-size:13px;line-height:1.45}.insightText strong{color:#0B2E5E;font-weight:950}
 .insightValue{font-size:25px;font-weight:1000;color:#0057B8;margin-top:10px;line-height:1}
+.mobileExecutiveSummary,.mobileSectionNav,.mobileChartPreview,.mobileMoreBtn,.mobileTopBtn{display:none}
 @media (max-width:1200px){.insightsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:680px){.insightsGrid{grid-template-columns:1fr}}
 .chartGrid{display:grid;grid-template-columns:1fr;gap:22px}
@@ -160,6 +161,7 @@ select{display:none}
 .progress span{display:block;height:100%;background:linear-gradient(90deg,var(--gazin-blue),var(--gazin-blue-3));border-radius:999px}
 
 .tableScroll{width:100%;overflow-x:auto;position:relative;z-index:2;padding-bottom:4px}
+.tableScroll:after{content:"";position:absolute;right:0;top:0;bottom:8px;width:34px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.96));pointer-events:none}
 .executiveTable.brandTable{min-width:1160px;border-spacing:0 10px}
 .executiveTable.brandTable th{text-align:right;white-space:nowrap;padding:0 12px 8px}
 .executiveTable.brandTable th:first-child{text-align:left}
@@ -475,14 +477,15 @@ body.authReady .authShell{display:none}
 @media (max-width:760px){
   body{background:#F3F8FF}
   .sidebar{
-    padding:14px 12px 16px;
+    padding:10px 10px 12px;
     border-radius:0 0 22px 22px;
     overflow:visible;
   }
   .userPanel{
     gap:10px;
-    padding:10px;
+    padding:8px 9px;
     border-radius:16px;
+    margin-bottom:8px;
   }
   .userPanel span{max-width:185px}
   .userPanel button{padding:8px 9px}
@@ -496,6 +499,8 @@ body.authReady .authShell{display:none}
     scroll-snap-type:x proximity;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
+    mask-image:linear-gradient(90deg,#000 0,#000 86%,transparent 100%);
+    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 86%,transparent 100%);
   }
   .nav::-webkit-scrollbar{display:none}
   .nav button{
@@ -506,36 +511,123 @@ body.authReady .authShell{display:none}
     font-size:13px;
     scroll-snap-align:start;
   }
+  .nav button:active,
+  .historyBtn:active,
+  .expandBtn:active,
+  .exportBtn:active,
+  .mobileMoreBtn:active,
+  .welcomePrimary:active,
+  .authPrimary:active{transform:scale(.98)}
   .pill{font-size:10px;padding:2px 7px}
   .historyDock{
-    padding:14px;
-    margin-top:10px;
-    border-radius:20px;
+    display:flex;
+    justify-content:flex-start;
+    padding:0;
+    margin-top:6px;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    overflow:visible;
   }
+  .historyDock:before,
+  .historyDock:after{display:none}
   .historyDock p{display:none}
-  .historyBtn{padding:12px;border-radius:17px}
-  .historyIcon{width:34px;height:34px;border-radius:12px}
+  .historyBtn{
+    width:auto;
+    padding:8px 11px 8px 8px;
+    border-radius:999px;
+    gap:8px;
+  }
+  .historyIcon{width:30px;height:30px;border-radius:11px;font-size:15px}
   .historyBtnText strong{font-size:13px}
-  .historyBtnText small{font-size:10px}
+  .historyBtnText small{display:none}
   .main{
-    padding:16px 12px 30px;
+    padding:12px 10px 30px;
     overflow:visible;
   }
   .hero{
-    padding:22px;
-    border-radius:22px;
+    padding:16px;
+    border-radius:20px;
   }
   .heroContent{display:block}
-  .hero h2{font-size:30px}
-  .hero p{font-size:14px;line-height:1.5}
+  .hero h2{font-size:25px;margin-bottom:0}
+  .hero p{display:none}
   .badge{
     display:inline-flex;
-    margin-top:16px;
+    margin-top:12px;
+    padding:9px 12px;
     white-space:normal;
   }
+  .mobileSectionNav{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin:12px 0 10px;
+    padding-bottom:2px;
+    scrollbar-width:none;
+    position:sticky;
+    top:0;
+    z-index:70;
+    background:linear-gradient(180deg,rgba(243,248,255,.98),rgba(243,248,255,.92));
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .mobileSectionNav::-webkit-scrollbar{display:none}
+  .mobileSectionNav a{
+    flex:0 0 auto;
+    text-decoration:none;
+    color:#0057B8;
+    background:#FFFFFF;
+    border:1px solid rgba(0,87,184,.12);
+    border-radius:999px;
+    padding:8px 11px;
+    font-size:12px;
+    font-weight:950;
+    box-shadow:0 8px 18px rgba(0,87,184,.08);
+  }
+  .mobileExecutiveSummary{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+    margin:10px 0 14px;
+  }
+  .mobileMetric{
+    border-radius:17px;
+    padding:12px;
+    background:linear-gradient(180deg,#FFFFFF,#F8FBFF);
+    border:1px solid rgba(0,87,184,.10);
+    box-shadow:0 12px 26px rgba(9,42,86,.07);
+  }
+  .mobileMetric span{
+    display:block;
+    color:#607089;
+    text-transform:uppercase;
+    font-size:10px;
+    letter-spacing:.08em;
+    font-weight:950;
+  }
+  .mobileMetric strong{
+    display:block;
+    margin-top:5px;
+    color:#061A36;
+    font-size:24px;
+    line-height:1;
+    font-weight:1000;
+  }
+  .mobileMetric small{
+    display:block;
+    margin-top:5px;
+    color:#607089;
+    font-size:11px;
+    line-height:1.25;
+    font-weight:800;
+  }
+  .mobileMetric.good strong{color:#087A55}
+  .mobileMetric.warn strong{color:#A15C00}
+  .mobileMetric.danger strong{color:#C83333}
   .sectionHeader{
     display:block;
-    margin:24px 0 12px;
+    margin:18px 0 10px;
   }
   .sectionHeader h3{font-size:21px}
   .sectionHeader p{font-size:13px}
@@ -543,17 +635,36 @@ body.authReady .authShell{display:none}
   .hero p,
   .insightText,
   .chartSubtitle{overflow-wrap:anywhere}
-  .kpis{grid-template-columns:1fr;gap:12px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
   .kpi{
-    padding:16px;
-    border-radius:18px;
+    padding:13px;
+    border-radius:17px;
+    min-height:142px;
   }
-  .kpi .value{font-size:28px}
+  .kpi:before{width:78px;height:78px;right:-30px;top:-30px}
+  .kpi .label{font-size:10px;line-height:1.25}
+  .kpi .value{font-size:24px}
+  .kpi .sub{font-size:10px;line-height:1.25}
+  .kpiRate{font-size:10px;padding:6px 8px;white-space:normal;border-radius:14px}
+  .kpiGoal{font-size:9px;line-height:1.25}
   .insightsGrid{grid-template-columns:1fr;gap:12px}
+  .insightsBlock:not(.expanded) .insightCard:nth-child(n+4){display:none}
   .insightCard{
     min-height:auto;
     padding:18px;
     border-radius:20px;
+  }
+  .mobileMoreBtn{
+    display:block;
+    width:100%;
+    margin-top:12px;
+    border:1px solid rgba(0,87,184,.14);
+    border-radius:999px;
+    padding:12px 14px;
+    color:#0057B8;
+    background:linear-gradient(180deg,#FFFFFF,#EAF4FF);
+    font-weight:1000;
+    box-shadow:0 10px 22px rgba(0,87,184,.10);
   }
   .chartGrid{gap:16px}
   .chartCard{
@@ -571,6 +682,7 @@ body.authReady .authShell{display:none}
     margin-top:12px;
     gap:8px;
   }
+  .chartActions .exportBtn{display:none}
   .chartTotal,
   .exportBtn,
   .expandBtn{
@@ -580,6 +692,39 @@ body.authReady .authShell{display:none}
   .chartCanvas{
     min-height:300px;
     overflow:hidden;
+  }
+  .chartCard.mobileCondensed .chartCanvas{display:none}
+  .mobileChartPreview{
+    display:grid;
+    gap:8px;
+    margin-top:12px;
+    position:relative;
+    z-index:2;
+  }
+  .mobileChartRow{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:4px;
+    padding:10px 11px;
+    border-radius:14px;
+    background:#FFFFFF;
+    border:1px solid rgba(0,87,184,.09);
+    box-shadow:0 8px 18px rgba(9,42,86,.06);
+    color:#294B70;
+    font-size:12px;
+    font-weight:900;
+  }
+  .mobileChartRow span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .mobileChartRow strong{
+    color:#061A36;
+    font-size:13px;
+    white-space:nowrap;
+    line-height:1;
   }
   .chartCanvas.tall{min-height:390px}
   .pieWrap{
@@ -703,19 +848,45 @@ body.authReady .authShell{display:none}
     overflow:auto;
   }
   .welcomePresenter{
-    min-height:190px;
-    padding:18px 16px 0;
+    min-height:150px;
+    padding:12px 16px 0;
   }
   .welcomeAvatarFrame{
-    width:170px;
-    min-height:190px;
+    width:140px;
+    min-height:150px;
   }
-  .welcomeContent{padding:22px 18px}
-  .welcomeContent h3{font-size:24px}
-  .welcomeContent p{font-size:14px;line-height:1.5}
+  .welcomeContent{padding:18px}
+  .welcomeContent h3{font-size:22px;margin-bottom:10px}
+  .welcomeContent p{font-size:13px;line-height:1.45;margin-bottom:9px}
   .welcomePrimary{
     width:100%;
     align-self:stretch;
+  }
+  .mobileTopBtn{
+    display:grid;
+    position:fixed;
+    right:14px;
+    bottom:16px;
+    z-index:160;
+    width:42px;
+    height:42px;
+    place-items:center;
+    border:0;
+    border-radius:50%;
+    color:#fff;
+    background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));
+    box-shadow:0 14px 30px rgba(0,87,184,.28);
+    font-size:20px;
+    font-weight:1000;
+    opacity:0;
+    pointer-events:none;
+    transform:translateY(8px);
+    transition:.18s;
+  }
+  .mobileTopBtn.visible{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateY(0);
   }
 }
 
@@ -726,6 +897,11 @@ body.authReady .authShell{display:none}
   .hero h2{font-size:26px}
   .eyebrow{font-size:11px}
   .nav button{min-width:132px;font-size:12px}
+  .kpis,
+  .mobileExecutiveSummary{grid-template-columns:1fr}
+  .kpi{min-height:auto}
+  .mobileMetric{padding:11px}
+  .mobileMetric strong{font-size:21px}
   .chartCard,
   .tableCard,
   .insightCard{padding:14px}
@@ -738,4 +914,10 @@ body.authReady .authShell{display:none}
   .marketplaceRow{font-size:14px}
   .marketplaceBadge{width:70px;height:70px;font-size:18px}
   .authPanel{border-radius:22px}
+}
+
+@media (max-width:520px){
+  .kpis,
+  .mobileExecutiveSummary{grid-template-columns:1fr}
+  .kpi{min-height:auto}
 }
