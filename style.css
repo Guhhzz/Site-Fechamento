@@ -235,7 +235,7 @@ select{display:none}
 .modalHead h3{margin:0;color:var(--gazin-dark)} .modalHead p{margin:5px 0 0;color:var(--muted)}
 .closeBtn{border:none;background:#EEF5FF;color:var(--gazin-blue);font-weight:950;border-radius:14px;padding:10px 14px;cursor:pointer}
 #modalCanvas{flex:1;min-height:680px}
-@media (max-width:1100px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.kpis{grid-template-columns:repeat(2,1fr)}.main{padding:22px}}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:680px){.kpis{grid-template-columns:1fr}.heroContent{display:block}.hero h2{font-size:27px}.chartTop,.tableHead{display:block}.chartActions{justify-content:flex-start;margin-top:10px}.executiveTable{font-size:12px}}
 
 .historyUpload{display:none;}
@@ -458,7 +458,7 @@ body.authReady .authShell{display:none}
   .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
-@media (max-width:1100px){
+@media (max-width:760px){
   body{background:#F3F8FF}
   .app{--sidebar-width:0;display:block}
   .sidebar{
