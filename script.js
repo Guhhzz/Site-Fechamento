@@ -363,7 +363,17 @@ function chartTotal(c){
 function slug(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]/g,'_')}
 function showTip(txt,x,y){tooltip.innerHTML=txt; tooltip.style.left=x+'px'; tooltip.style.top=y+'px'; tooltip.style.opacity=1;}
 function hideTip(){tooltip.style.opacity=0;}
-function renderChart(el,c,expanded=false){ if(!el) return; const rows=chartData(c); if(c.type==='line') return lineChart(el,rows,expanded); if(c.type==='groupedBar') return groupedChart(el,rows); if(c.type==='groupedColumn') return groupedColumnChart(el,rows); if(c.type==='ufMap') return ufMapChart(el,rows,expanded); if(c.type==='pie') return pieChart(el,rows,expanded); return barChart(el,rows); }
+function renderChart(el,c,expanded=false){
+ if(!el) return;
+ el.classList.remove('lineChartCanvas','lineChartExpanded');
+ const rows=chartData(c);
+ if(c.type==='line') return lineChart(el,rows,expanded);
+ if(c.type==='groupedBar') return groupedChart(el,rows);
+ if(c.type==='groupedColumn') return groupedColumnChart(el,rows);
+ if(c.type==='ufMap') return ufMapChart(el,rows,expanded);
+ if(c.type==='pie') return pieChart(el,rows,expanded);
+ return barChart(el,rows);
+}
 
 
 function marketLabelPretty(label){
@@ -506,13 +516,18 @@ function lineChart(el,data,expanded=false){
  const W=el.clientWidth||980,H=el.clientHeight||380;
  const compact=W<560;
  const m=compact ? (expanded?{t:60,r:28,b:98,l:38}:{t:38,r:24,b:58,l:34}) : (expanded?{t:74,r:70,b:122,l:68}:{t:34,r:48,b:52,l:58});
- const vals=data.map(d=>+d.value||0); const max=Math.max(...vals,1), min=Math.min(...vals,0); const range=Math.max(max-min,1); const stepX=(W-m.l-m.r)/Math.max(data.length-1,1); const y=v=>H-m.b-((v-min)/range)*(H-m.t-m.b); let pts=data.map((d,i)=>[m.l+i*stepX,y(+d.value||0)]);
+ const chartW=compact ? Math.max(W, m.l+m.r+Math.max(data.length-1,1)*(expanded?54:46)) : W;
+ if(compact){
+   el.classList.add('lineChartCanvas');
+   if(expanded) el.classList.add('lineChartExpanded');
+ }
+ const vals=data.map(d=>+d.value||0); const max=Math.max(...vals,1), min=Math.min(...vals,0); const range=Math.max(max-min,1); const stepX=(chartW-m.l-m.r)/Math.max(data.length-1,1); const y=v=>H-m.b-((v-min)/range)*(H-m.t-m.b); let pts=data.map((d,i)=>[m.l+i*stepX,y(+d.value||0)]);
  let area=`M ${pts[0][0]} ${H-m.b} L `+pts.map(p=>p.join(' ')).join(' L ')+` L ${pts[pts.length-1][0]} ${H-m.b} Z`; let line='M '+pts.map(p=>p.join(' ')).join(' L ');
- let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0072CE" stop-opacity=".24"/><stop offset="1" stop-color="#0072CE" stop-opacity="0"/></linearGradient></defs>`;
+ let svg=`<svg viewBox="0 0 ${chartW} ${H}" width="${compact?chartW:'100%'}" height="100%"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0072CE" stop-opacity=".24"/><stop offset="1" stop-color="#0072CE" stop-opacity="0"/></linearGradient></defs>`;
  svg+=`<path d="${area}" fill="url(#area)"/><path d="${line}" fill="none" stroke="#0057B8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
  const step=Math.max(1,Math.ceil(data.length/10));
  data.forEach((d,i)=>{
-   const [x,yy]=pts[i]; const show=expanded || i===0||i===data.length-1||i%step===0;
+   const [x,yy]=pts[i]; const show=compact || expanded || i===0||i===data.length-1||i%step===0;
    const r=expanded?4.5:5;
    svg+=`<circle class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" cx="${x}" cy="${yy}" r="${r}" fill="#fff" stroke="#0057B8" stroke-width="3"/>`;
    if(show){
@@ -528,7 +543,9 @@ function lineChart(el,data,expanded=false){
      }
    }
  });
- svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
+ svg+=`</svg>`;
+ el.innerHTML=compact?`<div class="lineChartScroll">${svg}</div>`:svg;
+ bindTips(el);
 }
 
 function excelCell(v){ return String(v??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
