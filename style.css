@@ -928,6 +928,7 @@ body.authReady .authShell{display:none}
     pointer-events:auto;
     transform:translateY(0);
   }
+  body.chartModalOpen .mobileTopBtn{display:none !important}
 }
 
 @media (max-width:420px){
@@ -978,4 +979,167 @@ body.authReady .authShell{display:none}
   .main{
     margin-left:var(--sidebar-width) !important;
   }
+}
+
+@media (orientation:landscape) and (max-height:520px) and (max-width:960px){
+  body{background:#F3F8FF}
+  .app{
+    --sidebar-width:0;
+    display:block;
+  }
+  .sidebar{
+    position:relative !important;
+    left:auto !important;
+    top:auto !important;
+    bottom:auto !important;
+    width:auto !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+    z-index:240;
+    display:grid;
+    grid-template-columns:minmax(170px,1fr) 220px 220px;
+    align-items:end;
+    gap:8px 12px;
+    padding:8px 12px 10px;
+    border-radius:0 0 18px 18px;
+    box-shadow:0 14px 34px rgba(6,26,54,.16);
+  }
+  .userPanel{
+    margin:0;
+    min-height:54px;
+    align-self:stretch;
+  }
+  .userPanel span{max-width:140px}
+  .mobileNucleoPicker{
+    display:block;
+    width:220px !important;
+    max-width:100% !important;
+    margin:0;
+    z-index:260;
+  }
+  .mobileNucleoPicker label{margin-bottom:5px}
+  .mobileNucleoMenu{
+    z-index:320;
+    max-height:calc(100vh - 98px);
+  }
+  .mobileNucleoBtn{width:100% !important}
+  .nav{display:none}
+  .historyDock{
+    display:flex;
+    justify-content:flex-start;
+    width:220px !important;
+    max-width:100% !important;
+    padding:0;
+    margin:0;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    overflow:visible;
+  }
+  .historyDock:before,
+  .historyDock:after,
+  .historyDock p{display:none}
+  .historyBtn{
+    width:100% !important;
+    padding:8px 11px 8px 8px;
+    border-radius:999px;
+    gap:8px;
+  }
+  .historyIcon{width:30px;height:30px;border-radius:11px;font-size:15px}
+  .historyBtnText strong{font-size:13px}
+  .historyBtnText small{display:none}
+  .main{
+    margin-left:0 !important;
+    padding:10px 12px 26px;
+    overflow:visible;
+  }
+  .hero{
+    padding:16px 18px;
+    border-radius:18px;
+  }
+  .heroContent{
+    display:flex;
+    align-items:center;
+  }
+  .hero h2{font-size:24px;margin-bottom:0}
+  .hero p{display:none}
+  .badge{
+    margin-top:0;
+    padding:9px 12px;
+  }
+  .mobileSectionNav{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin:10px 0;
+    padding-bottom:2px;
+    scrollbar-width:none;
+    position:sticky;
+    top:0;
+    z-index:40;
+    background:linear-gradient(180deg,rgba(243,248,255,.98),rgba(243,248,255,.92));
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  body.mobileNucleoMenuOpen .mobileSectionNav{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
+  .mobileSectionNav::-webkit-scrollbar{display:none}
+  .mobileSectionNav a{
+    flex:0 0 auto;
+    text-decoration:none;
+    color:#0057B8;
+    background:#FFFFFF;
+    border:1px solid rgba(0,87,184,.12);
+    border-radius:999px;
+    padding:8px 11px;
+    font-size:12px;
+    font-weight:950;
+    box-shadow:0 8px 18px rgba(6,26,54,.08);
+  }
+  .kpis,
+  .mobileExecutiveSummary{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .chartGrid{grid-template-columns:1fr}
+  .chartCard{min-height:330px}
+  .modal{
+    padding:8px;
+    align-items:stretch;
+  }
+  .modalPanel{
+    width:100%;
+    height:calc(100vh - 16px);
+    padding:12px;
+    border-radius:18px;
+  }
+  .modalHead{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding-bottom:8px;
+    margin-bottom:8px;
+  }
+  .modalHead h3{font-size:17px}
+  .modalHead p{font-size:12px}
+  .closeBtn{
+    width:auto;
+    min-width:116px;
+    margin-top:0;
+    padding:10px 14px;
+  }
+  #modalCanvas{
+    min-height:0;
+    flex:1;
+    overflow:hidden;
+  }
+  #modalCanvas.lineChartCanvas{
+    overflow-x:auto;
+    overflow-y:hidden;
+  }
+  .mobileTopBtn{display:grid}
+  body.chartModalOpen .mobileTopBtn{display:none !important}
 }

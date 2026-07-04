@@ -576,9 +576,10 @@ function exportChartExcel(sheetName,index){
 function openChartModal(sheetName,index){
  const s=DATA.sheets.find(x=>x.name===sheetName); if(!s||!s.charts[index]) return;
  const c=s.charts[index]; modalTitle.textContent=c.title; modalSubtitle.textContent=(s.name+' · '+(c.subtitle||'')).trim(); modalCanvas.innerHTML=''; chartModal.classList.add('open'); chartModal.setAttribute('aria-hidden','false');
+ document.body.classList.add('chartModalOpen');
  requestAnimationFrame(()=>renderChart(modalCanvas,c,true));
 }
-closeModal.addEventListener('click',()=>{chartModal.classList.remove('open'); chartModal.setAttribute('aria-hidden','true'); modalCanvas.innerHTML='';});
+closeModal.addEventListener('click',()=>{chartModal.classList.remove('open'); chartModal.setAttribute('aria-hidden','true'); modalCanvas.innerHTML=''; document.body.classList.remove('chartModalOpen');});
 chartModal.addEventListener('click',e=>{if(e.target===chartModal) closeModal.click();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&chartModal.classList.contains('open')) closeModal.click();});
 function trunc(s,n){s=String(s); return s.length>n?s.slice(0,n-1)+'…':s;}
