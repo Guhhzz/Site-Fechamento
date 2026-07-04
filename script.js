@@ -12,6 +12,7 @@ let ADMIN_UNLOCKED = false;
 const AUTH_USERS_KEY = 'site_tech_analytics_users_v1';
 const AUTH_SESSION_KEY = 'site_tech_analytics_session_v1';
 const AUTH_WELCOME_SEEN_KEY = 'site_tech_analytics_welcome_seen_v1';
+const THEME_KEY = 'site_tech_analytics_theme_v1';
 const ADMIN_EMAILS = [
   'gustavo.salomao@gazin.com.br',
   'email-da-gerente@gazin.com.br',
@@ -45,6 +46,22 @@ function hasSeenWelcome(email){
 }
 function isAdminEmail(email){ return ADMIN_EMAILS.map(normalizeEmail).includes(normalizeEmail(email)); }
 function canManageHistory(){ return !!(CURRENT_USER && isAdminEmail(CURRENT_USER.email)); }
+function applyTheme(mode){
+ const isDark=mode==='dark';
+ document.body.classList.toggle('darkMode',isDark);
+ const btn=document.getElementById('themeToggle');
+ if(btn){ btn.textContent=isDark?'Claro':'Escuro'; btn.setAttribute('aria-pressed',String(isDark)); }
+}
+function initTheme(){
+ const saved=localStorage.getItem(THEME_KEY)==='dark'?'dark':'light';
+ applyTheme(saved);
+ const btn=document.getElementById('themeToggle');
+ if(btn) btn.addEventListener('click',()=>{
+   const next=document.body.classList.contains('darkMode')?'light':'dark';
+   localStorage.setItem(THEME_KEY,next);
+   applyTheme(next);
+ });
+}
 function showAuthMessage(message,type=''){
  const box=document.getElementById('authMessage'); if(!box) return;
  box.textContent=message||''; box.className=`authMessage ${type}`.trim();
@@ -516,7 +533,8 @@ function groupedColumnChart(el,data){
 
 function lineChart(el,data,expanded=false){
  const W=el.clientWidth||980,H=el.clientHeight||380;
- const compact=W<560;
+ const mobileLandscape=window.matchMedia('(orientation: landscape) and (max-height: 520px) and (max-width: 960px)').matches;
+ const compact=W<560 || mobileLandscape;
  const m=compact ? (expanded?{t:60,r:28,b:98,l:38}:{t:38,r:24,b:58,l:34}) : (expanded?{t:74,r:70,b:122,l:68}:{t:34,r:48,b:52,l:58});
  const chartW=compact ? Math.max(W, m.l+m.r+Math.max(data.length-1,1)*(expanded?54:46)) : W;
  if(compact){
@@ -684,6 +702,7 @@ function setupMobileTopButton(){
  sync();
 }
 
+initTheme();
 initAuth();
 buildMenu();
 setupHistoryModal();

@@ -129,6 +129,107 @@ select{display:none}
 .lineChartCanvas::-webkit-scrollbar-thumb{background:linear-gradient(90deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
 .lineChartCanvas{scrollbar-color:var(--gazin-blue) #E8F2FF;scrollbar-width:thin}
 
+body.darkMode{
+  --gazin-dark:#EAF4FF;
+  --text:#EAF4FF;
+  --muted:#A9BCD4;
+  --line:#243A5A;
+  --card:#101D33;
+  --shadow:0 20px 55px rgba(0,0,0,.30);
+  --glow:0 0 0 1px rgba(124,194,255,.12),0 24px 70px rgba(0,0,0,.26);
+  background:
+    radial-gradient(circle at 12% 0%,rgba(0,114,206,.22),transparent 28%),
+    radial-gradient(circle at 88% 6%,rgba(22,165,111,.10),transparent 26%),
+    linear-gradient(180deg,#071120 0%,#0B172B 45%,#0E1E36 100%);
+}
+body.darkMode .sidebar{background:linear-gradient(180deg,#050C18,#071D3A 54%,#063B7A)}
+body.darkMode .hero{background:linear-gradient(135deg,#073A78,#071D3A 70%,#050C18)}
+body.darkMode .kpi,
+body.darkMode .chartCard,
+body.darkMode .tableCard,
+body.darkMode .insightCard,
+body.darkMode .modalPanel,
+body.darkMode .baseCard,
+body.darkMode .authPanel{
+  background:linear-gradient(180deg,rgba(16,29,51,.96),rgba(9,18,34,.96));
+  border-color:rgba(130,190,255,.16);
+  box-shadow:0 18px 46px rgba(0,0,0,.28),0 0 0 1px rgba(124,194,255,.05) inset;
+}
+body.darkMode .kpi:before,
+body.darkMode .chartCard:before,
+body.darkMode .tableCard:after,
+body.darkMode .insightCard:before{background:radial-gradient(circle,rgba(0,163,255,.14),transparent 68%)}
+body.darkMode .sectionHeader h3,
+body.darkMode .kpi .value,
+body.darkMode .chartTitle,
+body.darkMode .tableHead h4,
+body.darkMode .insightTitle,
+body.darkMode .modalHead h3,
+body.darkMode .empty strong,
+body.darkMode .baseInfo h4,
+body.darkMode .brandName{color:#F4F9FF}
+body.darkMode .sectionHeader p,
+body.darkMode .kpi .label,
+body.darkMode .kpi .sub,
+body.darkMode .chartSubtitle,
+body.darkMode .tableHead p,
+body.darkMode .insightText,
+body.darkMode .modalHead p,
+body.darkMode .baseInfo p,
+body.darkMode .footer{color:#A9BCD4}
+body.darkMode .insightText strong,
+body.darkMode .moneyCell{color:#DCEBFF!important}
+body.darkMode .chartTotal,
+body.darkMode .exportBtn,
+body.darkMode .closeBtn,
+body.darkMode .mobileSectionNav a,
+body.darkMode .customSelectBtn,
+body.darkMode .mobileNucleoBtn,
+body.darkMode .historyBtn{
+  background:linear-gradient(180deg,#132845,#0E1E36);
+  color:#DCEBFF;
+  border-color:rgba(130,190,255,.20);
+  box-shadow:0 10px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.06);
+}
+body.darkMode .customSelectBtn:after,
+body.darkMode .mobileNucleoBtn:after{border-color:#DCEBFF}
+body.darkMode .customSelectMenu,
+body.darkMode .mobileNucleoMenu{
+  background:linear-gradient(180deg,rgba(13,30,54,.98),rgba(8,18,34,.98));
+  border-color:rgba(130,190,255,.20);
+  box-shadow:0 24px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);
+}
+body.darkMode .customOption,
+body.darkMode .mobileNucleoOption{color:#DCEBFF}
+body.darkMode .customOption:hover,
+body.darkMode .mobileNucleoOption:hover{background:rgba(0,114,206,.20);color:#fff}
+body.darkMode .mobileSectionNav{background:linear-gradient(180deg,rgba(7,17,32,.98),rgba(7,17,32,.90))}
+body.darkMode .executiveTable td{
+  background:#101D33;
+  border-color:#263C5F;
+  color:#DCEBFF;
+}
+body.darkMode .executiveTable tr td:first-child,
+body.darkMode .executiveTable tr td:last-child,
+body.darkMode .executiveTable.brandTable tr td:first-child,
+body.darkMode .executiveTable.brandTable tr td:last-child{color:#F4F9FF}
+body.darkMode .executiveTable th{color:#A9BCD4}
+body.darkMode .progress{background:#203653}
+body.darkMode .empty,
+body.darkMode .note,
+body.darkMode .historyIntro{
+  background:#101D33;
+  border-color:#263C5F;
+  color:#A9BCD4;
+}
+body.darkMode .historyIntro strong{color:#F4F9FF}
+body.darkMode .tableScroll:after{background:linear-gradient(90deg,rgba(16,29,51,0),rgba(16,29,51,.96))}
+body.darkMode .modal{background:rgba(0,5,15,.78)}
+body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
+body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
+body.darkMode .chartCanvas svg text{fill:#DCEBFF!important}
+body.darkMode .chartCanvas svg circle[fill="#fff"]{fill:#071120!important}
+
 .pieWrap{height:100%;min-height:330px;display:flex;align-items:center;justify-content:center;gap:28px;padding:8px 10px 16px;position:relative;z-index:2;flex-wrap:wrap}
 .pieVisual{position:relative;width:min(380px,100%);display:flex;align-items:center;justify-content:center;flex:0 1 380px}
 .pieSvg{width:min(360px,100%);height:auto;display:block;filter:drop-shadow(0 18px 30px rgba(0,87,184,.14))}
@@ -347,9 +448,14 @@ body.authReady .authShell{display:none}
   border:1px solid rgba(255,255,255,.14);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
 }
+.userPanel>div{min-width:0;flex:1}
 .userPanel span{display:block;font-size:13px;font-weight:950;color:#fff;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .userPanel small{display:block;margin-top:3px;color:#BBD7F7;font-size:11px;font-weight:850}
 .userPanel button{border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.10);color:#fff;font-weight:900;cursor:pointer}
+.themeToggle{min-width:62px}
+.themeToggle,
+#logoutBtn{flex:0 0 auto}
+.themeToggle[aria-pressed="true"]{background:rgba(0,163,255,.20);border-color:rgba(128,205,255,.42);box-shadow:0 0 0 1px rgba(128,205,255,.10) inset}
 @media (max-width:680px){
   .authShell{align-items:flex-start;padding:18px;background:linear-gradient(180deg,#071B38 0%,#0C4486 42%,#EAF4FF 42%,#F8FBFF 100%)}
   .authPanel{padding:20px;border-radius:24px}
@@ -517,12 +623,16 @@ body.authReady .authShell{display:none}
     z-index:240;
   }
   .userPanel{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
     gap:10px;
+    width:100%;
+    max-width:calc(100vw - 48px);
     padding:8px 9px;
     border-radius:16px;
     margin-bottom:8px;
   }
-  .userPanel span{max-width:185px}
+  .userPanel span{max-width:125px}
   .userPanel button{padding:8px 9px}
   .mobileNucleoPicker{
     display:block;
