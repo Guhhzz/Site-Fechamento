@@ -381,8 +381,8 @@ function assistanceBrandTable(s){
  const totalVendas=rowsData.reduce((a,d)=>a+(+d.quantidadeVendas||0),0);
  const totalFaturamento=rowsData.reduce((a,d)=>a+(+d.faturamento||0),0);
  const totalCusto=rowsData.reduce((a,d)=>a+(+d.custoMedioOS||0),0);
- const rows=rowsData.map((d,i)=>`<tr><td><div class="brandName"><span class="brandRank">${i+1}</span><span class="brandLabel">${esc(d.marca)}</span></div></td><td>${fmt.format(Math.round(+d.quantidadeOS||0))}</td><td>${fmt.format(Math.round(+d.quantidadeVendas||0))}</td><td><span class="percentBadge">${brPercent.format(+d.osPorFaturamento||0)}</span></td><td class="moneyCell">${brMoney.format(+d.custoMedioOS||0)}</td><td class="moneyCell">${brMoney.format(+d.faturamento||0)}</td><td><span class="percentBadge">${brPercent.format(+d.custoOSPorFaturamento||0)}</span></td></tr>`).join('');
- return `<section class="tableCard"><div class="tableHead"><div><h4>Tabela Executiva · Top 20 Marcas</h4><p>Ranking por marca na Assistência, com os IDs removidos para deixar a leitura mais limpa e executiva.</p></div><div class="chartActions"><div class="chartTotal">O.S: ${fmt.format(totalOS)}</div><div class="chartTotal">Vendas: ${fmt.format(totalVendas)}</div></div></div><div class="tableCaption">Faturamento total apresentado: <strong>${brMoney.format(totalFaturamento)}</strong> · Custo médio de O.S somado: <strong>${brMoney.format(totalCusto)}</strong></div><div class="tableScroll brandTableScroll"><table class="executiveTable brandTable"><thead><tr><th>Marca</th><th>Quantidade de O.S</th><th>Quantidade de Vendas</th><th>Qtde. O.S por Faturamento</th><th>Custo Médio de O.S</th><th>Faturamento</th><th>Custo O.S por Faturamento</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+ const rows=rowsData.map((d,i)=>`<div class="brandGridRow" role="row"><div><div class="brandName"><span class="brandRank">${i+1}</span><span class="brandLabel">${esc(d.marca)}</span></div></div><div>${fmt.format(Math.round(+d.quantidadeOS||0))}</div><div>${fmt.format(Math.round(+d.quantidadeVendas||0))}</div><div><span class="percentBadge">${brPercent.format(+d.osPorFaturamento||0)}</span></div><div class="moneyCell">${brMoney.format(+d.custoMedioOS||0)}</div><div class="moneyCell">${brMoney.format(+d.faturamento||0)}</div><div><span class="percentBadge">${brPercent.format(+d.custoOSPorFaturamento||0)}</span></div></div>`).join('');
+ return `<section class="tableCard brandTableCard"><div class="tableHead"><div><h4>Tabela Executiva · Top 20 Marcas</h4><p>Ranking por marca na Assistência, com os IDs removidos para deixar a leitura mais limpa e executiva.</p></div><div class="chartActions"><div class="chartTotal">O.S: ${fmt.format(totalOS)}</div><div class="chartTotal">Vendas: ${fmt.format(totalVendas)}</div><button class="exportBtn" onclick="exportBrandTableExcel('Assistência')">⬇ Excel</button></div></div><div class="tableCaption">Faturamento total apresentado: <strong>${brMoney.format(totalFaturamento)}</strong> · Custo médio de O.S somado: <strong>${brMoney.format(totalCusto)}</strong></div><div class="brandGridScroll"><div class="brandGridTable" role="table" aria-label="Tabela Executiva Top 20 Marcas"><div class="brandGridHeader" role="row"><div>Marca</div><div>Quantidade de O.S</div><div>Quantidade de Vendas</div><div>Qtde. O.S por Faturamento</div><div>Custo Médio de O.S</div><div>Faturamento</div><div>Custo O.S por Faturamento</div></div><div class="brandGridRows" role="rowgroup">${rows}</div></div></div></section>`;
 }
 
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ')}
@@ -604,6 +604,27 @@ function chartRowsForExcel(c){
    return {headers:['UF','Quantidade'], rows:c.data.map(d=>[d.uf||d.label, Math.round(+d.value||0)])};
  }
  return {headers:['Categoria','Quantidade'], rows:c.data.map(d=>[d.label, Math.round(+d.value||0)])};
+}
+function exportBrandTableExcel(sheetName='Assistência'){
+ const s=DATA.sheets.find(x=>x.name===sheetName);
+ const rows=s?.brandTable||[];
+ if(!rows.length) return;
+ const headers=['Rank','Marca','Quantidade de O.S','Quantidade de Vendas','Qtde. O.S por Faturamento','Custo Médio de O.S','Faturamento','Custo O.S por Faturamento'];
+ const tableRows=rows.map((d,i)=>[
+  i+1,
+  d.marca,
+  Math.round(+d.quantidadeOS||0),
+  Math.round(+d.quantidadeVendas||0),
+  brPercent.format(+d.osPorFaturamento||0),
+  brMoney.format(+d.custoMedioOS||0),
+  brMoney.format(+d.faturamento||0),
+  brPercent.format(+d.custoOSPorFaturamento||0)
+ ]);
+ const headerHtml=headers.map(h=>`<th>${excelCell(h)}</th>`).join('');
+ const rowsHtml=tableRows.map(row=>`<tr>${row.map(v=>`<td>${excelCell(v)}</td>`).join('')}</tr>`).join('');
+ const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse}th{background:#0057B8;color:#fff;font-weight:bold}th,td{border:1px solid #C9DDF3;padding:8px 10px}h2{color:#061A36}</style></head><body><h2>Tabela Executiva - Top 20 Marcas</h2><p>${excelCell(sheetName)} - Junho 2026</p><table><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
+ const blob=new Blob(['﻿',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
+ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(sheetName)}_Top_20_Marcas.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function exportChartExcel(sheetName,index){
  const s=DATA.sheets.find(x=>x.name===sheetName); if(!s || !s.charts[index]) return;

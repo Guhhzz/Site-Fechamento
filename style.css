@@ -227,13 +227,11 @@ body.darkMode .tableScroll:after{background:linear-gradient(90deg,rgba(16,29,51,
 body.darkMode .modal{background:rgba(0,5,15,.78)}
 body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
 body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
-body.darkMode .brandTableScroll{scrollbar-color:#2E9BFF #162843}
-body.darkMode .brandTableScroll::-webkit-scrollbar-track{background:#162843}
-body.darkMode .brandTableScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2E9BFF,#0072CE)}
-body.darkMode .brandTableScroll .brandTable tbody{scrollbar-color:#2E9BFF #162843}
-body.darkMode .brandTableScroll .brandTable tbody::-webkit-scrollbar-track{background:#162843}
-body.darkMode .brandTableScroll .brandTable tbody::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2E9BFF,#0072CE)}
-body.darkMode .brandTableScroll .brandTable thead th{background:linear-gradient(180deg,#101D33 0%,#101D33 82%,rgba(16,29,51,.92) 100%)}
+body.darkMode .brandGridScroll{scrollbar-color:#2E9BFF #162843}
+body.darkMode .brandGridScroll::-webkit-scrollbar-track{background:#162843}
+body.darkMode .brandGridScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2E9BFF,#0072CE)}
+body.darkMode .brandGridHeader{background:linear-gradient(180deg,#101D33 0%,#101D33 82%,rgba(16,29,51,.92) 100%)}
+body.darkMode .brandGridRow{background:linear-gradient(180deg,#101D33,#0D182B);border-color:#355174}
 body.darkMode .chartCanvas svg text,
 body.darkMode #modalCanvas svg text{
   fill:#FFFFFF!important;
@@ -297,51 +295,45 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 
 .tableScroll{width:100%;overflow-x:auto;position:relative;z-index:2;padding-bottom:4px}
 .tableScroll:after{content:"";position:absolute;right:0;top:0;bottom:8px;width:34px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.96));pointer-events:none}
-.brandTableScroll{
-  height:auto;
-  max-height:none;
-  overflow-x:auto;
-  overflow-y:hidden;
-  padding-right:0;
+.brandGridScroll{
+  width:100%;
+  height:666px;
+  overflow:auto;
+  position:relative;
+  z-index:2;
+  padding-bottom:8px;
+  scrollbar-color:var(--gazin-blue) #E8F2FF;
+  scrollbar-width:thin;
 }
-.brandTableScroll:after{display:none}
-.brandTableScroll::-webkit-scrollbar{width:12px;height:8px}
-.brandTableScroll::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
-.brandTableScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
-.brandTableScroll{scrollbar-color:var(--gazin-blue) #E8F2FF;scrollbar-width:thin}
-.brandTableScroll .brandTable{display:block}
-.brandTableScroll .brandTable thead,
-.brandTableScroll .brandTable tbody{display:block}
-.brandTableScroll .brandTable tbody{
-  height:640px;
-  max-height:640px;
-  overflow-y:scroll;
-  overflow-x:hidden;
-  padding-right:10px;
-}
-.brandTableScroll .brandTable tbody::-webkit-scrollbar{width:12px}
-.brandTableScroll .brandTable tbody::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
-.brandTableScroll .brandTable tbody::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
-.brandTableScroll .brandTable tbody{scrollbar-color:var(--gazin-blue) #E8F2FF;scrollbar-width:thin}
-.brandTableScroll .brandTable tr{
+.brandGridScroll::-webkit-scrollbar{width:12px;height:8px}
+.brandGridScroll::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
+.brandGridScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
+.brandGridTable{min-width:1160px}
+.brandGridHeader,
+.brandGridRow{
   display:grid;
   grid-template-columns:minmax(250px,2fr) .9fr 1fr 1.25fr 1.35fr 1.35fr 1.3fr;
   align-items:center;
 }
-.brandTableScroll .brandTable tbody tr{margin-bottom:10px}
-.executiveTable.brandTable{min-width:1160px;border-spacing:0}
-.executiveTable.brandTable th{text-align:right;white-space:nowrap;padding:0 12px 8px}
-.executiveTable.brandTable th:first-child{text-align:left}
-.brandTableScroll .brandTable thead th{
+.brandGridHeader{
   position:sticky;
   top:0;
-  z-index:4;
+  z-index:5;
+  padding:0 18px 10px 10px;
   background:linear-gradient(180deg,#FFFFFF 0%,#F9FCFF 82%,rgba(249,252,255,.92) 100%);
-  padding-top:2px;
 }
-.executiveTable.brandTable td{text-align:right;white-space:nowrap;background:linear-gradient(180deg,#FFFFFF,#FBFDFF)}
-.executiveTable.brandTable tr td:first-child{width:auto;text-align:left;color:#061A36;min-width:250px}
-.executiveTable.brandTable tr td:last-child{text-align:right;color:#061A36}
+.brandGridHeader div{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#5A6E86;text-align:right;font-weight:900;white-space:nowrap}
+.brandGridHeader div:first-child{text-align:left}
+.brandGridRows{
+  overflow:visible;
+  display:grid;
+  grid-auto-rows:54px;
+  row-gap:10px;
+}
+.brandGridRow{border:1px solid #E3EFFB;border-radius:14px;background:linear-gradient(180deg,#FFFFFF,#FBFDFF);overflow:hidden}
+.brandGridRow>div{padding:0 14px;text-align:right;font-weight:800;color:#17395F;min-width:0;white-space:nowrap}
+.brandGridRow>div:first-child{text-align:left;color:#061A36}
+.brandGridRow>div:last-child{text-align:right;color:#061A36}
 .brandName{display:flex;align-items:center;gap:11px;font-weight:950;color:#061A36}
 .brandRank{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-3));color:#fff;display:grid;place-items:center;font-size:12px;box-shadow:0 8px 20px rgba(0,87,184,.22);flex:0 0 auto}
 .brandLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -975,12 +967,12 @@ body.authReady .authShell{display:none}
     margin:0 -4px;
     padding-bottom:8px;
   }
-  .brandTableScroll{
-    padding-right:6px;
+  .brandGridTable{min-width:1040px}
+  .brandGridScroll{
+    height:636px;
   }
-  .brandTableScroll .brandTable tbody{
-    height:600px;
-    max-height:600px;
+  .brandGridRows{
+    grid-auto-rows:51px;
   }
   .executiveTable{
     min-width:720px;
