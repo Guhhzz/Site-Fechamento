@@ -230,7 +230,6 @@ body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
 body.darkMode .chartCanvas svg text,
 body.darkMode #modalCanvas svg text{
   fill:#FFFFFF!important;
-  text-shadow:0 1px 2px rgba(0,0,0,.65);
 }
 body.darkMode .chartCanvas svg text[style*="stroke:#fff"],
 body.darkMode #modalCanvas svg text[style*="stroke:#fff"]{

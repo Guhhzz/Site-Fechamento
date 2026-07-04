@@ -165,6 +165,22 @@ const brMoney = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'
 const brPercent = new Intl.NumberFormat('pt-BR', {style:'percent', minimumFractionDigits:2, maximumFractionDigits:2});
 const shortFmt = new Intl.NumberFormat('pt-BR', {notation:'compact', maximumFractionDigits:1});
 function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function chartTheme(){
+ const dark=document.body.classList.contains('darkMode');
+ return {
+  dark,
+  label:dark?'#FFFFFF':'#061A36',
+  muted:dark?'#EAF4FF':'#294B70',
+  axis:dark?'#EAF4FF':'#61738C',
+  halo:dark?'#061225':'#fff',
+  baseline:dark?'rgba(234,244,255,.44)':'#D8E4F2',
+  line:dark?'#2E9BFF':'#0057B8',
+  area:dark?'#2E9BFF':'#0072CE',
+  pointFill:dark?'#071120':'#fff',
+  labelPill:dark?'rgba(6,18,37,.92)':'#FFFFFF',
+  labelPillStroke:dark?'rgba(234,244,255,.22)':'rgba(0,87,184,.10)'
+ };
+}
 function kpiCard(label,value,sub,extra=''){return `<div class="kpi"><div class="label">${esc(label)}</div><div class="value">${fmt.format(Math.round(+value||0))}</div><div class="sub">${esc(sub||'')}</div>${extra||''}</div>`}
 function pct(v){ return (v||0).toFixed(1).replace('.',',')+'%'; }
 function rateBadge(value, label, goodWhen='above'){
@@ -464,6 +480,7 @@ function pieChart(el,data,expanded=false){
 function barChart(el,data){
  const W=el.clientWidth||980,H=Math.max(el.clientHeight||360, 120 + (data||[]).length*34);
  const compact=W<560;
+ const colors=chartTheme();
  const m=compact?{t:18,r:44,b:26,l:118}:{t:18,r:86,b:26,l:260};
  const labelLimit=compact?18:34;
  const labelFont=compact?10:12;
@@ -471,25 +488,27 @@ function barChart(el,data){
  const max=Math.max(...data.map(d=>+d.value||0),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" role="img">`;
  svg += `<defs><linearGradient id="barGrad" x1="0" x2="1"><stop offset="0" stop-color="#0057B8"/><stop offset="1" stop-color="#00A3FF"/></linearGradient><filter id="softShadow"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0057B8" flood-opacity=".18"/></filter></defs>`;
  const gap=11; const bh=Math.max(17,(H-m.t-m.b-(data.length-1)*gap)/data.length);
- data.forEach((d,i)=>{ const y=m.t+i*(bh+gap); const w=Math.max(0,(W-m.l-m.r)*(d.value/max)); svg+=`<text x="${m.l-10}" y="${y+bh*.66}" text-anchor="end" font-size="${labelFont}" fill="#294B70" font-weight="800">${esc(trunc(d.label,labelLimit))}</text><rect class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text x="${Math.min(m.l+w+8,W-36)}" y="${y+bh*.66}" font-size="${valueFont}" fill="#061A36" font-weight="950">${fmt.format(Math.round(+d.value||0))}</text>`; });
+ data.forEach((d,i)=>{ const y=m.t+i*(bh+gap); const w=Math.max(0,(W-m.l-m.r)*(d.value/max)); svg+=`<text x="${m.l-10}" y="${y+bh*.66}" text-anchor="end" font-size="${labelFont}" fill="${colors.muted}" font-weight="800">${esc(trunc(d.label,labelLimit))}</text><rect class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text x="${Math.min(m.l+w+8,W-36)}" y="${y+bh*.66}" font-size="${valueFont}" fill="${colors.label}" font-weight="950">${fmt.format(Math.round(+d.value||0))}</text>`; });
  svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
 }
 function groupedChart(el,data){
  const W=el.clientWidth||980,H=Math.max(el.clientHeight||360, 130 + (data||[]).length*62);
  const compact=W<560;
+ const colors=chartTheme();
  const m=compact?{t:34,r:44,b:34,l:118}:{t:32,r:78,b:36,l:230};
  const labelLimit=compact?17:28;
  const labelFont=compact?10:12;
  const max=Math.max(...data.flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">`;
  svg+=`<text x="${m.l}" y="18" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+(compact?96:130)}" y="18" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
  const rowH=(H-m.t-m.b)/data.length;
- data.forEach((d,i)=>{ const y=m.t+i*rowH+8; svg+=`<text x="${m.l-10}" y="${y+22}" text-anchor="end" font-size="${labelFont}" fill="#294B70" font-weight="800">${esc(trunc(d.label,labelLimit))}</text>`; [['sucesso','#0057B8','Com sucesso',0],['semSucesso','#E05252','Sem sucesso',25]].forEach(arr=>{ const key=arr[0],color=arr[1],lab=arr[2],off=arr[3]; const w=Math.max(0,(W-m.l-m.r)*(d[key]/max)); const yy=y+off; svg+=`<rect class="bar" data-tip="${esc(d.label)} · ${lab}: ${fmt.format(Math.round(+d[key]||0))}" x="${m.l}" y="${yy}" width="${Math.max(w,4)}" height="18" rx="9" fill="${color}"/><text x="${Math.min(m.l+w+8,W-36)}" y="${yy+13}" font-size="${compact?10:12}" fill="#061A36" font-weight="950">${fmt.format(Math.round(+d[key]||0))}</text>`; }); });
+ data.forEach((d,i)=>{ const y=m.t+i*rowH+8; svg+=`<text x="${m.l-10}" y="${y+22}" text-anchor="end" font-size="${labelFont}" fill="${colors.muted}" font-weight="800">${esc(trunc(d.label,labelLimit))}</text>`; [['sucesso','#0057B8','Com sucesso',0],['semSucesso','#E05252','Sem sucesso',25]].forEach(arr=>{ const key=arr[0],color=arr[1],lab=arr[2],off=arr[3]; const w=Math.max(0,(W-m.l-m.r)*(d[key]/max)); const yy=y+off; svg+=`<rect class="bar" data-tip="${esc(d.label)} · ${lab}: ${fmt.format(Math.round(+d[key]||0))}" x="${m.l}" y="${yy}" width="${Math.max(w,4)}" height="18" rx="9" fill="${color}"/><text x="${Math.min(m.l+w+8,W-36)}" y="${yy+13}" font-size="${compact?10:12}" fill="${colors.label}" font-weight="950">${fmt.format(Math.round(+d[key]||0))}</text>`; }); });
  svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
 }
 
 function groupedColumnChart(el,data){
  const W=el.clientWidth||980,H=Math.max(el.clientHeight||380,380);
  const compact=W<560;
+ const colors=chartTheme();
  const m=compact?{t:70,r:20,b:98,l:32}:{t:76,r:32,b:88,l:54};
  const defs='<defs><linearGradient id="colGradBlue" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0B7CE6"/><stop offset="1" stop-color="#0057B8"/></linearGradient><linearGradient id="colGradRed" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#FF7A7A"/><stop offset="1" stop-color="#E05252"/></linearGradient><filter id="colShadow"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0A4EA8" flood-opacity=".16"/></filter></defs>';
  const max=Math.max(...(data||[]).flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1);
@@ -503,7 +522,7 @@ function groupedColumnChart(el,data){
  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">${defs}`;
  svg+=`<text x="${m.l+6}" y="22" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+(compact?108:146)}" y="22" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
  // baseline
- svg+=`<line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#D8E4F2" stroke-width="2"/>`;
+ svg+=`<line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="${colors.baseline}" stroke-width="2"/>`;
  (data||[]).forEach((d,i)=>{
    const baseX=x0(i);
    const bars=[
@@ -514,17 +533,17 @@ function groupedColumnChart(el,data){
      const h=Math.max((b.val/max)*innerH, b.val>0?4:0);
      const yy=H-m.b-h;
      svg+=`<rect class="bar" data-tip="${esc(d.label)} · ${b.label}: ${fmt.format(Math.round(b.val))}" x="${b.x}" y="${yy}" width="${barW}" height="${h}" rx="10" fill="${b.color}" filter="url(#colShadow)"/>`;
-     svg+=`<text x="${b.x+barW/2}" y="${Math.max(m.t-8,yy-10)}" text-anchor="middle" font-size="${compact?10:12}" fill="#061A36" font-weight="950">${fmt.format(Math.round(b.val))}</text>`;
+     svg+=`<text x="${b.x+barW/2}" y="${Math.max(m.t-8,yy-10)}" text-anchor="middle" font-size="${compact?10:12}" fill="${colors.label}" font-weight="950">${fmt.format(Math.round(b.val))}</text>`;
    });
    const cx=baseX+pairW/2;
    const lines=String(d.label||'').split(' ');
    if(lines.length>1){
      const first=esc(lines.slice(0,-1).join(' '));
      const last=esc(lines.slice(-1).join(' '));
-     svg+=`<text x="${cx}" y="${H-m.b+24}" text-anchor="middle" font-size="${compact?10:12}" fill="#294B70" font-weight="800">${first}</text>`;
-     svg+=`<text x="${cx}" y="${H-m.b+40}" text-anchor="middle" font-size="${compact?10:12}" fill="#294B70" font-weight="800">${last}</text>`;
+     svg+=`<text x="${cx}" y="${H-m.b+24}" text-anchor="middle" font-size="${compact?10:12}" fill="${colors.muted}" font-weight="800">${first}</text>`;
+     svg+=`<text x="${cx}" y="${H-m.b+40}" text-anchor="middle" font-size="${compact?10:12}" fill="${colors.muted}" font-weight="800">${last}</text>`;
    } else {
-     svg+=`<text x="${cx}" y="${H-m.b+28}" text-anchor="middle" font-size="${compact?10:12}" fill="#294B70" font-weight="800">${esc(d.label)}</text>`;
+     svg+=`<text x="${cx}" y="${H-m.b+28}" text-anchor="middle" font-size="${compact?10:12}" fill="${colors.muted}" font-weight="800">${esc(d.label)}</text>`;
    }
  });
  svg+=`</svg>`;
@@ -537,36 +556,39 @@ function lineChart(el,data,expanded=false){
   const compact=W<560 || mobileLandscape;
   const m=compact ? (expanded?{t:60,r:28,b:98,l:38}:{t:38,r:24,b:58,l:34}) : (expanded?{t:74,r:70,b:122,l:68}:{t:34,r:48,b:52,l:58});
   const chartW=compact ? Math.max(W, m.l+m.r+Math.max(data.length-1,1)*(expanded?54:46)) : W;
-  const dark=document.body.classList.contains('darkMode');
-  const lineColor=dark?'#2E9BFF':'#0057B8';
-  const areaColor=dark?'#2E9BFF':'#0072CE';
-  const labelColor=dark?'#FFFFFF':'#061A36';
-  const axisColor=dark?'#FFFFFF':'#61738C';
-  const haloColor=dark?'#071120':'#fff';
-  const pointFill=dark?'#071120':'#fff';
+  const colors=chartTheme();
   if(compact){
     el.classList.add('lineChartCanvas');
     if(expanded) el.classList.add('lineChartExpanded');
   }
   const vals=data.map(d=>+d.value||0); const max=Math.max(...vals,1), min=Math.min(...vals,0); const range=Math.max(max-min,1); const stepX=(chartW-m.l-m.r)/Math.max(data.length-1,1); const y=v=>H-m.b-((v-min)/range)*(H-m.t-m.b); let pts=data.map((d,i)=>[m.l+i*stepX,y(+d.value||0)]);
   let area=`M ${pts[0][0]} ${H-m.b} L `+pts.map(p=>p.join(' ')).join(' L ')+` L ${pts[pts.length-1][0]} ${H-m.b} Z`; let line='M '+pts.map(p=>p.join(' ')).join(' L ');
-  let svg=`<svg viewBox="0 0 ${chartW} ${H}" width="${compact?chartW:'100%'}" height="100%"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${areaColor}" stop-opacity=".24"/><stop offset="1" stop-color="${areaColor}" stop-opacity="0"/></linearGradient></defs>`;
-  svg+=`<path d="${area}" fill="url(#area)"/><path d="${line}" fill="none" stroke="${lineColor}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let svg=`<svg viewBox="0 0 ${chartW} ${H}" width="${compact?chartW:'100%'}" height="100%"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${colors.area}" stop-opacity=".24"/><stop offset="1" stop-color="${colors.area}" stop-opacity="0"/></linearGradient></defs>`;
+  svg+=`<path d="${area}" fill="url(#area)"/><path d="${line}" fill="none" stroke="${colors.line}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
  const step=Math.max(1,Math.ceil(data.length/10));
  data.forEach((d,i)=>{
     const [x,yy]=pts[i]; const show=compact || expanded || i===0||i===data.length-1||i%step===0;
     const r=expanded?4.5:5;
-    svg+=`<circle class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" cx="${x}" cy="${yy}" r="${r}" fill="${pointFill}" stroke="${lineColor}" stroke-width="3"/>`;
+    svg+=`<circle class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" cx="${x}" cy="${yy}" r="${r}" fill="${colors.pointFill}" stroke="${colors.line}" stroke-width="3"/>`;
    if(show){
      const valueLabel=expanded?fmt.format(Math.round(+d.value||0)):shortFmt.format(+d.value||0);
+     const labelFont=expanded?12:12;
      let labelY = yy - (expanded?22:18);
      if(labelY < m.t+14) labelY = yy + (expanded?30:26);
-      const labelStyle = expanded ? `paint-order:stroke;stroke:${haloColor};stroke-width:7px;stroke-linejoin:round` : `paint-order:stroke;stroke:${haloColor};stroke-width:6px;stroke-linejoin:round`;
-      svg+=`<text x="${x}" y="${Math.max(m.t+12,labelY)}" text-anchor="middle" font-size="${expanded?12:12}" fill="${labelColor}" font-weight="950" style="${labelStyle}">${valueLabel}</text>`;
-      if(expanded){
-        svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="${axisColor}" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(d.label)}</text>`;
+     const textY=Math.max(m.t+12,labelY);
+      if(colors.dark){
+        const pillW=Math.max(24,String(valueLabel).length*7.2+12);
+        const pillH=17;
+        svg+=`<rect x="${x-pillW/2}" y="${textY-pillH+4}" width="${pillW}" height="${pillH}" rx="8.5" fill="${colors.labelPill}" stroke="${colors.labelPillStroke}" stroke-width="1"/>`;
+        svg+=`<text x="${x}" y="${textY}" text-anchor="middle" font-size="${labelFont}" fill="${colors.label}" font-weight="950">${valueLabel}</text>`;
       } else {
-        svg+=`<text x="${x}" y="${H-20}" text-anchor="middle" font-size="10" fill="${axisColor}" font-weight="800">${esc(d.label)}</text>`;
+        const labelStyle = expanded ? `paint-order:stroke;stroke:${colors.halo};stroke-width:7px;stroke-linejoin:round` : `paint-order:stroke;stroke:${colors.halo};stroke-width:6px;stroke-linejoin:round`;
+        svg+=`<text x="${x}" y="${textY}" text-anchor="middle" font-size="${labelFont}" fill="${colors.label}" font-weight="950" style="${labelStyle}">${valueLabel}</text>`;
+      }
+      if(expanded){
+        svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="${colors.axis}" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(d.label)}</text>`;
+      } else {
+        svg+=`<text x="${x}" y="${H-20}" text-anchor="middle" font-size="11" fill="${colors.axis}" font-weight="900">${esc(d.label)}</text>`;
       }
    }
  });
