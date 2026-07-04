@@ -231,7 +231,14 @@ body.darkMode .brandGridScroll{scrollbar-color:#2E9BFF #162843}
 body.darkMode .brandGridScroll::-webkit-scrollbar-track{background:#162843}
 body.darkMode .brandGridScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2E9BFF,#0072CE)}
 body.darkMode .brandGridHeader{background:linear-gradient(180deg,#101D33 0%,#101D33 82%,rgba(16,29,51,.92) 100%)}
+body.darkMode .brandGridHeader div{color:#DCEBFF}
 body.darkMode .brandGridRow{background:linear-gradient(180deg,#101D33,#0D182B);border-color:#355174}
+body.darkMode .brandGridRow>div{color:#F4F9FF}
+body.darkMode .brandGridRow>div:nth-child(2),
+body.darkMode .brandGridRow>div:nth-child(3){color:#FFFFFF;font-weight:950}
+body.darkMode .brandGridRow>div:first-child,
+body.darkMode .brandGridRow>div:last-child{color:#FFFFFF}
+body.darkMode .brandGridRow .moneyCell{color:#FFFFFF!important}
 body.darkMode .chartCanvas svg text,
 body.darkMode #modalCanvas svg text{
   fill:#FFFFFF!important;
@@ -308,12 +315,13 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .brandGridScroll::-webkit-scrollbar{width:12px;height:8px}
 .brandGridScroll::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
 .brandGridScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
-.brandGridTable{min-width:1160px}
+.brandGridTable{min-width:1560px}
 .brandGridHeader,
 .brandGridRow{
   display:grid;
-  grid-template-columns:minmax(250px,2fr) .9fr 1fr 1.25fr 1.35fr 1.35fr 1.3fr;
+  grid-template-columns:minmax(300px,2.1fr) minmax(180px,1.05fr) minmax(210px,1.15fr) minmax(230px,1.25fr) minmax(220px,1.25fr) minmax(220px,1.25fr) minmax(245px,1.3fr);
   align-items:center;
+  column-gap:22px;
 }
 .brandGridHeader{
   position:sticky;
@@ -967,7 +975,7 @@ body.authReady .authShell{display:none}
     margin:0 -4px;
     padding-bottom:8px;
   }
-  .brandGridTable{min-width:1040px}
+  .brandGridTable{min-width:1400px}
   .brandGridScroll{
     height:636px;
   }
