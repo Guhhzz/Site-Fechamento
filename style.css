@@ -227,8 +227,17 @@ body.darkMode .tableScroll:after{background:linear-gradient(90deg,rgba(16,29,51,
 body.darkMode .modal{background:rgba(0,5,15,.78)}
 body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
 body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
-body.darkMode .chartCanvas svg text{fill:#DCEBFF!important}
-body.darkMode .chartCanvas svg circle[fill="#fff"]{fill:#071120!important}
+body.darkMode .chartCanvas svg text,
+body.darkMode #modalCanvas svg text{
+  fill:#FFFFFF!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.65);
+}
+body.darkMode .chartCanvas svg text[style*="stroke:#fff"],
+body.darkMode #modalCanvas svg text[style*="stroke:#fff"]{
+  stroke:#071120!important;
+}
+body.darkMode .chartCanvas svg circle[fill="#fff"],
+body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 
 .pieWrap{height:100%;min-height:330px;display:flex;align-items:center;justify-content:center;gap:28px;padding:8px 10px 16px;position:relative;z-index:2;flex-wrap:wrap}
 .pieVisual{position:relative;width:min(380px,100%);display:flex;align-items:center;justify-content:center;flex:0 1 380px}

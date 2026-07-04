@@ -532,35 +532,42 @@ function groupedColumnChart(el,data){
 }
 
 function lineChart(el,data,expanded=false){
- const W=el.clientWidth||980,H=el.clientHeight||380;
- const mobileLandscape=window.matchMedia('(orientation: landscape) and (max-height: 520px) and (max-width: 960px)').matches;
- const compact=W<560 || mobileLandscape;
- const m=compact ? (expanded?{t:60,r:28,b:98,l:38}:{t:38,r:24,b:58,l:34}) : (expanded?{t:74,r:70,b:122,l:68}:{t:34,r:48,b:52,l:58});
- const chartW=compact ? Math.max(W, m.l+m.r+Math.max(data.length-1,1)*(expanded?54:46)) : W;
- if(compact){
-   el.classList.add('lineChartCanvas');
-   if(expanded) el.classList.add('lineChartExpanded');
- }
- const vals=data.map(d=>+d.value||0); const max=Math.max(...vals,1), min=Math.min(...vals,0); const range=Math.max(max-min,1); const stepX=(chartW-m.l-m.r)/Math.max(data.length-1,1); const y=v=>H-m.b-((v-min)/range)*(H-m.t-m.b); let pts=data.map((d,i)=>[m.l+i*stepX,y(+d.value||0)]);
- let area=`M ${pts[0][0]} ${H-m.b} L `+pts.map(p=>p.join(' ')).join(' L ')+` L ${pts[pts.length-1][0]} ${H-m.b} Z`; let line='M '+pts.map(p=>p.join(' ')).join(' L ');
- let svg=`<svg viewBox="0 0 ${chartW} ${H}" width="${compact?chartW:'100%'}" height="100%"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0072CE" stop-opacity=".24"/><stop offset="1" stop-color="#0072CE" stop-opacity="0"/></linearGradient></defs>`;
- svg+=`<path d="${area}" fill="url(#area)"/><path d="${line}" fill="none" stroke="#0057B8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const W=el.clientWidth||980,H=el.clientHeight||380;
+  const mobileLandscape=window.matchMedia('(orientation: landscape) and (max-height: 520px) and (max-width: 960px)').matches;
+  const compact=W<560 || mobileLandscape;
+  const m=compact ? (expanded?{t:60,r:28,b:98,l:38}:{t:38,r:24,b:58,l:34}) : (expanded?{t:74,r:70,b:122,l:68}:{t:34,r:48,b:52,l:58});
+  const chartW=compact ? Math.max(W, m.l+m.r+Math.max(data.length-1,1)*(expanded?54:46)) : W;
+  const dark=document.body.classList.contains('darkMode');
+  const lineColor=dark?'#2E9BFF':'#0057B8';
+  const areaColor=dark?'#2E9BFF':'#0072CE';
+  const labelColor=dark?'#FFFFFF':'#061A36';
+  const axisColor=dark?'#FFFFFF':'#61738C';
+  const haloColor=dark?'#071120':'#fff';
+  const pointFill=dark?'#071120':'#fff';
+  if(compact){
+    el.classList.add('lineChartCanvas');
+    if(expanded) el.classList.add('lineChartExpanded');
+  }
+  const vals=data.map(d=>+d.value||0); const max=Math.max(...vals,1), min=Math.min(...vals,0); const range=Math.max(max-min,1); const stepX=(chartW-m.l-m.r)/Math.max(data.length-1,1); const y=v=>H-m.b-((v-min)/range)*(H-m.t-m.b); let pts=data.map((d,i)=>[m.l+i*stepX,y(+d.value||0)]);
+  let area=`M ${pts[0][0]} ${H-m.b} L `+pts.map(p=>p.join(' ')).join(' L ')+` L ${pts[pts.length-1][0]} ${H-m.b} Z`; let line='M '+pts.map(p=>p.join(' ')).join(' L ');
+  let svg=`<svg viewBox="0 0 ${chartW} ${H}" width="${compact?chartW:'100%'}" height="100%"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${areaColor}" stop-opacity=".24"/><stop offset="1" stop-color="${areaColor}" stop-opacity="0"/></linearGradient></defs>`;
+  svg+=`<path d="${area}" fill="url(#area)"/><path d="${line}" fill="none" stroke="${lineColor}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
  const step=Math.max(1,Math.ceil(data.length/10));
  data.forEach((d,i)=>{
-   const [x,yy]=pts[i]; const show=compact || expanded || i===0||i===data.length-1||i%step===0;
-   const r=expanded?4.5:5;
-   svg+=`<circle class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" cx="${x}" cy="${yy}" r="${r}" fill="#fff" stroke="#0057B8" stroke-width="3"/>`;
+    const [x,yy]=pts[i]; const show=compact || expanded || i===0||i===data.length-1||i%step===0;
+    const r=expanded?4.5:5;
+    svg+=`<circle class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" cx="${x}" cy="${yy}" r="${r}" fill="${pointFill}" stroke="${lineColor}" stroke-width="3"/>`;
    if(show){
      const valueLabel=expanded?fmt.format(Math.round(+d.value||0)):shortFmt.format(+d.value||0);
      let labelY = yy - (expanded?22:18);
      if(labelY < m.t+14) labelY = yy + (expanded?30:26);
-     const labelStyle = expanded ? 'paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round' : 'paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round';
-     svg+=`<text x="${x}" y="${Math.max(m.t+12,labelY)}" text-anchor="middle" font-size="${expanded?12:12}" fill="#061A36" font-weight="950" style="${labelStyle}">${valueLabel}</text>`;
-     if(expanded){
-       svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="#61738C" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(d.label)}</text>`;
-     } else {
-       svg+=`<text x="${x}" y="${H-20}" text-anchor="middle" font-size="10" fill="#61738C" font-weight="800">${esc(d.label)}</text>`;
-     }
+      const labelStyle = expanded ? `paint-order:stroke;stroke:${haloColor};stroke-width:7px;stroke-linejoin:round` : `paint-order:stroke;stroke:${haloColor};stroke-width:6px;stroke-linejoin:round`;
+      svg+=`<text x="${x}" y="${Math.max(m.t+12,labelY)}" text-anchor="middle" font-size="${expanded?12:12}" fill="${labelColor}" font-weight="950" style="${labelStyle}">${valueLabel}</text>`;
+      if(expanded){
+        svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="${axisColor}" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(d.label)}</text>`;
+      } else {
+        svg+=`<text x="${x}" y="${H-20}" text-anchor="middle" font-size="10" fill="${axisColor}" font-weight="800">${esc(d.label)}</text>`;
+      }
    }
  });
  svg+=`</svg>`;
