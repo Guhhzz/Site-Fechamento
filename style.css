@@ -227,6 +227,10 @@ body.darkMode .tableScroll:after{background:linear-gradient(90deg,rgba(16,29,51,
 body.darkMode .modal{background:rgba(0,5,15,.78)}
 body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
 body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
+body.darkMode .brandTableScroll{scrollbar-color:#2E9BFF #162843}
+body.darkMode .brandTableScroll::-webkit-scrollbar-track{background:#162843}
+body.darkMode .brandTableScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2E9BFF,#0072CE)}
+body.darkMode .brandTableScroll .brandTable thead th{background:linear-gradient(180deg,#101D33 0%,#101D33 82%,rgba(16,29,51,.92) 100%)}
 body.darkMode .chartCanvas svg text,
 body.darkMode #modalCanvas svg text{
   fill:#FFFFFF!important;
@@ -290,9 +294,26 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 
 .tableScroll{width:100%;overflow-x:auto;position:relative;z-index:2;padding-bottom:4px}
 .tableScroll:after{content:"";position:absolute;right:0;top:0;bottom:8px;width:34px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.96));pointer-events:none}
+.brandTableScroll{
+  max-height:674px;
+  overflow:auto;
+  padding-right:8px;
+}
+.brandTableScroll:after{display:none}
+.brandTableScroll::-webkit-scrollbar{width:8px;height:8px}
+.brandTableScroll::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
+.brandTableScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
+.brandTableScroll{scrollbar-color:var(--gazin-blue) #E8F2FF;scrollbar-width:thin}
 .executiveTable.brandTable{min-width:1160px;border-spacing:0 10px}
 .executiveTable.brandTable th{text-align:right;white-space:nowrap;padding:0 12px 8px}
 .executiveTable.brandTable th:first-child{text-align:left}
+.brandTableScroll .brandTable thead th{
+  position:sticky;
+  top:0;
+  z-index:4;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F9FCFF 82%,rgba(249,252,255,.92) 100%);
+  padding-top:2px;
+}
 .executiveTable.brandTable td{text-align:right;white-space:nowrap;background:linear-gradient(180deg,#FFFFFF,#FBFDFF)}
 .executiveTable.brandTable tr td:first-child{width:auto;text-align:left;color:#061A36;min-width:250px}
 .executiveTable.brandTable tr td:last-child{text-align:right;color:#061A36}
@@ -928,6 +949,10 @@ body.authReady .authShell{display:none}
   .tableScroll{
     margin:0 -4px;
     padding-bottom:8px;
+  }
+  .brandTableScroll{
+    max-height:620px;
+    padding-right:6px;
   }
   .executiveTable{
     min-width:720px;
