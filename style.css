@@ -512,6 +512,23 @@ body.authReady .authShell{display:none}
   transition:.18s;
 }
 .authForm input:focus{border-color:var(--gazin-blue-2);box-shadow:0 0 0 4px rgba(0,114,206,.10);background:#fff}
+body.darkMode .authBrand h1{color:#F8FBFF}
+body.darkMode .authBrand span,
+body.darkMode .authForm label{color:#9FCEFF}
+body.darkMode .authForm input{
+  color:#061A36;
+  background:#F8FBFF;
+  border-color:#7CC8FF;
+  -webkit-text-fill-color:#061A36;
+}
+body.darkMode .authForm input::placeholder{color:#5F7894;-webkit-text-fill-color:#5F7894}
+body.darkMode .authForm input:focus{
+  color:#061A36;
+  background:#fff;
+  border-color:#00A3FF;
+  box-shadow:0 0 0 4px rgba(0,163,255,.22);
+  -webkit-text-fill-color:#061A36;
+}
 .authPrimary{
   margin-top:8px;
   border:0;
