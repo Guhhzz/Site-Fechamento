@@ -683,6 +683,14 @@ body.authLoading .authPrimary{
   background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));
   box-shadow:0 14px 28px rgba(0,87,184,.22);
 }
+body.darkMode .welcomePanel{
+  background:linear-gradient(180deg,#FFFFFF,#F8FBFF);
+  border-color:rgba(216,233,250,.82);
+  box-shadow:0 26px 70px rgba(0,0,0,.40);
+}
+body.darkMode .welcomeEyebrow{color:#0057B8}
+body.darkMode .welcomeContent h3{color:#061A36}
+body.darkMode .welcomeContent p{color:#405873}
 @media (max-width:780px){
   .welcomePanel{grid-template-columns:1fr;max-height:92vh;overflow:auto}
   .welcomePresenter{min-height:220px;padding-top:18px}
