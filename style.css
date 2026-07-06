@@ -315,13 +315,13 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .brandGridScroll::-webkit-scrollbar{width:12px;height:8px}
 .brandGridScroll::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
 .brandGridScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
-.brandGridTable{min-width:1560px}
+.brandGridTable{min-width:100%;width:100%}
 .brandGridHeader,
 .brandGridRow{
   display:grid;
-  grid-template-columns:minmax(300px,2.1fr) minmax(180px,1.05fr) minmax(210px,1.15fr) minmax(230px,1.25fr) minmax(220px,1.25fr) minmax(220px,1.25fr) minmax(245px,1.3fr);
+  grid-template-columns:minmax(170px,1.55fr) minmax(115px,.9fr) minmax(125px,.95fr) minmax(150px,1.1fr) minmax(160px,1.1fr) minmax(160px,1.1fr) minmax(150px,1.05fr);
   align-items:center;
-  column-gap:22px;
+  column-gap:12px;
 }
 .brandGridHeader{
   position:sticky;
@@ -330,7 +330,7 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
   padding:0 18px 10px 10px;
   background:linear-gradient(180deg,#FFFFFF 0%,#F9FCFF 82%,rgba(249,252,255,.92) 100%);
 }
-.brandGridHeader div{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#5A6E86;text-align:right;font-weight:900;white-space:nowrap}
+.brandGridHeader div{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#5A6E86;text-align:right;font-weight:900;white-space:normal;line-height:1.2}
 .brandGridHeader div:first-child{text-align:left}
 .brandGridRows{
   overflow:visible;
@@ -339,7 +339,7 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
   row-gap:10px;
 }
 .brandGridRow{border:1px solid #E3EFFB;border-radius:14px;background:linear-gradient(180deg,#FFFFFF,#FBFDFF);overflow:hidden}
-.brandGridRow>div{padding:0 14px;text-align:right;font-weight:800;color:#17395F;min-width:0;white-space:nowrap}
+.brandGridRow>div{padding:0 10px;text-align:right;font-weight:800;color:#17395F;min-width:0;white-space:nowrap}
 .brandGridRow>div:first-child{text-align:left;color:#061A36}
 .brandGridRow>div:last-child{text-align:right;color:#061A36}
 .brandName{display:flex;align-items:center;gap:11px;font-weight:950;color:#061A36}
@@ -975,7 +975,7 @@ body.authReady .authShell{display:none}
     margin:0 -4px;
     padding-bottom:8px;
   }
-  .brandGridTable{min-width:1400px}
+  .brandGridTable{min-width:1320px}
   .brandGridScroll{
     height:636px;
   }
