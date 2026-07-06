@@ -46,12 +46,22 @@ function supabaseProfile(user){
   provider:'supabase'
  };
 }
+function withTimeout(promise, ms, message='Tempo esgotado na conexão com o Supabase.'){
+ return Promise.race([
+  promise,
+  new Promise((_,reject)=>setTimeout(()=>reject(new Error(message)),ms))
+ ]);
+}
 async function withSupabaseProfile(user){
  const profile=supabaseProfile(user);
  const client=getSupabaseClient();
  if(!client || !user?.id) return profile;
  try{
-  const {data,error}=await client.from('profiles').select('nome,email,perfil,ativo').eq('id',user.id).maybeSingle();
+  const {data,error}=await withTimeout(
+   client.from('profiles').select('nome,email,perfil,ativo').eq('id',user.id).maybeSingle(),
+   3500,
+   'Perfil demorou para carregar.'
+  );
   if(error || !data) return profile;
   return {
    ...profile,
@@ -63,6 +73,13 @@ async function withSupabaseProfile(user){
  }catch(e){
   return profile;
  }
+}
+function hydrateSupabaseProfile(user){
+ const base=supabaseProfile(user);
+ setSignedInUser(base);
+ withSupabaseProfile(user).then(profile=>{
+  if(CURRENT_USER && normalizeEmail(CURRENT_USER.email)===normalizeEmail(profile.email)) setSignedInUser(profile);
+ }).catch(()=>{});
 }
 function translateSupabaseAuthError(error){
  const raw=String(error?.message || 'Não foi possível concluir a autenticação.');
@@ -227,14 +244,19 @@ function initSupabaseAuth(client,loginForm,signupForm){
    const redirectTo=window.location.href.split('#')[0];
    let data,error;
    try {
-    ({data,error}=await client.auth.signUp({email,password,options:{data:{name},emailRedirectTo:redirectTo}}));
+    ({data,error}=await withTimeout(
+     client.auth.signUp({email,password,options:{data:{name},emailRedirectTo:redirectTo}}),
+     15000,
+     'O cadastro demorou para responder. Verifique a conexão e tente novamente.'
+    ));
    } catch(err) {
     error=err;
+   } finally {
+    setAuthLoading(false);
    }
-   setAuthLoading(false);
    if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
    if(data?.session && data?.user){
-    setSignedInUser(await withSupabaseProfile(data.user));
+    hydrateSupabaseProfile(data.user);
     showAuthMessage('Cadastro criado com sucesso.','success');
     maybeShowWelcome();
     return;
@@ -251,27 +273,34 @@ function initSupabaseAuth(client,loginForm,signupForm){
    showAuthMessage('');
    let data,error;
    try {
-    ({data,error}=await client.auth.signInWithPassword({email,password}));
+    ({data,error}=await withTimeout(
+     client.auth.signInWithPassword({email,password}),
+     15000,
+     'O login demorou para responder. Verifique a conexão e tente novamente.'
+    ));
    } catch(err) {
     error=err;
+   } finally {
+    setAuthLoading(false);
    }
-   setAuthLoading(false);
    if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
    if(data?.user){
-    setSignedInUser(await withSupabaseProfile(data.user));
+    hydrateSupabaseProfile(data.user);
     showAuthMessage('');
     maybeShowWelcome();
    }
  });
-client.auth.getSession().then(async ({data})=>{
+client.auth.getSession().then(({data})=>{
   const user=data?.session?.user;
-  setSignedInUser(user ? await withSupabaseProfile(user) : null);
+  if(user) hydrateSupabaseProfile(user);
+  else setSignedInUser(null);
 }).catch(()=>{
   setSignedInUser(null);
 });
-client.auth.onAuthStateChange(async (_event,session)=>{
+client.auth.onAuthStateChange((_event,session)=>{
   const user=session?.user;
-  setSignedInUser(user ? await withSupabaseProfile(user) : null);
+  if(user) hydrateSupabaseProfile(user);
+  else setSignedInUser(null);
   if(_event==='PASSWORD_RECOVERY') setTimeout(openPasswordRecoveryModal,120);
  });
 }
