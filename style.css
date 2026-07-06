@@ -523,6 +523,12 @@ body.authReady .authShell{display:none}
   background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));
   box-shadow:0 14px 28px rgba(0,87,184,.22);
 }
+.authPrimary:disabled,
+body.authLoading .authPrimary{
+  opacity:.72;
+  cursor:progress;
+  transform:none;
+}
 .authMessage{min-height:18px;margin-top:12px;font-size:13px;font-weight:800;color:#315879;line-height:1.35}
 .authMessage.error{color:#B42318}
 .authMessage.success{color:#087A55}

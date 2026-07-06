@@ -13,14 +13,49 @@ const AUTH_USERS_KEY = 'site_tech_analytics_users_v1';
 const AUTH_SESSION_KEY = 'site_tech_analytics_session_v1';
 const AUTH_WELCOME_SEEN_KEY = 'site_tech_analytics_welcome_seen_v1';
 const THEME_KEY = 'site_tech_analytics_theme_v1';
+const SUPABASE_URL = 'https://evpjwlvozywnpsxgczxg.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_P2r-rZDvR2kcUaAm2ueN9g_SvLnybxr';
 const ADMIN_EMAILS = [
   'gustavo.salomao@gazin.com.br',
   'email-da-gerente@gazin.com.br',
   'email-da-coordenadora@gazin.com.br'
 ];
 let CURRENT_USER = null;
+let SUPABASE_CLIENT = null;
 
 function normalizeEmail(email){ return String(email||'').trim().toLowerCase(); }
+function getSupabaseClient(){
+ if(SUPABASE_CLIENT) return SUPABASE_CLIENT;
+ const factory=window.supabase && window.supabase.createClient;
+ if(!factory) return null;
+ SUPABASE_CLIENT=factory(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+ });
+ return SUPABASE_CLIENT;
+}
+function supabaseProfile(user){
+ const meta=user?.user_metadata || {};
+ const email=normalizeEmail(user?.email);
+ return {
+  id:user?.id || email,
+  name:String(meta.name || meta.full_name || email.split('@')[0] || 'Usuário').trim(),
+  email,
+  provider:'supabase'
+ };
+}
+function translateSupabaseAuthError(error){
+ const raw=String(error?.message || 'Não foi possível concluir a autenticação.');
+ const msg=raw.toLowerCase();
+ if(msg.includes('invalid login credentials')) return 'E-mail ou senha inválido.';
+ if(msg.includes('email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
+ if(msg.includes('already registered') || msg.includes('user already registered')) return 'Este e-mail já possui cadastro. Use a tela de entrada.';
+ if(msg.includes('password')) return 'A senha precisa atender aos requisitos mínimos do Supabase.';
+ return raw;
+}
+function setAuthLoading(isLoading){
+ document.body.classList.toggle('authLoading',!!isLoading);
+ document.querySelectorAll('.authPrimary').forEach(btn=>{btn.disabled=!!isLoading;});
+}
 function readAuthUsers(){
  try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '[]'); }
  catch(e){ return []; }
@@ -111,16 +146,17 @@ function maybeShowWelcome(){
  markWelcomeSeen(email);
  setTimeout(openWelcomeModal,220);
 }
-function signOut(){
+async function signOut(){
+ const client=getSupabaseClient();
+ if(client){
+  try { await client.auth.signOut(); }
+  catch(e){ console.warn('Falha ao sair do Supabase.',e); }
+ }
  localStorage.removeItem(AUTH_SESSION_KEY);
  setSignedInUser(null);
  setAuthMode('login');
 }
-function initAuth(){
- const loginTab=document.getElementById('loginTab'), signupTab=document.getElementById('signupTab'), loginForm=document.getElementById('loginForm'), signupForm=document.getElementById('signupForm'), logoutBtn=document.getElementById('logoutBtn');
- if(loginTab) loginTab.addEventListener('click',()=>setAuthMode('login'));
- if(signupTab) signupTab.addEventListener('click',()=>setAuthMode('signup'));
- if(logoutBtn) logoutBtn.addEventListener('click',signOut);
+function initLocalAuth(loginForm,signupForm){
  if(signupForm) signupForm.addEventListener('submit',e=>{
    e.preventDefault();
    const name=String(document.getElementById('signupName')?.value||'').trim();
@@ -151,6 +187,74 @@ function initAuth(){
  const sessionUser=readAuthUsers().find(u=>normalizeEmail(u.email)===sessionEmail);
  setSignedInUser(sessionUser || null);
  if(sessionUser) maybeShowWelcome();
+}
+function initSupabaseAuth(client,loginForm,signupForm){
+ if(signupForm) signupForm.addEventListener('submit',async e=>{
+   e.preventDefault();
+   const name=String(document.getElementById('signupName')?.value||'').trim();
+   const email=normalizeEmail(document.getElementById('signupEmail')?.value);
+   const password=String(document.getElementById('signupPassword')?.value||'');
+   if(!name || !email || password.length<6){ showAuthMessage('Preencha nome, e-mail e senha com pelo menos 6 caracteres.','error'); return; }
+   setAuthLoading(true);
+   showAuthMessage('');
+   const redirectTo=window.location.href.split('#')[0];
+   let data,error;
+   try {
+    ({data,error}=await client.auth.signUp({email,password,options:{data:{name},emailRedirectTo:redirectTo}}));
+   } catch(err) {
+    error=err;
+   }
+   setAuthLoading(false);
+   if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
+   if(data?.session && data?.user){
+    setSignedInUser(supabaseProfile(data.user));
+    showAuthMessage('Cadastro criado com sucesso.','success');
+    maybeShowWelcome();
+    return;
+   }
+   setAuthMode('login');
+   showAuthMessage('Cadastro criado. Se o Supabase solicitar confirmação, confirme pelo e-mail antes de entrar.','success');
+ });
+ if(loginForm) loginForm.addEventListener('submit',async e=>{
+   e.preventDefault();
+   const email=normalizeEmail(document.getElementById('loginEmail')?.value);
+   const password=String(document.getElementById('loginPassword')?.value||'');
+   if(!email || !password){ showAuthMessage('Informe e-mail e senha para entrar.','error'); return; }
+   setAuthLoading(true);
+   showAuthMessage('');
+   let data,error;
+   try {
+    ({data,error}=await client.auth.signInWithPassword({email,password}));
+   } catch(err) {
+    error=err;
+   }
+   setAuthLoading(false);
+   if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
+   if(data?.user){
+    setSignedInUser(supabaseProfile(data.user));
+    showAuthMessage('');
+    maybeShowWelcome();
+   }
+ });
+ client.auth.getSession().then(({data})=>{
+  const user=data?.session?.user;
+  setSignedInUser(user ? supabaseProfile(user) : null);
+ }).catch(()=>{
+  setSignedInUser(null);
+ });
+ client.auth.onAuthStateChange((_event,session)=>{
+  const user=session?.user;
+  setSignedInUser(user ? supabaseProfile(user) : null);
+ });
+}
+function initAuth(){
+ const loginTab=document.getElementById('loginTab'), signupTab=document.getElementById('signupTab'), loginForm=document.getElementById('loginForm'), signupForm=document.getElementById('signupForm'), logoutBtn=document.getElementById('logoutBtn');
+ if(loginTab) loginTab.addEventListener('click',()=>setAuthMode('login'));
+ if(signupTab) signupTab.addEventListener('click',()=>setAuthMode('signup'));
+ if(logoutBtn) logoutBtn.addEventListener('click',signOut);
+ const client=getSupabaseClient();
+ if(client) initSupabaseAuth(client,loginForm,signupForm);
+ else initLocalAuth(loginForm,signupForm);
  const closeWelcome=document.getElementById('closeWelcomeModal'), welcomeModal=document.getElementById('welcomeModal');
  if(closeWelcome) closeWelcome.addEventListener('click',closeWelcomeModal);
  if(welcomeModal) welcomeModal.addEventListener('click',e=>{if(e.target===welcomeModal) closeWelcomeModal();});
