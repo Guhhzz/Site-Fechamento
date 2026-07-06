@@ -1,21 +1,28 @@
 # Edge Function: admin-users
 
-Esta função ativa a tela administrativa de usuários do painel.
+Esta funcao ativa a tela administrativa de usuarios do painel.
 
-Ela deve ser publicada no Supabase porque usa `SUPABASE_SERVICE_ROLE_KEY`, que não pode ficar no HTML/JavaScript do site.
+Ela deve ser publicada no Supabase porque usa `SERVICE_ROLE_KEY`, que nao pode ficar no HTML/JavaScript do site.
 
-## Publicação
+## Publicacao
 
-No Supabase CLI:
+O deploy foi preparado para rodar pelo GitHub Actions em:
+
+`.github/workflows/deploy-supabase-functions.yml`
+
+Se precisar publicar manualmente com Supabase CLI:
 
 ```bash
 supabase functions deploy admin-users --project-ref evpjwlvozywnpsxgczxg
 ```
 
-Opcionalmente, configure o segredo `SITE_URL` para o link do GitHub Pages:
+## Secrets necessarios
+
+No Supabase, em Edge Functions > Secrets:
 
 ```bash
-supabase secrets set SITE_URL=https://guhhzz.github.io/Site-Fechamento/ --project-ref evpjwlvozywnpsxgczxg
+SERVICE_ROLE_KEY=<chave service_role do projeto>
+SITE_URL=https://guhhzz.github.io/Site-Fechamento/
 ```
 
-As variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` são fornecidas pelo ambiente das Edge Functions do Supabase.
+A funcao tambem aceita `SUPABASE_SERVICE_ROLE_KEY` como fallback, mas o nome principal usado neste projeto e `SERVICE_ROLE_KEY`.

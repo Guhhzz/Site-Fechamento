@@ -41,8 +41,28 @@ function supabaseProfile(user){
   id:user?.id || email,
   name:String(meta.name || meta.full_name || email.split('@')[0] || 'Usuário').trim(),
   email,
+  perfil:String(meta.perfil || 'usuario').trim().toLowerCase(),
+  ativo:true,
   provider:'supabase'
  };
+}
+async function withSupabaseProfile(user){
+ const profile=supabaseProfile(user);
+ const client=getSupabaseClient();
+ if(!client || !user?.id) return profile;
+ try{
+  const {data,error}=await client.from('profiles').select('nome,email,perfil,ativo').eq('id',user.id).maybeSingle();
+  if(error || !data) return profile;
+  return {
+   ...profile,
+   name:String(data.nome || profile.name).trim(),
+   email:normalizeEmail(data.email || profile.email),
+   perfil:String(data.perfil || profile.perfil || 'usuario').trim().toLowerCase(),
+   ativo:data.ativo !== false
+  };
+ }catch(e){
+  return profile;
+ }
 }
 function translateSupabaseAuthError(error){
  const raw=String(error?.message || 'Não foi possível concluir a autenticação.');
@@ -81,7 +101,7 @@ function hasSeenWelcome(email){
  return !!(key && readWelcomeSeen()[key]);
 }
 function isAdminEmail(email){ return ADMIN_EMAILS.map(normalizeEmail).includes(normalizeEmail(email)); }
-function canManageHistory(){ return !!(CURRENT_USER && isAdminEmail(CURRENT_USER.email)); }
+function canManageHistory(){ return !!(CURRENT_USER && CURRENT_USER.ativo !== false && (CURRENT_USER.perfil === 'admin' || isAdminEmail(CURRENT_USER.email))); }
 function applyTheme(mode){
  const isDark=mode==='dark';
  document.body.classList.toggle('darkMode',isDark);
@@ -214,7 +234,7 @@ function initSupabaseAuth(client,loginForm,signupForm){
    setAuthLoading(false);
    if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
    if(data?.session && data?.user){
-    setSignedInUser(supabaseProfile(data.user));
+    setSignedInUser(await withSupabaseProfile(data.user));
     showAuthMessage('Cadastro criado com sucesso.','success');
     maybeShowWelcome();
     return;
@@ -238,20 +258,20 @@ function initSupabaseAuth(client,loginForm,signupForm){
    setAuthLoading(false);
    if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
    if(data?.user){
-    setSignedInUser(supabaseProfile(data.user));
+    setSignedInUser(await withSupabaseProfile(data.user));
     showAuthMessage('');
     maybeShowWelcome();
    }
  });
- client.auth.getSession().then(({data})=>{
+client.auth.getSession().then(async ({data})=>{
   const user=data?.session?.user;
-  setSignedInUser(user ? supabaseProfile(user) : null);
- }).catch(()=>{
+  setSignedInUser(user ? await withSupabaseProfile(user) : null);
+}).catch(()=>{
   setSignedInUser(null);
- });
- client.auth.onAuthStateChange((_event,session)=>{
+});
+client.auth.onAuthStateChange(async (_event,session)=>{
   const user=session?.user;
-  setSignedInUser(user ? supabaseProfile(user) : null);
+  setSignedInUser(user ? await withSupabaseProfile(user) : null);
   if(_event==='PASSWORD_RECOVERY') setTimeout(openPasswordRecoveryModal,120);
  });
 }
@@ -295,14 +315,15 @@ async function getSupabaseAccessToken(){
 }
 async function callAdminUsers(payload){
  const token=await getSupabaseAccessToken();
+ const isList=payload?.action==='list';
  const res=await fetch(ADMIN_USERS_FUNCTION_URL,{
-  method:'POST',
+  method:isList?'GET':'POST',
   headers:{
    'Content-Type':'application/json',
    'Authorization':`Bearer ${token}`,
    'apikey':SUPABASE_PUBLISHABLE_KEY
   },
-  body:JSON.stringify(payload)
+  body:isList ? undefined : JSON.stringify(payload)
  });
  const text=await res.text();
  let data={};
@@ -320,12 +341,13 @@ function renderAdminUsers(users){
  if(!users?.length){ usersEmpty('Nenhum usuário cadastrado foi retornado pelo Supabase.'); return; }
  list.innerHTML=users.map(user=>{
   const name=user.name || user.email || 'Usuário';
-  const admin=isAdminEmail(user.email);
+  const admin=user.perfil === 'admin' || isAdminEmail(user.email);
+  const active=user.ativo !== false;
   const confirmed=user.email_confirmed_at ? 'Confirmado' : 'Pendente';
   return `<article class="userRow" data-user-id="${esc(user.id)}" data-email="${esc(user.email)}">
     <div class="userSummary">
       <div><strong>${esc(name)}</strong><span>${esc(user.email || 'E-mail não informado')}</span></div>
-      <div class="userBadges"><em>${admin?'Admin':'Visualização'}</em><em>${confirmed}</em></div>
+      <div class="userBadges"><em>${admin?'Admin':'Visualização'}</em><em>${active?'Ativo':'Inativo'}</em><em>${confirmed}</em></div>
       <small>Criado em ${esc(formatUserDate(user.created_at))} · Último acesso ${esc(formatUserDate(user.last_sign_in_at))}</small>
     </div>
     <div class="userControls">

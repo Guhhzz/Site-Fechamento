@@ -7,11 +7,12 @@ const ADMIN_EMAILS = [
 ].map((email) => email.toLowerCase());
 
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://guhhzz.github.io/Site-Fechamento/';
+const DEFAULT_SUPABASE_URL = 'https://evpjwlvozywnpsxgczxg.supabase.co';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Content-Type': 'application/json',
 };
 
@@ -19,16 +20,19 @@ function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
 
-function profileName(user: any) {
+function profileName(user: any, profile?: any) {
+  if (profile?.nome) return String(profile.nome).trim();
   const meta = user?.user_metadata || {};
   return String(meta.name || meta.full_name || user?.email?.split('@')[0] || 'Usuario').trim();
 }
 
-function publicUser(user: any) {
+function publicUser(user: any, profile?: any) {
   return {
     id: user.id,
     email: user.email,
-    name: profileName(user),
+    name: profileName(user, profile),
+    perfil: profile?.perfil || 'usuario',
+    ativo: profile?.ativo !== false,
     created_at: user.created_at,
     last_sign_in_at: user.last_sign_in_at,
     email_confirmed_at: user.email_confirmed_at,
@@ -37,38 +41,47 @@ function publicUser(user: any) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') return json({ error: 'Metodo nao permitido.' }, 405);
+  if (!['GET', 'POST'].includes(req.method)) return json({ error: 'Metodo nao permitido.' }, 405);
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-    return json({ error: 'Variaveis do Supabase nao configuradas na Edge Function.' }, 500);
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || DEFAULT_SUPABASE_URL;
+  const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !serviceRoleKey) {
+    return json({
+      error: 'Configuracao da Edge Function incompleta.',
+      details: 'SUPABASE_URL ou SERVICE_ROLE_KEY nao configurada.',
+    }, 500);
   }
 
   const authHeader = req.headers.get('Authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) return json({ error: 'Sessao ausente.' }, 401);
 
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false },
-  });
-
-  const { data: sessionData, error: sessionError } = await userClient.auth.getUser();
-  const requester = sessionData?.user;
-  if (sessionError || !requester?.email) return json({ error: 'Sessao invalida.' }, 401);
-  if (!ADMIN_EMAILS.includes(requester.email.toLowerCase())) return json({ error: 'Acesso restrito a administradores.' }, 403);
-
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  let body: any = {};
-  try {
-    body = await req.json();
-  } catch (_) {
-    return json({ error: 'Corpo da requisicao invalido.' }, 400);
+  const { data: sessionData, error: sessionError } = await adminClient.auth.getUser(token);
+  const requester = sessionData?.user;
+  if (sessionError || !requester?.email) return json({ error: 'Sessao invalida.' }, 401);
+  const isFallbackAdmin = ADMIN_EMAILS.includes(requester.email.toLowerCase());
+
+  const { data: requesterProfile, error: profileError } = await adminClient
+    .from('profiles')
+    .select('perfil, ativo')
+    .eq('id', requester.id)
+    .maybeSingle();
+  if (profileError && !isFallbackAdmin) return json({ error: profileError.message || 'Nao foi possivel validar o perfil administrativo.' }, 500);
+
+  const isProfileAdmin = requesterProfile?.perfil === 'admin' && requesterProfile?.ativo !== false;
+  if (!isProfileAdmin && !isFallbackAdmin) return json({ error: 'Acesso restrito a administradores.' }, 403);
+
+  let body: any = req.method === 'GET' ? { action: 'list' } : {};
+  if (req.method === 'POST') {
+    try {
+      body = await req.json();
+    } catch (_) {
+      return json({ error: 'Corpo da requisicao invalido.' }, 400);
+    }
   }
 
   try {
@@ -78,7 +91,20 @@ Deno.serve(async (req) => {
         perPage: Math.min(Number(body.perPage || 200), 200),
       });
       if (error) throw error;
-      const users = (data?.users || []).map(publicUser).sort((a, b) => String(a.email || '').localeCompare(String(b.email || '')));
+      const ids = (data?.users || []).map((user) => user.id);
+      let profiles: any[] = [];
+      if (ids.length) {
+        const { data: profilesData, error: profilesError } = await adminClient
+          .from('profiles')
+          .select('id, nome, email, perfil, ativo')
+          .in('id', ids);
+        if (profilesError) throw profilesError;
+        profiles = profilesData || [];
+      }
+      const profileById = new Map((profiles || []).map((profile: any) => [profile.id, profile]));
+      const users = (data?.users || [])
+        .map((user) => publicUser(user, profileById.get(user.id)))
+        .sort((a, b) => String(a.email || '').localeCompare(String(b.email || '')));
       return json({ users });
     }
 
@@ -94,7 +120,8 @@ Deno.serve(async (req) => {
         user_metadata: { ...currentMeta, name, full_name: name },
       });
       if (error) throw error;
-      return json({ user: publicUser(data.user) });
+      await adminClient.from('profiles').update({ nome: name, updated_at: new Date().toISOString() }).eq('id', userId);
+      return json({ user: publicUser(data.user, { nome: name }) });
     }
 
     if (body.action === 'resetPassword') {
