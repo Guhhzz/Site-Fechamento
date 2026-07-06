@@ -15,6 +15,7 @@ const AUTH_WELCOME_SEEN_KEY = 'site_tech_analytics_welcome_seen_v1';
 const THEME_KEY = 'site_tech_analytics_theme_v1';
 const SUPABASE_URL = 'https://evpjwlvozywnpsxgczxg.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_P2r-rZDvR2kcUaAm2ueN9g_SvLnybxr';
+const ADMIN_USERS_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-users`;
 const ADMIN_EMAILS = [
   'gustavo.salomao@gazin.com.br',
   'email-da-gerente@gazin.com.br',
@@ -118,10 +119,16 @@ function setSignedInUser(user){
  document.body.classList.toggle('authReady',isLogged);
  document.body.classList.toggle('adminUser',isAdmin);
  document.body.classList.toggle('adminUnlocked',isAdmin);
- const panel=document.getElementById('userPanel'), userName=document.getElementById('userName'), userRole=document.getElementById('userRole');
+ const panel=document.getElementById('userPanel'), userName=document.getElementById('userName'), userRole=document.getElementById('userRole'), userIdentity=document.getElementById('userIdentity');
  if(panel) panel.hidden=!isLogged;
  if(userName) userName.textContent=isLogged ? (CURRENT_USER.name || CURRENT_USER.email) : 'Usuário';
  if(userRole) userRole.textContent=isAdmin ? 'Administrador' : 'Visualização';
+ if(userIdentity){
+  userIdentity.disabled=!isAdmin;
+  userIdentity.setAttribute('aria-expanded','false');
+  userIdentity.title=isAdmin ? 'Abrir menu administrativo' : 'Usuário conectado';
+ }
+ closeUserMenu();
  if(typeof renderHistoryBases === 'function') renderHistoryBases();
 }
 function openWelcomeModal(){
@@ -245,6 +252,7 @@ function initSupabaseAuth(client,loginForm,signupForm){
  client.auth.onAuthStateChange((_event,session)=>{
   const user=session?.user;
   setSignedInUser(user ? supabaseProfile(user) : null);
+  if(_event==='PASSWORD_RECOVERY') setTimeout(openPasswordRecoveryModal,120);
  });
 }
 function initAuth(){
@@ -258,6 +266,184 @@ function initAuth(){
  const closeWelcome=document.getElementById('closeWelcomeModal'), welcomeModal=document.getElementById('welcomeModal');
  if(closeWelcome) closeWelcome.addEventListener('click',closeWelcomeModal);
  if(welcomeModal) welcomeModal.addEventListener('click',e=>{if(e.target===welcomeModal) closeWelcomeModal();});
+}
+function closeUserMenu(){
+ const menu=document.getElementById('userMenu'), identity=document.getElementById('userIdentity');
+ if(menu) menu.hidden=true;
+ if(identity) identity.setAttribute('aria-expanded','false');
+}
+function toggleUserMenu(){
+ if(!canManageHistory()) return;
+ const menu=document.getElementById('userMenu'), identity=document.getElementById('userIdentity');
+ if(!menu) return;
+ const open=menu.hidden;
+ menu.hidden=!open;
+ if(identity) identity.setAttribute('aria-expanded',open?'true':'false');
+}
+function formatUserDate(value){
+ if(!value) return 'Sem registro';
+ const date=new Date(value);
+ if(Number.isNaN(date.getTime())) return 'Sem registro';
+ return date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+}
+async function getSupabaseAccessToken(){
+ const client=getSupabaseClient();
+ if(!client) throw new Error('Supabase não carregado nesta sessão.');
+ const {data,error}=await client.auth.getSession();
+ if(error || !data?.session?.access_token) throw new Error('Sua sessão expirou. Entre novamente para continuar.');
+ return data.session.access_token;
+}
+async function callAdminUsers(payload){
+ const token=await getSupabaseAccessToken();
+ const res=await fetch(ADMIN_USERS_FUNCTION_URL,{
+  method:'POST',
+  headers:{
+   'Content-Type':'application/json',
+   'Authorization':`Bearer ${token}`,
+   'apikey':SUPABASE_PUBLISHABLE_KEY
+  },
+  body:JSON.stringify(payload)
+ });
+ const text=await res.text();
+ let data={};
+ try{ data=text?JSON.parse(text):{}; }catch(e){ data={error:text}; }
+ if(!res.ok) throw new Error(data.error || 'Não foi possível concluir a solicitação administrativa.');
+ return data;
+}
+function usersEmpty(message){
+ const list=document.getElementById('usersList');
+ if(list) list.innerHTML=`<div class="usersEmpty">${esc(message)}</div>`;
+}
+function renderAdminUsers(users){
+ const list=document.getElementById('usersList');
+ if(!list) return;
+ if(!users?.length){ usersEmpty('Nenhum usuário cadastrado foi retornado pelo Supabase.'); return; }
+ list.innerHTML=users.map(user=>{
+  const name=user.name || user.email || 'Usuário';
+  const admin=isAdminEmail(user.email);
+  const confirmed=user.email_confirmed_at ? 'Confirmado' : 'Pendente';
+  return `<article class="userRow" data-user-id="${esc(user.id)}" data-email="${esc(user.email)}">
+    <div class="userSummary">
+      <div><strong>${esc(name)}</strong><span>${esc(user.email || 'E-mail não informado')}</span></div>
+      <div class="userBadges"><em>${admin?'Admin':'Visualização'}</em><em>${confirmed}</em></div>
+      <small>Criado em ${esc(formatUserDate(user.created_at))} · Último acesso ${esc(formatUserDate(user.last_sign_in_at))}</small>
+    </div>
+    <div class="userControls">
+      <label>Nome de exibição<input class="adminUserNameInput" type="text" value="${esc(name)}" /></label>
+      <button type="button" data-action="save-name">Salvar nome</button>
+      <button type="button" data-action="reset-password">Enviar redefinição</button>
+    </div>
+  </article>`;
+ }).join('');
+}
+async function loadAdminUsers(){
+ const status=document.getElementById('usersStatus');
+ if(status) status.textContent='Carregando usuários...';
+ usersEmpty('Carregando usuários cadastrados no Supabase...');
+ try{
+  const data=await callAdminUsers({action:'list'});
+  renderAdminUsers(data.users || []);
+  if(status) status.textContent=`${(data.users||[]).length} usuário(s) carregado(s).`;
+ }catch(error){
+  usersEmpty(`${error.message}\n\nSe a Edge Function ainda não foi publicada, publique a função "admin-users" no Supabase para ativar esta tela.`);
+  if(status) status.textContent='Não foi possível carregar a lista.';
+ }
+}
+function openUsersModal(){
+ if(!canManageHistory()){ alert('Acesso restrito a administradores.'); return; }
+ closeUserMenu();
+ const modal=document.getElementById('usersModal');
+ if(!modal) return;
+ modal.classList.add('open');
+ modal.setAttribute('aria-hidden','false');
+ loadAdminUsers();
+}
+function closeUsersModal(){
+ const modal=document.getElementById('usersModal');
+ if(!modal) return;
+ modal.classList.remove('open');
+ modal.setAttribute('aria-hidden','true');
+}
+function setupAdminUsers(){
+ const identity=document.getElementById('userIdentity'), openBtn=document.getElementById('openUsersBtn'), modal=document.getElementById('usersModal'), closeBtn=document.getElementById('closeUsersModal'), refreshBtn=document.getElementById('refreshUsersBtn'), list=document.getElementById('usersList');
+ if(identity){
+  identity.addEventListener('click',toggleUserMenu);
+  identity.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleUserMenu(); } });
+ }
+ if(openBtn) openBtn.addEventListener('click',openUsersModal);
+ if(closeBtn) closeBtn.addEventListener('click',closeUsersModal);
+ if(refreshBtn) refreshBtn.addEventListener('click',loadAdminUsers);
+ if(modal) modal.addEventListener('click',e=>{if(e.target===modal) closeUsersModal();});
+ document.addEventListener('click',e=>{
+  const panel=document.getElementById('userPanel');
+  if(panel && !panel.contains(e.target)) closeUserMenu();
+ });
+ if(list) list.addEventListener('click',async e=>{
+  const btn=e.target.closest('button[data-action]');
+  if(!btn || !canManageHistory()) return;
+  const row=btn.closest('.userRow');
+  if(!row) return;
+  const status=document.getElementById('usersStatus');
+  const action=btn.dataset.action;
+  btn.disabled=true;
+  try{
+   if(action==='save-name'){
+    const name=String(row.querySelector('.adminUserNameInput')?.value||'').trim();
+    if(!name) throw new Error('Informe um nome para salvar.');
+    await callAdminUsers({action:'updateName',userId:row.dataset.userId,name});
+    if(status) status.textContent='Nome atualizado com sucesso.';
+    await loadAdminUsers();
+   }
+   if(action==='reset-password'){
+    const email=row.dataset.email;
+    if(!email) throw new Error('Usuário sem e-mail válido.');
+    if(!confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) return;
+    await callAdminUsers({action:'resetPassword',email});
+    if(status) status.textContent='E-mail de redefinição enviado.';
+   }
+  }catch(error){
+   if(status) status.textContent=error.message;
+   alert(error.message);
+  }finally{
+   btn.disabled=false;
+  }
+ });
+}
+function openPasswordRecoveryModal(){
+ const modal=document.getElementById('passwordRecoveryModal');
+ if(!modal) return;
+ modal.classList.add('open');
+ modal.setAttribute('aria-hidden','false');
+ const input=document.getElementById('newPassword');
+ if(input) setTimeout(()=>input.focus(),80);
+}
+function closePasswordRecoveryModal(){
+ const modal=document.getElementById('passwordRecoveryModal');
+ if(!modal) return;
+ modal.classList.remove('open');
+ modal.setAttribute('aria-hidden','true');
+}
+function setupPasswordRecoveryModal(){
+ const modal=document.getElementById('passwordRecoveryModal'), closeBtn=document.getElementById('closePasswordRecoveryModal'), form=document.getElementById('passwordRecoveryForm'), status=document.getElementById('passwordRecoveryStatus');
+ if(closeBtn) closeBtn.addEventListener('click',closePasswordRecoveryModal);
+ if(modal) modal.addEventListener('click',e=>{if(e.target===modal) closePasswordRecoveryModal();});
+ if(form) form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const password=String(document.getElementById('newPassword')?.value||'');
+  const confirmPassword=String(document.getElementById('confirmNewPassword')?.value||'');
+  if(password.length<6){ if(status) status.textContent='A senha precisa ter pelo menos 6 caracteres.'; return; }
+  if(password!==confirmPassword){ if(status) status.textContent='As senhas não conferem.'; return; }
+  const client=getSupabaseClient();
+  if(!client){ if(status) status.textContent='Supabase não carregado.'; return; }
+  if(status) status.textContent='Salvando nova senha...';
+  const {error}=await client.auth.updateUser({password});
+  if(error){ if(status) status.textContent=translateSupabaseAuthError(error); return; }
+  form.reset();
+  if(status) status.textContent='Senha atualizada com sucesso.';
+  if(history.replaceState) history.replaceState({},document.title,location.pathname);
+  setTimeout(closePasswordRecoveryModal,900);
+ });
+ if(String(location.hash+location.search).includes('type=recovery')) setTimeout(openPasswordRecoveryModal,800);
 }
 
 const subtitles = {ofertadas:'Chamadas recebidas no período',atendidas:'Chamadas efetivamente atendidas',abandonadas:'Chamadas abandonadas',callback:'Retornos registrados na fila do núcleo',whatsapp:'Tickets via WhatsApp'};
@@ -856,6 +1042,8 @@ initTheme();
 initAuth();
 buildMenu();
 setupHistoryModal();
+setupAdminUsers();
+setupPasswordRecoveryModal();
 setupMobileTopButton();
 setView(initialViewFromHash());
 function setView(key){ key==='geral'?generalView():nucleoView(key); window.scrollTo({top:0,behavior:'smooth'}); }

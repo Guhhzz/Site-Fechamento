@@ -236,6 +236,18 @@ body.darkMode .historyIntro{
 body.darkMode .historyIntro strong{color:#F4F9FF}
 body.darkMode .tableScroll:after{background:linear-gradient(90deg,rgba(16,29,51,0),rgba(16,29,51,.96))}
 body.darkMode .modal{background:rgba(0,5,15,.78)}
+body.darkMode .userMenu,
+body.darkMode .userRow,
+body.darkMode .usersEmpty{background:#101D33;border-color:#263C5F}
+body.darkMode .userMenu button{background:#132845;border-color:#263C5F;color:#DCEBFF}
+body.darkMode .usersToolbar span,
+body.darkMode .userSummary small,
+body.darkMode .userControls label{color:#A9BCD4}
+body.darkMode .userSummary strong{color:#F4F9FF}
+body.darkMode .userSummary span{color:#DCEBFF}
+body.darkMode .userControls input,
+body.darkMode .passwordRecoveryForm input{background:#fff;color:#061A36;-webkit-text-fill-color:#061A36}
+body.darkMode .passwordRecoveryForm label{color:#DCEBFF}
 body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
 body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
 body.darkMode .brandGridScroll{scrollbar-color:#2E9BFF #162843}
@@ -416,7 +428,26 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 }
 
 .baseSelect.disabled{background:#EAF4FF;color:#285B91;box-shadow:none;cursor:default}.baseSelect.active{background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;box-shadow:0 12px 24px rgba(0,87,184,.22);cursor:default}.baseRemove{background:#FFF0F0;color:#B42318;border:1px solid rgba(180,35,24,.16)}.baseEdit{background:#F3F7FC;color:#0057B8;border:1px solid #D8E9FA}.baseEdit,.baseRemove{border-radius:999px;padding:9px 12px;font-weight:950;cursor:pointer;transition:.18s}.baseEdit:hover,.baseRemove:hover{transform:translateY(-1px)}.basePill.current{background:#EAF4FF;color:#0057B8;border-color:rgba(0,87,184,.18)}.baseAdminActions{display:none;gap:8px;flex-wrap:wrap;position:relative;z-index:1;margin-top:8px}.adminUnlocked .baseAdminActions{display:flex}.historyEmpty{padding:24px;border-radius:20px;background:#F8FBFF;border:1px dashed #B9CDE5;color:#6B7F98;text-align:center}.passwordBox{padding:10px 0 4px}.passwordBox label{display:block;font-size:13px;font-weight:850;color:#315879;margin-bottom:8px}.passwordInput{width:100%;border:1px solid #D8E9FA;border-radius:16px;padding:13px 14px;font-size:15px;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.95);background:#F8FBFF;color:#061A36}.passwordActions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}.adminHint{margin-top:10px;color:#6B7F98;font-size:12px;line-height:1.35}.smallModalPanel{width:min(520px,94vw);height:auto;min-height:0}
-@media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}}
+.usersPanel{width:min(1080px,96vw);height:min(780px,92vh)}
+.usersToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.usersToolbar span{font-size:13px;font-weight:850;color:#5E748D}
+.usersList{display:grid;gap:12px;overflow:auto;padding:2px 4px 6px}
+.usersEmpty{white-space:pre-line;padding:24px;border-radius:20px;background:#F8FBFF;border:1px dashed #B9CDE5;color:#5E748D;font-weight:800;line-height:1.45}
+.userRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.9fr);gap:16px;align-items:center;border:1px solid #D8E9FA;border-radius:22px;background:linear-gradient(180deg,#FFFFFF,#F8FBFF);box-shadow:0 12px 28px rgba(6,26,54,.08);padding:16px}
+.userSummary strong{display:block;color:#061A36;font-size:16px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.userSummary span{display:block;color:#315879;font-size:13px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.userSummary small{display:block;margin-top:10px;color:#6B7F98;font-size:12px;line-height:1.35}
+.userBadges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.userBadges em{font-style:normal;font-size:11px;font-weight:950;color:#0057B8;background:#EAF4FF;border:1px solid #D8E9FA;border-radius:999px;padding:5px 8px}
+.userControls{display:grid;grid-template-columns:1fr auto auto;align-items:end;gap:10px}
+.userControls label{font-size:11px;font-weight:950;color:#5E748D;text-transform:uppercase;letter-spacing:.04em}
+.userControls input,.passwordRecoveryForm input{display:block;width:100%;margin-top:6px;border:1px solid #D8E9FA;border-radius:14px;background:#fff;color:#061A36;padding:11px 12px;font-weight:850;outline:none}
+.userControls button{border:0;border-radius:14px;padding:11px 13px;font-weight:950;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));box-shadow:0 10px 20px rgba(0,87,184,.16)}
+.userControls button[data-action="reset-password"]{background:linear-gradient(135deg,#18A058,#27C46C)}
+.userControls button:disabled{opacity:.62;cursor:progress}
+.passwordRecoveryForm{display:grid;gap:10px}
+.passwordRecoveryForm label{font-size:12px;font-weight:950;color:#315879}
+@media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}.usersPanel{height:calc(100vh - 20px)}.userRow{grid-template-columns:1fr}.userControls{grid-template-columns:1fr}.userControls button{width:100%}.usersToolbar{display:grid}.usersToolbar .baseDownload{width:100%}}
 
 .tooltip{position:fixed;pointer-events:none;background:#061A36;color:#fff;padding:8px 10px;border-radius:10px;font-size:12px;opacity:0;transform:translate(-50%,-120%);transition:opacity .1s;box-shadow:0 10px 28px rgba(0,0,0,.28);z-index:99}
 .modal{position:fixed;inset:0;background:rgba(4,16,34,.70);z-index:120;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
@@ -580,11 +611,46 @@ body.authLoading .authPrimary{
   background:rgba(255,255,255,.10);
   border:1px solid rgba(255,255,255,.14);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+  position:relative;
 }
-.userPanel>div{min-width:0;flex:1}
+.userPanel>div{min-width:0}
 .userPanel span{display:block;font-size:13px;font-weight:950;color:#fff;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .userPanel small{display:block;margin-top:3px;color:#BBD7F7;font-size:11px;font-weight:850}
 .userPanel button{border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.10);color:#fff;font-weight:900;cursor:pointer}
+.userPanel .userIdentity{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:left;
+  padding:4px 6px;
+  border-color:transparent;
+  background:transparent;
+}
+.userPanel .userIdentity:not(:disabled):hover,
+.userPanel .userIdentity[aria-expanded="true"]{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.18);
+}
+.userPanel .userIdentity:disabled{cursor:default}
+.userMenu{
+  position:absolute;
+  left:12px;
+  top:calc(100% + 8px);
+  z-index:260;
+  width:190px;
+  padding:8px;
+  border-radius:16px;
+  background:#FFFFFF;
+  border:1px solid #D8E9FA;
+  box-shadow:0 18px 40px rgba(6,26,54,.22);
+}
+.userMenu button{
+  width:100%;
+  color:#0057B8;
+  background:#EAF4FF;
+  border-color:#D8E9FA;
+  text-align:left;
+}
+body:not(.adminUser) .userMenu{display:none!important}
 .themeToggle{min-width:62px}
 .themeToggle,
 #logoutBtn{flex:0 0 auto}
