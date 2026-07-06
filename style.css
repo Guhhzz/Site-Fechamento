@@ -516,18 +516,38 @@ body.darkMode .authBrand h1{color:#F8FBFF}
 body.darkMode .authBrand span,
 body.darkMode .authForm label{color:#9FCEFF}
 body.darkMode .authForm input{
-  color:#061A36;
-  background:#F8FBFF;
+  color:#061A36!important;
+  background:#F8FBFF!important;
   border-color:#7CC8FF;
-  -webkit-text-fill-color:#061A36;
+  caret-color:#0057B8;
+  color-scheme:light;
+  text-shadow:none!important;
+  -webkit-text-fill-color:#061A36!important;
 }
-body.darkMode .authForm input::placeholder{color:#5F7894;-webkit-text-fill-color:#5F7894}
+body.darkMode .authForm input::placeholder{color:#5F7894!important;opacity:1;-webkit-text-fill-color:#5F7894!important}
 body.darkMode .authForm input:focus{
-  color:#061A36;
-  background:#fff;
+  color:#061A36!important;
+  background:#fff!important;
   border-color:#00A3FF;
   box-shadow:0 0 0 4px rgba(0,163,255,.22);
-  -webkit-text-fill-color:#061A36;
+  -webkit-text-fill-color:#061A36!important;
+}
+body.darkMode .authShell .authPanel .authForm input,
+body.darkMode .authShell .authPanel .authForm input:hover,
+body.darkMode .authShell .authPanel .authForm input:active,
+body.darkMode .authShell .authPanel .authForm input:focus,
+body.darkMode .authShell .authPanel .authForm input:-webkit-autofill,
+body.darkMode .authShell .authPanel .authForm input:-webkit-autofill:hover,
+body.darkMode .authShell .authPanel .authForm input:-webkit-autofill:focus{
+  color:#061A36!important;
+  background:#fff!important;
+  box-shadow:0 0 0 1000px #fff inset!important;
+  -webkit-box-shadow:0 0 0 1000px #fff inset!important;
+  -webkit-text-fill-color:#061A36!important;
+}
+body.darkMode .authShell .authPanel .authForm input::selection{
+  color:#fff;
+  background:#0057B8;
 }
 .authPrimary{
   margin-top:8px;
