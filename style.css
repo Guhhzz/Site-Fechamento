@@ -305,7 +305,8 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .brandGridScroll{
   width:100%;
   height:666px;
-  overflow:auto;
+  overflow-y:auto;
+  overflow-x:hidden;
   position:relative;
   z-index:2;
   padding-bottom:8px;
@@ -319,9 +320,9 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .brandGridHeader,
 .brandGridRow{
   display:grid;
-  grid-template-columns:minmax(170px,1.55fr) minmax(115px,.9fr) minmax(125px,.95fr) minmax(150px,1.1fr) minmax(160px,1.1fr) minmax(160px,1.1fr) minmax(150px,1.05fr);
+  grid-template-columns:minmax(185px,1.45fr) minmax(92px,.68fr) minmax(108px,.75fr) minmax(122px,.86fr) minmax(142px,1fr) minmax(142px,1fr) minmax(132px,.9fr);
   align-items:center;
-  column-gap:12px;
+  column-gap:8px;
 }
 .brandGridHeader{
   position:sticky;
@@ -330,7 +331,7 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
   padding:0 18px 10px 10px;
   background:linear-gradient(180deg,#FFFFFF 0%,#F9FCFF 82%,rgba(249,252,255,.92) 100%);
 }
-.brandGridHeader div{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#5A6E86;text-align:right;font-weight:900;white-space:normal;line-height:1.2}
+.brandGridHeader div{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5A6E86;text-align:right;font-weight:900;white-space:normal;line-height:1.15}
 .brandGridHeader div:first-child{text-align:left}
 .brandGridRows{
   overflow:visible;
@@ -339,13 +340,13 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
   row-gap:10px;
 }
 .brandGridRow{border:1px solid #E3EFFB;border-radius:14px;background:linear-gradient(180deg,#FFFFFF,#FBFDFF);overflow:hidden}
-.brandGridRow>div{padding:0 10px;text-align:right;font-weight:800;color:#17395F;min-width:0;white-space:nowrap}
+.brandGridRow>div{padding:0 7px;text-align:right;font-size:13px;font-weight:800;color:#17395F;min-width:0;white-space:nowrap}
 .brandGridRow>div:first-child{text-align:left;color:#061A36}
 .brandGridRow>div:last-child{text-align:right;color:#061A36}
 .brandName{display:flex;align-items:center;gap:11px;font-weight:950;color:#061A36}
 .brandRank{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-3));color:#fff;display:grid;place-items:center;font-size:12px;box-shadow:0 8px 20px rgba(0,87,184,.22);flex:0 0 auto}
 .brandLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.percentBadge{display:inline-flex;align-items:center;justify-content:center;min-width:58px;border-radius:999px;background:#EAF4FF;color:#0057B8;padding:5px 9px;font-weight:950}
+.percentBadge{display:inline-flex;align-items:center;justify-content:center;min-width:54px;border-radius:999px;background:#EAF4FF;color:#0057B8;padding:5px 8px;font-weight:950}
 .moneyCell{font-variant-numeric:tabular-nums;color:#0E345D!important}
 .tableCaption{position:relative;z-index:2;margin-top:-6px;margin-bottom:12px;color:#607089;font-size:12px}
 .empty{background:#fff;border:1px dashed #B9CDE5;border-radius:22px;padding:34px;text-align:center;color:var(--muted);box-shadow:0 12px 34px rgba(9,42,86,.05)}
@@ -978,6 +979,7 @@ body.authReady .authShell{display:none}
   .brandGridTable{min-width:1320px}
   .brandGridScroll{
     height:636px;
+    overflow:auto;
   }
   .brandGridRows{
     grid-auto-rows:51px;
