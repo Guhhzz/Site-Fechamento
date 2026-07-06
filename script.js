@@ -840,7 +840,7 @@ function groupedChart(el,data){
  const labelLimit=compact?17:28;
  const labelFont=compact?10:12;
  const max=Math.max(...data.flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">`;
- svg+=`<text x="${m.l}" y="18" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+(compact?96:130)}" y="18" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
+ svg+=`<text class="legendSuccessText" x="${m.l}" y="18" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text class="legendFailText" x="${m.l+(compact?96:130)}" y="18" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
  const rowH=(H-m.t-m.b)/data.length;
  data.forEach((d,i)=>{ const y=m.t+i*rowH+8; svg+=`<text x="${m.l-10}" y="${y+22}" text-anchor="end" font-size="${labelFont}" fill="${colors.muted}" font-weight="800">${esc(trunc(d.label,labelLimit))}</text>`; [['sucesso','#0057B8','Com sucesso',0],['semSucesso','#E05252','Sem sucesso',25]].forEach(arr=>{ const key=arr[0],color=arr[1],lab=arr[2],off=arr[3]; const w=Math.max(0,(W-m.l-m.r)*(d[key]/max)); const yy=y+off; svg+=`<rect class="bar" data-tip="${esc(d.label)} · ${lab}: ${fmt.format(Math.round(+d[key]||0))}" x="${m.l}" y="${yy}" width="${Math.max(w,4)}" height="18" rx="9" fill="${color}"/><text x="${Math.min(m.l+w+8,W-36)}" y="${yy+13}" font-size="${compact?10:12}" fill="${colors.label}" font-weight="950">${fmt.format(Math.round(+d[key]||0))}</text>`; }); });
  svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
@@ -861,7 +861,7 @@ function groupedColumnChart(el,data){
  const x0=i=>m.l+i*groupW + (groupW-pairW)/2;
  const y=v=>H-m.b-(v/max)*innerH;
  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">${defs}`;
- svg+=`<text x="${m.l+6}" y="22" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text x="${m.l+(compact?108:146)}" y="22" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
+ svg+=`<text class="legendSuccessText" x="${m.l+6}" y="22" font-size="${compact?10:12}" fill="#0057B8" font-weight="950">■ Com sucesso</text><text class="legendFailText" x="${m.l+(compact?108:146)}" y="22" font-size="${compact?10:12}" fill="#E05252" font-weight="950">■ Sem sucesso</text>`;
  // baseline
  svg+=`<line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="${colors.baseline}" stroke-width="2"/>`;
  (data||[]).forEach((d,i)=>{

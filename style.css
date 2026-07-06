@@ -275,6 +275,14 @@ body.darkMode .chartCanvas svg text,
 body.darkMode #modalCanvas svg text{
   fill:#FFFFFF!important;
 }
+body.darkMode .chartCanvas svg text.legendSuccessText,
+body.darkMode #modalCanvas svg text.legendSuccessText{
+  fill:#2E9BFF!important;
+}
+body.darkMode .chartCanvas svg text.legendFailText,
+body.darkMode #modalCanvas svg text.legendFailText{
+  fill:#FF5B5B!important;
+}
 body.darkMode .chartCanvas svg text[style*="stroke:#fff"],
 body.darkMode #modalCanvas svg text[style*="stroke:#fff"]{
   stroke:#071120!important;
