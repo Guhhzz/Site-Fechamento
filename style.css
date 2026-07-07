@@ -785,6 +785,20 @@ body:not(.adminUser) .userMenu{display:none!important}
     linear-gradient(135deg,rgba(0,87,184,.10),rgba(0,163,255,.07) 42%,rgba(255,255,255,.70)),
     #F8FBFF;
 }
+.welcomeSceneVisual{
+  position:absolute;
+  right:24px;
+  top:26px;
+  width:250px;
+  min-height:168px;
+  display:grid;
+  place-items:center;
+  z-index:0;
+}
+.welcomeSceneVisual>*{
+  width:100%;
+  animation:welcomeSceneIn .36s ease both;
+}
 .welcomeMiniDashboard{
   position:absolute;
   right:24px;
@@ -839,6 +853,162 @@ body:not(.adminUser) .userMenu{display:none!important}
 .welcomeVideo.playing .welcomeMiniChart span:nth-child(3){animation-delay:.24s}
 .welcomeVideo.playing .welcomeMiniChart span:nth-child(4){animation-delay:.36s}
 .welcomeVideo.playing .welcomeMiniChart span:nth-child(5){animation-delay:.48s}
+.welcomeBrandScene,
+.welcomeClosingScene{
+  min-height:168px;
+  border-radius:22px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  text-align:center;
+  background:linear-gradient(145deg,#061A36,#0C4486);
+  color:#fff;
+  box-shadow:0 22px 50px rgba(6,26,54,.18);
+}
+.welcomeBrandScene img{width:104px;height:auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.22))}
+.welcomeBrandScene strong,
+.welcomeClosingScene strong{font-size:18px;line-height:1.1}
+.welcomeBrandScene span,
+.welcomeClosingScene span{font-size:11px;font-weight:900;text-transform:uppercase;color:#CFE6FF}
+.welcomePlatformScene,
+.welcomeKpiScene,
+.welcomeInsightsScene,
+.welcomeMenuScene,
+.welcomeRateScene,
+.welcomeChartScene,
+.welcomeActionsScene,
+.welcomeBasesScene{
+  min-height:168px;
+  border:1px solid rgba(0,87,184,.14);
+  border-radius:22px;
+  background:rgba(255,255,255,.86);
+  box-shadow:0 20px 46px rgba(6,26,54,.12);
+  padding:14px;
+}
+.welcomePlatformScene{display:grid;gap:10px}
+.welcomePlatformScene div,
+.welcomeKpiScene div,
+.welcomeRateScene div,
+.welcomeInsightsScene article{
+  border:1px solid #D8E9FA;
+  border-radius:15px;
+  background:linear-gradient(180deg,#FFFFFF,#EAF4FF);
+  padding:10px;
+}
+.welcomePlatformScene span,
+.welcomeKpiScene span,
+.welcomeRateScene span,
+.welcomeInsightsScene span{
+  display:block;
+  color:#5E748D;
+  font-size:10px;
+  font-weight:950;
+  text-transform:uppercase;
+}
+.welcomePlatformScene strong,
+.welcomeKpiScene strong,
+.welcomeRateScene strong,
+.welcomeInsightsScene strong{
+  display:block;
+  color:#061A36;
+  font-size:15px;
+  line-height:1.12;
+  margin-top:4px;
+}
+.welcomeKpiScene{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.welcomeKpiScene div:first-child{grid-column:span 2}
+.welcomeRateScene,
+.welcomeInsightsScene{display:grid;gap:10px}
+.welcomeRateScene strong{font-size:28px;color:#0057B8}
+.welcomeRateScene em{
+  display:inline-flex;
+  margin-top:6px;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  font-style:normal;
+  font-weight:1000;
+}
+.welcomeRateScene em.good{background:#EAF8EF;color:#157347}
+.welcomeRateScene em.danger{background:#FFF0F0;color:#B42318}
+.welcomeMenuScene{display:grid;grid-template-columns:1fr;gap:7px}
+.welcomeMenuScene span{
+  border:1px solid #D8E9FA;
+  border-radius:999px;
+  padding:7px 10px;
+  color:#123250;
+  background:#F8FBFF;
+  font-size:11px;
+  font-weight:950;
+}
+.welcomeMenuScene span.active{background:linear-gradient(135deg,#0057B8,#00A3FF);color:#fff;border-color:transparent}
+.welcomeChartScene{display:grid;gap:12px}
+.welcomeChartScene .line{
+  position:relative;
+  height:86px;
+  border-radius:16px;
+  background:linear-gradient(180deg,#FFFFFF,#EAF4FF);
+  border:1px solid #D8E9FA;
+}
+.welcomeChartScene .line:before{
+  content:"";
+  position:absolute;
+  left:16px;
+  right:16px;
+  top:50%;
+  height:3px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#0057B8,#00A3FF);
+  transform:rotate(-8deg);
+}
+.welcomeChartScene .line i{
+  position:absolute;
+  left:var(--x);
+  top:var(--y);
+  width:11px;
+  height:11px;
+  border:3px solid #0057B8;
+  border-radius:50%;
+  background:#fff;
+}
+.welcomeChartScene .bars{height:58px;display:flex;align-items:flex-end;gap:10px}
+.welcomeChartScene .bars span{
+  flex:1;
+  height:var(--h);
+  border-radius:10px 10px 3px 3px;
+  background:linear-gradient(180deg,#00A3FF,#0057B8);
+}
+.welcomeActionsScene{
+  display:grid;
+  align-content:center;
+  justify-items:center;
+  gap:10px;
+}
+.welcomeActionsScene button,
+.welcomeBasesScene button{
+  border:0;
+  border-radius:999px;
+  padding:10px 14px;
+  color:#fff;
+  background:linear-gradient(135deg,#0057B8,#00A3FF);
+  font-weight:1000;
+}
+.welcomeActionsScene p{margin:0;color:#405873;text-align:center;font-size:12px;font-weight:850}
+.welcomeBasesScene{
+  display:grid;
+  align-content:center;
+  gap:14px;
+}
+.welcomeBasesScene div{
+  border-radius:18px;
+  padding:15px;
+  background:linear-gradient(180deg,#FFFFFF,#EAF4FF);
+  border:1px solid #D8E9FA;
+}
+.welcomeBasesScene strong{display:block;color:#061A36}
+.welcomeBasesScene span{display:block;color:#5E748D;font-size:12px;margin-top:4px}
 .welcomeSceneKicker{
   display:block;
   max-width:calc(100% - 270px);
@@ -877,6 +1047,15 @@ body:not(.adminUser) .userMenu{display:none!important}
 .welcomeDots{
   display:flex;
   gap:7px;
+  padding:0;
+  flex:1 1 auto;
+  min-width:120px;
+}
+.welcomeVideoFooter{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
   padding:14px;
   background:#FFFFFF;
 }
@@ -887,6 +1066,12 @@ body:not(.adminUser) .userMenu{display:none!important}
   background:#D8E9FA;
 }
 .welcomeDots span.active{background:#0057B8}
+#welcomeTime{
+  color:#48617D;
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+}
 .welcomeActions{
   display:flex;
   flex-wrap:wrap;
@@ -927,6 +1112,10 @@ body:not(.adminUser) .userMenu{display:none!important}
   0%,100%{transform:scaleY(1)}
   50%{transform:scaleY(.72)}
 }
+@keyframes welcomeSceneIn{
+  from{opacity:0;transform:translateY(10px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
 body.darkMode .welcomePanel{
   background:linear-gradient(180deg,#FFFFFF,#F8FBFF);
   border-color:rgba(216,233,250,.82);
@@ -942,12 +1131,12 @@ body.darkMode .welcomeContent p{color:#405873}
   .welcomeContent{padding:28px 24px}
   .welcomeContent h3{font-size:25px}
   .welcomeScene{min-height:360px;padding:22px}
-  .welcomeMiniDashboard{
+  .welcomeSceneVisual{
     position:relative;
     top:auto;
     right:auto;
     width:100%;
-    height:138px;
+    min-height:160px;
     margin-bottom:18px;
   }
   .welcomeSceneKicker,
