@@ -120,16 +120,42 @@
     </div>
     <div class="welcomeContent">
       <span class="welcomeEyebrow">Boas-vindas</span>
-      <h3>Conheça o painel de fechamento mensal</h3>
-      <p>Este ambiente consolida os principais indicadores do Atendimento ao Cliente em uma leitura executiva, organizada por núcleo e preparada para acompanhamento do fechamento mensal.</p>
-      <p>Você encontrará dados de ligações ofertadas, atendidas e abandonadas, callbacks, tickets via WhatsApp, gráficos por área e destaques operacionais dos núcleos Consórcio, GazinBank, Assistência, Gazin.com, Chilli Seguros, Canais Especiais, Teleatendimento e Atacado.</p>
-      <p>A proposta é facilitar a análise, reduzir a dispersão das informações e apoiar uma visão mais clara sobre volume, eficiência e pontos de atenção do departamento.</p>
-      <button class="welcomePrimary" id="closeWelcomeModal" type="button">Acessar painel</button>
+      <div class="welcomeVideo" id="welcomeVideo" aria-label="Apresentação do painel de fechamento mensal">
+        <div class="welcomeVideoTop">
+          <span id="welcomeSceneCounter">Cena 1 de 4</span>
+          <span class="welcomeAudioPill" id="welcomeAudioStatus">Áudio narrado</span>
+        </div>
+        <div class="welcomeScene" id="welcomeScene">
+          <div class="welcomeMiniDashboard" aria-hidden="true">
+            <div class="welcomeMiniHeader"><span></span><span></span><span></span></div>
+            <div class="welcomeMiniKpis">
+              <i></i><i></i><i></i>
+            </div>
+            <div class="welcomeMiniChart">
+              <span style="--h:58%"></span>
+              <span style="--h:86%"></span>
+              <span style="--h:42%"></span>
+              <span style="--h:72%"></span>
+              <span style="--h:64%"></span>
+            </div>
+          </div>
+          <span class="welcomeSceneKicker" id="welcomeSceneKicker">Visão executiva</span>
+          <h3 id="welcomeSceneTitle">Conheça o painel de fechamento mensal</h3>
+          <p id="welcomeSceneText">Este ambiente consolida os principais indicadores do Atendimento ao Cliente em uma leitura executiva, organizada por núcleo e preparada para acompanhamento do fechamento mensal.</p>
+        </div>
+        <div class="welcomeProgress" aria-hidden="true"><span id="welcomeProgressBar"></span></div>
+        <div class="welcomeDots" id="welcomeDots" aria-hidden="true"></div>
+      </div>
+      <div class="welcomeActions">
+        <button class="welcomePrimary" id="startWelcomePresentation" type="button">Iniciar apresentação</button>
+        <button class="welcomeSecondary" id="toggleWelcomeAudio" type="button" aria-pressed="true">Áudio ligado</button>
+        <button class="welcomeTextBtn" id="closeWelcomeModal" type="button">Acessar painel</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js?v=20260707-admin-delete-user"></script>
+<script src="script.js?v=20260707-welcome-video"></script>
 </body>
 </html>

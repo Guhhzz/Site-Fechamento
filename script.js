@@ -168,6 +168,131 @@ function setSignedInUser(user){
  closeUserMenu();
  if(typeof renderHistoryBases === 'function') renderHistoryBases();
 }
+const WELCOME_PRESENTATION_SCENES=[
+ {
+  kicker:'Visão executiva',
+  title:'Conheça o painel de fechamento mensal',
+  text:'Este ambiente consolida os principais indicadores do Atendimento ao Cliente em uma leitura executiva, organizada por núcleo e preparada para acompanhar o fechamento mensal.',
+  duration:7200
+ },
+ {
+  kicker:'Canais e volumes',
+  title:'Ligações, WhatsApp, callbacks e abandonos no mesmo lugar',
+  text:'A apresentação reúne chamadas ofertadas, atendidas e abandonadas, tickets digitais, retornos em fila e indicadores que ajudam a entender o volume real de atendimento.',
+  duration:7600
+ },
+ {
+  kicker:'Leitura por núcleo',
+  title:'Compare áreas sem perder contexto',
+  text:'Consórcio, GazinBank, Assistência, Gazin.com, Chilli Seguros, Canais Especiais, Teleatendimento e Atacado ficam organizados por núcleo para uma navegação mais rápida.',
+  duration:8200
+ },
+ {
+  kicker:'Decisão operacional',
+  title:'Insights prontos para orientar a análise',
+  text:'Os gráficos e destaques reduzem a dispersão das informações e deixam mais claros os pontos de eficiência, concentração de demanda e atenção do departamento.',
+  duration:7800
+ }
+];
+let welcomeSceneIndex=0;
+let welcomeSceneTimer=null;
+let welcomePresentationStarted=false;
+let welcomeAudioEnabled=true;
+function welcomeEls(){
+ return {
+  video:document.getElementById('welcomeVideo'),
+  counter:document.getElementById('welcomeSceneCounter'),
+  status:document.getElementById('welcomeAudioStatus'),
+  kicker:document.getElementById('welcomeSceneKicker'),
+  title:document.getElementById('welcomeSceneTitle'),
+  text:document.getElementById('welcomeSceneText'),
+  progress:document.getElementById('welcomeProgressBar'),
+  dots:document.getElementById('welcomeDots'),
+  start:document.getElementById('startWelcomePresentation'),
+  toggle:document.getElementById('toggleWelcomeAudio')
+ };
+}
+function canNarrateWelcome(){
+ return 'speechSynthesis' in window && typeof SpeechSynthesisUtterance === 'function';
+}
+function getWelcomeVoice(){
+ if(!canNarrateWelcome()) return null;
+ const voices=window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+ return voices.find(v=>/pt[-_]BR/i.test(v.lang)) || voices.find(v=>/^pt/i.test(v.lang)) || null;
+}
+function stopWelcomeNarration(){
+ if(welcomeSceneTimer) clearTimeout(welcomeSceneTimer);
+ welcomeSceneTimer=null;
+ if(canNarrateWelcome()) window.speechSynthesis.cancel();
+}
+function narrateWelcomeScene(scene){
+ if(!welcomeAudioEnabled || !canNarrateWelcome()) return;
+ window.speechSynthesis.cancel();
+ const utterance=new SpeechSynthesisUtterance(`${scene.title}. ${scene.text}`);
+ utterance.lang='pt-BR';
+ utterance.rate=.96;
+ utterance.pitch=1;
+ const voice=getWelcomeVoice();
+ if(voice) utterance.voice=voice;
+ window.speechSynthesis.speak(utterance);
+}
+function renderWelcomeDots(activeIndex){
+ const {dots}=welcomeEls();
+ if(!dots) return;
+ dots.innerHTML=WELCOME_PRESENTATION_SCENES.map((_,i)=>`<span class="${i===activeIndex?'active':''}"></span>`).join('');
+}
+function renderWelcomeScene(index, narrate=false){
+ const els=welcomeEls();
+ const scene=WELCOME_PRESENTATION_SCENES[index] || WELCOME_PRESENTATION_SCENES[0];
+ welcomeSceneIndex=index;
+ if(els.counter) els.counter.textContent=`Cena ${index+1} de ${WELCOME_PRESENTATION_SCENES.length}`;
+ if(els.kicker) els.kicker.textContent=scene.kicker;
+ if(els.title) els.title.textContent=scene.title;
+ if(els.text) els.text.textContent=scene.text;
+ if(els.progress) els.progress.style.width=`${((index+1)/WELCOME_PRESENTATION_SCENES.length)*100}%`;
+ if(els.status) els.status.textContent=canNarrateWelcome() ? (welcomeAudioEnabled ? 'Áudio narrado' : 'Áudio pausado') : 'Narração indisponível';
+ renderWelcomeDots(index);
+ if(narrate) narrateWelcomeScene(scene);
+ if(welcomeSceneTimer) clearTimeout(welcomeSceneTimer);
+ if(welcomePresentationStarted){
+  welcomeSceneTimer=setTimeout(()=>{
+   if(index < WELCOME_PRESENTATION_SCENES.length-1){
+    renderWelcomeScene(index+1,true);
+    return;
+   }
+   welcomePresentationStarted=false;
+   if(els.video) els.video.classList.remove('playing');
+   if(els.start) els.start.textContent='Rever apresentação';
+  },scene.duration);
+ }
+}
+function startWelcomePresentation(){
+ const {video,start}=welcomeEls();
+ stopWelcomeNarration();
+ welcomePresentationStarted=true;
+ if(video) video.classList.add('playing');
+ if(start) start.textContent='Rever apresentação';
+ renderWelcomeScene(0,true);
+}
+function toggleWelcomeAudio(){
+ const {toggle}=welcomeEls();
+ welcomeAudioEnabled=!welcomeAudioEnabled;
+ if(toggle){
+  toggle.setAttribute('aria-pressed',welcomeAudioEnabled?'true':'false');
+  toggle.textContent=welcomeAudioEnabled ? 'Áudio ligado' : 'Áudio desligado';
+ }
+ if(!welcomeAudioEnabled) stopWelcomeNarration();
+ renderWelcomeScene(welcomeSceneIndex,welcomePresentationStarted && welcomeAudioEnabled);
+}
+function setupWelcomePresentation(){
+ const {start,toggle}=welcomeEls();
+ renderWelcomeScene(0,false);
+ if(start) start.addEventListener('click',startWelcomePresentation);
+ if(toggle) toggle.addEventListener('click',toggleWelcomeAudio);
+ if(canNarrateWelcome() && window.speechSynthesis.onvoiceschanged !== undefined){
+  window.speechSynthesis.onvoiceschanged=()=>renderWelcomeScene(welcomeSceneIndex,false);
+ }
+}
 function openWelcomeModal(){
  const modal=document.getElementById('welcomeModal'); if(!modal) return;
  const avatar=document.getElementById('welcomeAvatar');
@@ -175,11 +300,21 @@ function openWelcomeModal(){
    avatar.onerror=()=>avatar.closest('.welcomeAvatarFrame')?.classList.add('avatarMissing');
    if(avatar.complete && !avatar.naturalWidth) avatar.closest('.welcomeAvatarFrame')?.classList.add('avatarMissing');
  }
+ stopWelcomeNarration();
+ welcomePresentationStarted=false;
+ const els=welcomeEls();
+ if(els.video) els.video.classList.remove('playing');
+ if(els.start) els.start.textContent='Iniciar apresentação';
+ renderWelcomeScene(0,false);
  modal.classList.add('open');
  modal.setAttribute('aria-hidden','false');
 }
 function closeWelcomeModal(){
  const modal=document.getElementById('welcomeModal'); if(!modal) return;
+ stopWelcomeNarration();
+ welcomePresentationStarted=false;
+ const {video}=welcomeEls();
+ if(video) video.classList.remove('playing');
  modal.classList.remove('open');
  modal.setAttribute('aria-hidden','true');
 }
@@ -257,7 +392,7 @@ function initSupabaseAuth(client,loginForm,signupForm){
    if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
    if(data?.session && data?.user){
     hydrateSupabaseProfile(data.user);
-   showAuthMessage('Cadastro criado com sucesso. Você já pode acessar o painel.','success');
+    showAuthMessage('Cadastro criado com sucesso. Você já pode acessar o painel.','success');
     maybeShowWelcome();
     return;
    }
@@ -315,6 +450,7 @@ function initAuth(){
  const closeWelcome=document.getElementById('closeWelcomeModal'), welcomeModal=document.getElementById('welcomeModal');
  if(closeWelcome) closeWelcome.addEventListener('click',closeWelcomeModal);
  if(welcomeModal) welcomeModal.addEventListener('click',e=>{if(e.target===welcomeModal) closeWelcomeModal();});
+ setupWelcomePresentation();
 }
 function closeUserMenu(){
  const menu=document.getElementById('userMenu'), identity=document.getElementById('userIdentity');
