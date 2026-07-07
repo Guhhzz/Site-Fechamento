@@ -207,7 +207,7 @@ const WELCOME_TOUR_STEPS=[
  },
  {
   view:'GazinBank',
-  target:'#chartsSection .chartCard',
+  target:'#chartsSection .sectionHeader',
   kicker:'Gráficos',
   title:'Rankings e evolução por período',
   text:'Os gráficos ajudam a entender concentração de demanda, evolução diária, canais mais usados e comportamentos relevantes de cada núcleo.'
@@ -225,6 +225,13 @@ const WELCOME_TOUR_STEPS=[
   kicker:'Bases de fechamento',
   title:'Histórico e download das bases',
   text:'Nesta área ficam os arquivos usados no fechamento mensal, permitindo consulta e download da base original quando necessário.'
+ },
+ {
+  view:'geral',
+  target:'.hero',
+  kicker:'Conclusão',
+  title:'Por que este painel foi criado',
+  text:'O objetivo é substituir apresentações manuais por uma experiência centralizada, moderna e interativa, facilitando a leitura dos resultados e fortalecendo a cultura de dados no Atendimento ao Cliente.'
  }
 ];
 let welcomeTourIndex=0;
@@ -326,6 +333,9 @@ function positionTourPanel(target){
  panel.style.left=best.left+'px';
  panel.style.top=best.top+'px';
  panel.dataset.placement=best.name;
+ panel.classList.add('isMoving');
+ clearTimeout(panel._tourMoveTimer);
+ panel._tourMoveTimer=setTimeout(()=>panel.classList.remove('isMoving'),360);
 }
 function renderWelcomeDots(activeIndex){
  const {dots}=welcomeEls();
@@ -372,8 +382,10 @@ function prevWelcomeTourStep(){
 }
 function setupWelcomePresentation(){
  const {prev,next}=welcomeEls();
+ const openTourBtn=document.getElementById('openTourBtn');
  if(prev) prev.addEventListener('click',prevWelcomeTourStep);
  if(next) next.addEventListener('click',nextWelcomeTourStep);
+ if(openTourBtn) openTourBtn.addEventListener('click',openWelcomeModal);
  window.addEventListener('resize',()=>{
   if(document.getElementById('welcomeModal')?.classList.contains('open')) renderWelcomeTourStep(welcomeTourIndex);
  });
