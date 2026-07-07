@@ -1641,7 +1641,217 @@ body.darkMode .welcomeContent p{color:#405873}
     pointer-events:auto;
     transform:translateY(0);
   }
-  body.chartModalOpen .mobileTopBtn{display:none !important}
+body.chartModalOpen .mobileTopBtn{display:none !important}
+}
+
+/* Guided welcome tour */
+.welcomeModal{
+  background:transparent;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  pointer-events:none;
+}
+.welcomeModal.open{
+  display:block;
+  pointer-events:auto;
+}
+.tourBackdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(4,16,34,.62);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+  opacity:0;
+  transition:opacity .18s ease;
+}
+.welcomeModal.open .tourBackdrop{opacity:1}
+.tourSpotlight{
+  position:fixed;
+  border:2px solid rgba(0,163,255,.95);
+  border-radius:24px;
+  box-shadow:0 0 0 9999px rgba(4,16,34,.52),0 20px 70px rgba(0,87,184,.24);
+  opacity:0;
+  pointer-events:none;
+  z-index:221;
+  transition:left .24s ease,top .24s ease,width .24s ease,height .24s ease,opacity .16s ease;
+}
+.tourSpotlight.visible{opacity:1}
+.tourFocused{
+  position:relative;
+  z-index:222!important;
+  filter:drop-shadow(0 18px 35px rgba(0,87,184,.18));
+}
+.tourPanel{
+  position:fixed;
+  right:26px;
+  bottom:24px;
+  z-index:223;
+  width:min(620px,calc(100vw - 32px));
+  display:grid;
+  grid-template-columns:160px 1fr;
+  gap:0;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  overflow:visible;
+}
+.tourCharacter{
+  align-self:end;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  min-height:230px;
+  pointer-events:none;
+}
+.tourCharacter .welcomeAvatar{
+  width:170px;
+  max-height:250px;
+  object-fit:contain;
+  filter:drop-shadow(0 24px 32px rgba(0,0,0,.36));
+}
+.tourCharacter.avatarMissing .welcomeAvatar{display:none}
+.tourCharacter.avatarMissing .welcomeAvatarFallback{display:grid}
+.tourBubble{
+  position:relative;
+  align-self:end;
+  background:linear-gradient(180deg,#FFFFFF,#F7FBFF);
+  border:1px solid rgba(216,233,250,.95);
+  border-radius:24px;
+  padding:20px;
+  box-shadow:0 28px 80px rgba(0,14,42,.35);
+}
+.tourBubble:before{
+  content:"";
+  position:absolute;
+  left:-12px;
+  bottom:52px;
+  width:24px;
+  height:24px;
+  background:#FFFFFF;
+  transform:rotate(45deg);
+  border-left:1px solid rgba(216,233,250,.95);
+  border-bottom:1px solid rgba(216,233,250,.95);
+}
+.tourMeta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.tourMeta #welcomeSceneCounter{
+  color:#5E748D;
+  background:#EAF4FF;
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.tourBubble .welcomeEyebrow{
+  color:#0057B8;
+  font-size:12px;
+  font-weight:1000;
+  text-transform:uppercase;
+  letter-spacing:0;
+}
+.tourBubble h3{
+  margin:0 0 10px;
+  color:#061A36;
+  font-size:22px;
+  line-height:1.14;
+}
+.tourBubble p{
+  margin:0;
+  color:#405873;
+  font-size:14px;
+  line-height:1.5;
+}
+.tourBubble .welcomeProgress{
+  height:5px;
+  margin:16px 0 12px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#E6EFFA;
+}
+.tourBubble .welcomeProgress span{
+  display:block;
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#0057B8,#00A3FF);
+  transition:width .22s ease;
+}
+.tourBubble .welcomeDots{
+  display:flex;
+  gap:6px;
+  min-width:0;
+  padding:0;
+  margin-bottom:14px;
+  background:transparent;
+}
+.tourBubble .welcomeDots span{
+  flex:1;
+  width:auto;
+  height:5px;
+  border-radius:999px;
+  background:#D8E9FA;
+}
+.tourBubble .welcomeDots span.active{background:#0057B8}
+.tourBubble .welcomeActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:0;
+}
+.tourBubble .welcomeSecondary:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+body.darkMode .tourBubble{
+  background:linear-gradient(180deg,#101D33,#0B1629);
+  border-color:#355174;
+}
+body.darkMode .tourBubble:before{
+  background:#101D33;
+  border-color:#355174;
+}
+body.darkMode .tourBubble h3{color:#FFFFFF}
+body.darkMode .tourBubble p{color:#DCEBFF}
+body.darkMode .tourMeta #welcomeSceneCounter{
+  color:#DCEBFF;
+  background:#173250;
+}
+@media (max-width:760px){
+  .tourPanel{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    width:auto;
+    grid-template-columns:92px 1fr;
+  }
+  .tourCharacter{min-height:150px}
+  .tourCharacter .welcomeAvatar{
+    width:110px;
+    max-height:160px;
+  }
+  .tourBubble{
+    padding:16px;
+    border-radius:20px;
+  }
+  .tourBubble:before{
+    left:-8px;
+    bottom:42px;
+    width:18px;
+    height:18px;
+  }
+  .tourBubble h3{font-size:18px}
+  .tourBubble p{font-size:13px}
+  .tourBubble .welcomeActions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .tourBubble .welcomeTextBtn{grid-column:1 / -1}
+  .tourSpotlight{border-radius:18px}
 }
 
 @media (max-width:420px){

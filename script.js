@@ -168,251 +168,174 @@ function setSignedInUser(user){
  closeUserMenu();
  if(typeof renderHistoryBases === 'function') renderHistoryBases();
 }
-const WELCOME_PRESENTATION_SCENES=[
+const WELCOME_TOUR_STEPS=[
  {
-  start:0,
-  kicker:'Abertura',
-  title:'Painel Executivo de Fechamento Mensal',
-  text:'Bem-vindo ao ambiente executivo do Atendimento ao Cliente da Gazin, criado para apresentar os resultados mensais com clareza e organização.',
-  visual:'opening'
+  view:'geral',
+  target:'.hero',
+  kicker:'Boas-vindas',
+  title:'Bem-vindo ao Painel Executivo',
+  text:'Este painel organiza os principais indicadores do Atendimento ao Cliente em uma leitura executiva, clara e interativa.'
  },
  {
-  start:17,
-  kicker:'Centralização',
-  title:'Indicadores dos núcleos em uma única plataforma',
-  text:'A plataforma centraliza os principais indicadores dos núcleos de atendimento em uma leitura dinâmica, padronizada e executiva.',
-  visual:'platform'
- },
- {
-  start:33,
+  view:'geral',
+  target:'#kpisSection .kpis',
   kicker:'Visão geral',
-  title:'Principais indicadores consolidados',
-  text:'Na tela inicial, o usuário acompanha ligações ofertadas, atendidas, abandonadas, tickets via WhatsApp e solicitações de callback.',
-  visual:'overview'
+  title:'KPIs consolidados do departamento',
+  text:'Aqui ficam os principais números do fechamento: ligações ofertadas, atendidas, abandonadas, tickets via WhatsApp, callbacks e NPS médio.'
  },
  {
-  start:52,
-  kicker:'Leitura rápida',
-  title:'Cards que destacam desempenho e percentuais',
-  text:'Os cards ajudam a enxergar rapidamente taxas importantes, como atendimento e abandono em relação ao total de ligações ofertadas.',
-  visual:'kpis'
- },
- {
-  start:68,
+  view:'geral',
+  target:'#insightsSection',
   kicker:'Insights executivos',
-  title:'Destaques para apoiar a gestão',
-  text:'Abaixo dos indicadores, o painel apresenta insights para identificar pontos fortes, oportunidades de melhoria e informações relevantes.',
-  visual:'insights'
+  title:'Destaques para orientar a gestão',
+  text:'Esta área transforma os dados em pontos de leitura: desempenho, oportunidades de melhoria e principais sinais de atenção.'
  },
  {
-  start:83,
+  view:'geral',
+  target:'#nav',
+  mobileTarget:'.mobileNucleoPicker',
   kicker:'Navegação',
-  title:'Menu lateral organizado por núcleo',
-  text:'O usuário navega entre Consórcio, GazinBank, Assistência, E-commerce, Chilli Seguros, Canais Especiais, Teleatendimento e Atacado.',
-  visual:'menu'
+  title:'Seleção por núcleo',
+  text:'Use o menu lateral no desktop ou o seletor no celular para alternar entre Visão Geral, Consórcio, GazinBank, Assistência e demais núcleos.'
  },
  {
-  start:101,
-  kicker:'Detalhamento',
-  title:'Indicadores e gráficos específicos por área',
-  text:'Cada núcleo reúne seus indicadores, gráficos de desempenho, rankings, evoluções por período e informações operacionais importantes.',
-  visual:'nucleus'
+  view:'GazinBank',
+  target:'#kpisSection .kpis',
+  kicker:'Exemplo de núcleo',
+  title:'Indicadores específicos da área',
+  text:'Ao entrar em um núcleo, a visão geral sai de cena e entram os indicadores específicos daquela operação, mantendo o mesmo padrão de leitura.'
  },
  {
-  start:121,
+  view:'GazinBank',
+  target:'#chartsSection .chartCard',
+  kicker:'Gráficos',
+  title:'Rankings e evolução por período',
+  text:'Os gráficos ajudam a entender concentração de demanda, evolução diária, canais mais usados e comportamentos relevantes de cada núcleo.'
+ },
+ {
+  view:'GazinBank',
+  target:'#chartsSection .chartActions',
   kicker:'Apoio à análise',
-  title:'Expandir e Excel facilitam a leitura dos dados',
-  text:'Os botões de apoio permitem ampliar gráficos e exportar informações para planilhas, facilitando análises complementares e compartilhamentos.',
-  visual:'actions'
+  title:'Expandir e exportar para Excel',
+  text:'O botão Expandir abre o gráfico em uma visualização maior. O botão Excel exporta os dados para análises complementares e compartilhamentos.'
  },
  {
-  start:140,
+  view:'GazinBank',
+  target:'#openHistoryBtn',
   kicker:'Bases de fechamento',
-  title:'Consulta e download da base original',
-  text:'A área de Bases de Fechamento concentra os arquivos utilizados em cada mês e permite baixar a base original quando necessário.',
-  visual:'bases'
- },
- {
-  start:151,
-  kicker:'Cultura de dados',
-  title:'Uma experiência mais moderna e interativa',
-  text:'O painel substitui apresentações manuais por uma experiência centralizada, clara e organizada para fortalecer a tomada de decisão.',
-  visual:'closing'
+  title:'Histórico e download das bases',
+  text:'Nesta área ficam os arquivos usados no fechamento mensal, permitindo consulta e download da base original quando necessário.'
  }
 ];
-const WELCOME_PRESENTATION_FALLBACK_DURATION=161.388;
-let welcomeSceneIndex=0;
-let welcomeRaf=null;
+let welcomeTourIndex=0;
+let welcomeTourPreviousView='geral';
+let welcomeTourShownThisSession=false;
 function welcomeEls(){
  return {
-  video:document.getElementById('welcomeVideo'),
-  audio:document.getElementById('welcomeAudio'),
+  modal:document.getElementById('welcomeModal'),
+  spotlight:document.getElementById('tourSpotlight'),
+  avatar:document.getElementById('welcomeAvatar'),
   counter:document.getElementById('welcomeSceneCounter'),
-  status:document.getElementById('welcomeAudioStatus'),
-  visual:document.getElementById('welcomeSceneVisual'),
   kicker:document.getElementById('welcomeSceneKicker'),
   title:document.getElementById('welcomeSceneTitle'),
   text:document.getElementById('welcomeSceneText'),
   progress:document.getElementById('welcomeProgressBar'),
   dots:document.getElementById('welcomeDots'),
-  start:document.getElementById('startWelcomePresentation'),
-  restart:document.getElementById('restartWelcomePresentation'),
-  time:document.getElementById('welcomeTime')
+  prev:document.getElementById('welcomePrevStep'),
+  next:document.getElementById('welcomeNextStep')
  };
 }
-function welcomeDuration(audio){
- const duration=Number(audio?.duration);
- return Number.isFinite(duration) && duration>0 ? duration : WELCOME_PRESENTATION_FALLBACK_DURATION;
+function tourTarget(step){
+ const selector=(window.innerWidth<=760 && step.mobileTarget) ? step.mobileTarget : step.target;
+ return selector ? document.querySelector(selector) : null;
 }
-function formatWelcomeTime(seconds){
- const safe=Math.max(0,Number(seconds)||0);
- const min=Math.floor(safe/60);
- const sec=Math.floor(safe%60);
- return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+function clearTourHighlight(){
+ document.querySelectorAll('.tourFocused').forEach(el=>el.classList.remove('tourFocused'));
+ const {spotlight}=welcomeEls();
+ if(spotlight) spotlight.classList.remove('visible');
 }
-function getWelcomeSceneIndex(time){
- let index=0;
- WELCOME_PRESENTATION_SCENES.forEach((scene,i)=>{ if(time>=scene.start) index=i; });
- return index;
-}
-function renderWelcomeVisual(scene){
- const {visual}=welcomeEls();
- if(!visual || visual.dataset.visual===scene.visual) return;
- visual.dataset.visual=scene.visual;
- const nuclei=['Consórcio','GazinBank','Assistência','Gazin.com','Chilli Seguros','Canais Especiais','Teleatendimento','Atacado'];
- const visuals={
-  opening:`<div class="welcomeBrandScene"><img src="assets/logo-dados-cx.png" alt="" /><strong>Núcleo de Dados</strong><span>Customer Experience · Gazin</span></div>`,
-  platform:`<div class="welcomePlatformScene"><div><span>Dados</span><strong>Atendimento ao Cliente</strong></div><div><span>Leitura</span><strong>Executiva</strong></div><div><span>Fechamento</span><strong>Mensal</strong></div></div>`,
-  overview:`<div class="welcomeKpiScene">${['Ofertadas','Atendidas','Abandonadas','WhatsApp','Callback'].map((label,i)=>`<div><span>${label}</span><strong>${['24.126','19.285','3.824','14.622','1.017'][i]}</strong></div>`).join('')}</div>`,
-  kpis:`<div class="welcomeRateScene"><div><span>Taxa de atendimento</span><strong>79,9%</strong><em class="good">desempenho consolidado</em></div><div><span>Taxa de abandono</span><strong>15,8%</strong><em class="danger">ponto de atenção</em></div></div>`,
-  insights:`<div class="welcomeInsightsScene"><article><span>Atendimento</span><strong>Eficiência consolidada</strong></article><article><span>Destaque</span><strong>Melhor taxa por núcleo</strong></article><article><span>Ponto de atenção</span><strong>Abandono acima do ideal</strong></article></div>`,
-  menu:`<div class="welcomeMenuScene">${nuclei.map((item,i)=>`<span class="${i===0?'active':''}">${item}</span>`).join('')}</div>`,
-  nucleus:`<div class="welcomeChartScene"><div class="line"><i style="--x:4%;--y:62%"></i><i style="--x:20%;--y:34%"></i><i style="--x:38%;--y:52%"></i><i style="--x:56%;--y:26%"></i><i style="--x:76%;--y:44%"></i><i style="--x:94%;--y:18%"></i></div><div class="bars"><span style="--h:72%"></span><span style="--h:48%"></span><span style="--h:86%"></span><span style="--h:58%"></span></div></div>`,
-  actions:`<div class="welcomeActionsScene"><button>↗ Expandir</button><button>⇩ Excel</button><p>Visualização ampliada e exportação de dados</p></div>`,
-  bases:`<div class="welcomeBasesScene"><div><strong>Bases de Fechamento</strong><span>Junho 2026 · Excel</span></div><button>Baixar base</button></div>`,
-  closing:`<div class="welcomeClosingScene"><strong>Dados claros para decisões melhores</strong><span>Padronização · Interatividade · Gestão</span></div>`
- };
- visual.innerHTML=visuals[scene.visual] || visuals.opening;
+function positionTourSpotlight(el){
+ const {spotlight}=welcomeEls();
+ if(!spotlight || !el) return;
+ const rect=el.getBoundingClientRect();
+ const pad=12;
+ spotlight.style.left=Math.max(8,rect.left-pad)+'px';
+ spotlight.style.top=Math.max(8,rect.top-pad)+'px';
+ spotlight.style.width=Math.min(window.innerWidth-16,rect.width+pad*2)+'px';
+ spotlight.style.height=Math.min(window.innerHeight-16,rect.height+pad*2)+'px';
+ spotlight.classList.add('visible');
 }
 function renderWelcomeDots(activeIndex){
  const {dots}=welcomeEls();
  if(!dots) return;
- dots.innerHTML=WELCOME_PRESENTATION_SCENES.map((_,i)=>`<span class="${i===activeIndex?'active':''}"></span>`).join('');
+ dots.innerHTML=WELCOME_TOUR_STEPS.map((_,i)=>`<span class="${i===activeIndex?'active':''}"></span>`).join('');
 }
-function renderWelcomeScene(index){
- const els=welcomeEls();
- const scene=WELCOME_PRESENTATION_SCENES[index] || WELCOME_PRESENTATION_SCENES[0];
- welcomeSceneIndex=index;
- if(els.counter) els.counter.textContent=`Cena ${index+1} de ${WELCOME_PRESENTATION_SCENES.length}`;
- if(els.kicker) els.kicker.textContent=scene.kicker;
- if(els.title) els.title.textContent=scene.title;
- if(els.text) els.text.textContent=scene.text;
- renderWelcomeVisual(scene);
- renderWelcomeDots(index);
+function renderWelcomeTourStep(index){
+ const step=WELCOME_TOUR_STEPS[index] || WELCOME_TOUR_STEPS[0];
+ welcomeTourIndex=index;
+ if(step.view && currentViewKey!==step.view) setView(step.view);
+ requestAnimationFrame(()=>{
+  const els=welcomeEls();
+  const target=tourTarget(step);
+  clearTourHighlight();
+  if(target){
+   target.classList.add('tourFocused');
+   target.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+   setTimeout(()=>positionTourSpotlight(target),280);
+   setTimeout(()=>positionTourSpotlight(target),680);
+  }
+  if(els.counter) els.counter.textContent=`${index+1} de ${WELCOME_TOUR_STEPS.length}`;
+  if(els.kicker) els.kicker.textContent=step.kicker;
+  if(els.title) els.title.textContent=step.title;
+  if(els.text) els.text.textContent=step.text;
+  if(els.progress) els.progress.style.width=`${((index+1)/WELCOME_TOUR_STEPS.length)*100}%`;
+  if(els.prev) els.prev.disabled=index===0;
+  if(els.next) els.next.textContent=index===WELCOME_TOUR_STEPS.length-1?'Concluir tour':'Próximo';
+  renderWelcomeDots(index);
+ });
 }
-function syncWelcomePresentation(){
- const els=welcomeEls();
- const audio=els.audio;
- const duration=welcomeDuration(audio);
- const current=Math.min(Number(audio?.currentTime)||0,duration);
- const nextIndex=getWelcomeSceneIndex(current);
- if(nextIndex!==welcomeSceneIndex) renderWelcomeScene(nextIndex);
- if(els.progress) els.progress.style.width=`${Math.min(100,(current/duration)*100)}%`;
- if(els.time) els.time.textContent=`${formatWelcomeTime(current)} / ${formatWelcomeTime(duration)}`;
- if(els.status) els.status.textContent=audio?.paused
-  ? (current>0 ? 'Apresentação pausada' : 'Pronto para reproduzir')
-  : 'Apresentação em reprodução';
- if(els.video) els.video.classList.toggle('playing',!!audio && !audio.paused);
- if(els.start) els.start.textContent=audio?.paused ? (current>0?'Continuar apresentação':'Reproduzir apresentação') : 'Pausar apresentação';
- if(audio && !audio.paused){
-  if(welcomeRaf) cancelAnimationFrame(welcomeRaf);
-  welcomeRaf=requestAnimationFrame(syncWelcomePresentation);
- }
-}
-function stopWelcomePlayback(reset=false){
- const {audio,video,start,status}=welcomeEls();
- if(welcomeRaf) cancelAnimationFrame(welcomeRaf);
- welcomeRaf=null;
- if(audio){
-  audio.pause();
-  if(reset) audio.currentTime=0;
- }
- if(video) video.classList.remove('playing');
- if(start) start.textContent=reset ? 'Reproduzir apresentação' : 'Continuar apresentação';
- if(status) status.textContent=reset ? 'Pronto para reproduzir' : 'Apresentação pausada';
- syncWelcomePresentation();
-}
-function startWelcomePresentation(){
- const {audio,status}=welcomeEls();
- if(!audio) return;
- if(!audio.paused){
-  stopWelcomePlayback(false);
+function nextWelcomeTourStep(){
+ if(welcomeTourIndex>=WELCOME_TOUR_STEPS.length-1){
+  closeWelcomeModal();
   return;
  }
- if(audio.currentTime>=welcomeDuration(audio)-.25) audio.currentTime=0;
- audio.play().then(syncWelcomePresentation).catch(()=>{
-  if(status) status.textContent='Clique novamente para liberar o áudio no navegador.';
- });
+ renderWelcomeTourStep(welcomeTourIndex+1);
 }
-function restartWelcomePresentation(){
- const {audio}=welcomeEls();
- if(!audio) return;
- audio.currentTime=0;
- renderWelcomeScene(0);
- audio.play().then(syncWelcomePresentation).catch(()=>syncWelcomePresentation());
+function prevWelcomeTourStep(){
+ if(welcomeTourIndex<=0) return;
+ renderWelcomeTourStep(welcomeTourIndex-1);
 }
-function setupWelcomeAudioEvents(){
- const {audio}=welcomeEls();
- if(!audio) return;
- ['loadedmetadata','timeupdate','pause','play','ended'].forEach(evt=>{
-  audio.addEventListener(evt,()=>{
-   if(evt==='ended') stopWelcomePlayback(true);
-   else syncWelcomePresentation();
-  });
- });
- audio.addEventListener('error',()=>{
-  const {status}=welcomeEls();
-  if(status) status.textContent='Não foi possível carregar o áudio.';
- });
-}
-function resetWelcomePresentation(){
- const {audio}=welcomeEls();
- stopWelcomePlayback(true);
- if(audio) audio.currentTime=0;
- renderWelcomeScene(0);
- syncWelcomePresentation();
- }
 function setupWelcomePresentation(){
- const {start,restart}=welcomeEls();
- setupWelcomeAudioEvents();
- renderWelcomeScene(0);
- syncWelcomePresentation();
- if(start) start.addEventListener('click',startWelcomePresentation);
- if(restart) restart.addEventListener('click',restartWelcomePresentation);
+ const {prev,next}=welcomeEls();
+ if(prev) prev.addEventListener('click',prevWelcomeTourStep);
+ if(next) next.addEventListener('click',nextWelcomeTourStep);
+ window.addEventListener('resize',()=>{
+  if(document.getElementById('welcomeModal')?.classList.contains('open')) renderWelcomeTourStep(welcomeTourIndex);
+ });
 }
 function openWelcomeModal(){
  const modal=document.getElementById('welcomeModal'); if(!modal) return;
  const avatar=document.getElementById('welcomeAvatar');
  if(avatar){
-   avatar.onerror=()=>avatar.closest('.welcomeAvatarFrame')?.classList.add('avatarMissing');
-   if(avatar.complete && !avatar.naturalWidth) avatar.closest('.welcomeAvatarFrame')?.classList.add('avatarMissing');
+  avatar.onerror=()=>avatar.closest('.tourCharacter')?.classList.add('avatarMissing');
+  if(avatar.complete && !avatar.naturalWidth) avatar.closest('.tourCharacter')?.classList.add('avatarMissing');
  }
- resetWelcomePresentation();
+ welcomeTourPreviousView=currentViewKey || 'geral';
  modal.classList.add('open');
  modal.setAttribute('aria-hidden','false');
+ renderWelcomeTourStep(0);
 }
 function closeWelcomeModal(){
  const modal=document.getElementById('welcomeModal'); if(!modal) return;
- stopWelcomePlayback(false);
+ clearTourHighlight();
  modal.classList.remove('open');
  modal.setAttribute('aria-hidden','true');
+ if(welcomeTourPreviousView && currentViewKey!==welcomeTourPreviousView) setView(welcomeTourPreviousView);
 }
 function maybeShowWelcome(){
- if(!CURRENT_USER) return;
- const email=normalizeEmail(CURRENT_USER.email);
- if(hasSeenWelcome(email)) return;
- markWelcomeSeen(email);
- setTimeout(openWelcomeModal,220);
+ if(!CURRENT_USER || welcomeTourShownThisSession) return;
+ welcomeTourShownThisSession=true;
+ setTimeout(openWelcomeModal,420);
 }
 async function signOut(){
  const client=getSupabaseClient();
@@ -421,6 +344,7 @@ async function signOut(){
   catch(e){ console.warn('Falha ao sair do Supabase.',e); }
  }
  localStorage.removeItem(AUTH_SESSION_KEY);
+ welcomeTourShownThisSession=false;
  setSignedInUser(null);
  setAuthMode('login');
 }
@@ -538,7 +462,7 @@ function initAuth(){
  else initLocalAuth(loginForm,signupForm);
  const closeWelcome=document.getElementById('closeWelcomeModal'), welcomeModal=document.getElementById('welcomeModal');
  if(closeWelcome) closeWelcome.addEventListener('click',closeWelcomeModal);
- if(welcomeModal) welcomeModal.addEventListener('click',e=>{if(e.target===welcomeModal) closeWelcomeModal();});
+ if(welcomeModal) welcomeModal.addEventListener('click',e=>{if(e.target===welcomeModal || e.target?.id==='tourBackdrop') closeWelcomeModal();});
  setupWelcomePresentation();
 }
 function closeUserMenu(){
