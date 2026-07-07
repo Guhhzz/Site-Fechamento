@@ -1694,6 +1694,7 @@ body.chartModalOpen .mobileTopBtn{display:none !important}
   border:0;
   box-shadow:none;
   overflow:visible;
+  transition:left .26s ease,top .26s ease;
 }
 .tourCharacter{
   align-self:end;
@@ -1702,12 +1703,18 @@ body.chartModalOpen .mobileTopBtn{display:none !important}
   justify-content:center;
   min-height:230px;
   pointer-events:none;
+  transform-origin:bottom center;
+}
+.welcomeModal.open .tourCharacter{
+  animation:tourCharacterFloat 3.4s ease-in-out infinite;
 }
 .tourCharacter .welcomeAvatar{
   width:170px;
   max-height:250px;
   object-fit:contain;
   filter:drop-shadow(0 24px 32px rgba(0,0,0,.36));
+  transform-origin:50% 82%;
+  animation:tourPresenterTalk 1.55s ease-in-out infinite;
 }
 .tourCharacter.avatarMissing .welcomeAvatar{display:none}
 .tourCharacter.avatarMissing .welcomeAvatarFallback{display:grid}
@@ -1820,6 +1827,15 @@ body.darkMode .tourBubble p{color:#DCEBFF}
 body.darkMode .tourMeta #welcomeSceneCounter{
   color:#DCEBFF;
   background:#173250;
+}
+@keyframes tourCharacterFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-7px)}
+}
+@keyframes tourPresenterTalk{
+  0%,100%{transform:rotate(0deg) scale(1)}
+  28%{transform:rotate(-1.1deg) scale(1.012)}
+  58%{transform:rotate(.9deg) scale(1.006)}
 }
 @media (max-width:760px){
   .tourPanel{

@@ -185,7 +185,7 @@ const WELCOME_TOUR_STEPS=[
  },
  {
   view:'geral',
-  target:'#insightsSection',
+  target:'#insightsSection .sectionHeader',
   kicker:'Insights executivos',
   title:'Destaques para orientar a gestão',
   text:'Esta área transforma os dados em pontos de leitura: desempenho, oportunidades de melhoria e principais sinais de atenção.'
@@ -233,6 +233,7 @@ let welcomeTourShownThisSession=false;
 function welcomeEls(){
  return {
   modal:document.getElementById('welcomeModal'),
+  panel:document.querySelector('#welcomeModal .tourPanel'),
   spotlight:document.getElementById('tourSpotlight'),
   avatar:document.getElementById('welcomeAvatar'),
   counter:document.getElementById('welcomeSceneCounter'),
@@ -265,6 +266,67 @@ function positionTourSpotlight(el){
  spotlight.style.height=Math.min(window.innerHeight-16,rect.height+pad*2)+'px';
  spotlight.classList.add('visible');
 }
+function clamp(n,min,max){
+ if(max<min) return min;
+ return Math.min(Math.max(n,min),max);
+}
+function rectOverlap(a,b){
+ const x=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));
+ const y=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+ return x*y;
+}
+function scoreTourPlacement(candidate,targetRect,panelRect){
+ const vw=window.innerWidth, vh=window.innerHeight, margin=14;
+ const panel={
+  left:candidate.left,
+  top:candidate.top,
+  right:candidate.left+panelRect.width,
+  bottom:candidate.top+panelRect.height
+ };
+ const overflow=
+  Math.max(0,margin-panel.left)+
+  Math.max(0,margin-panel.top)+
+  Math.max(0,panel.right-(vw-margin))+
+  Math.max(0,panel.bottom-(vh-margin));
+ return (overflow*12000)+rectOverlap(panel,targetRect);
+}
+function positionTourPanel(target){
+ const {panel}=welcomeEls();
+ if(!panel) return;
+ const vw=window.innerWidth, vh=window.innerHeight, margin=14, gap=20;
+ panel.style.right='auto';
+ panel.style.bottom='auto';
+ const panelRect=panel.getBoundingClientRect();
+ if(!target){
+  panel.style.left=clamp(vw-panelRect.width-margin,margin,vw-panelRect.width-margin)+'px';
+  panel.style.top=clamp(vh-panelRect.height-margin,margin,vh-panelRect.height-margin)+'px';
+  panel.dataset.placement='bottomRight';
+  return;
+ }
+ const targetRect=target.getBoundingClientRect();
+ const centerLeft=clamp(targetRect.left+(targetRect.width-panelRect.width)/2,margin,vw-panelRect.width-margin);
+ const centerTop=clamp(targetRect.top+(targetRect.height-panelRect.height)/2,margin,vh-panelRect.height-margin);
+ const candidates=[
+  {name:'right',left:targetRect.right+gap,top:centerTop},
+  {name:'left',left:targetRect.left-panelRect.width-gap,top:centerTop},
+  {name:'bottom',left:centerLeft,top:targetRect.bottom+gap},
+  {name:'top',left:centerLeft,top:targetRect.top-panelRect.height-gap},
+  {name:'bottomRight',left:vw-panelRect.width-margin,top:vh-panelRect.height-margin},
+  {name:'bottomLeft',left:margin,top:vh-panelRect.height-margin},
+  {name:'topRight',left:vw-panelRect.width-margin,top:margin},
+  {name:'topLeft',left:margin,top:margin}
+ ];
+ const best=candidates
+  .map(c=>({
+   ...c,
+   left:clamp(c.left,margin,vw-panelRect.width-margin),
+   top:clamp(c.top,margin,vh-panelRect.height-margin)
+  }))
+  .sort((a,b)=>scoreTourPlacement(a,targetRect,panelRect)-scoreTourPlacement(b,targetRect,panelRect))[0];
+ panel.style.left=best.left+'px';
+ panel.style.top=best.top+'px';
+ panel.dataset.placement=best.name;
+}
 function renderWelcomeDots(activeIndex){
  const {dots}=welcomeEls();
  if(!dots) return;
@@ -292,6 +354,9 @@ function renderWelcomeTourStep(index){
   if(els.prev) els.prev.disabled=index===0;
   if(els.next) els.next.textContent=index===WELCOME_TOUR_STEPS.length-1?'Concluir tour':'Próximo';
   renderWelcomeDots(index);
+  positionTourPanel(target);
+  setTimeout(()=>positionTourPanel(target),320);
+  setTimeout(()=>positionTourPanel(target),720);
  });
 }
 function nextWelcomeTourStep(){
