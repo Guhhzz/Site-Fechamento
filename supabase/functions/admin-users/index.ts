@@ -134,6 +134,18 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (body.action === 'deleteUser') {
+      const userId = String(body.userId || '').trim();
+      if (!userId) return json({ error: 'Informe o usuario que deve ser excluido.' }, 400);
+      if (userId === requester.id) return json({ error: 'Voce nao pode excluir o proprio usuario logado.' }, 400);
+
+      const { error } = await adminClient.auth.admin.deleteUser(userId);
+      if (error) throw error;
+
+      await adminClient.from('profiles').delete().eq('id', userId);
+      return json({ ok: true });
+    }
+
     return json({ error: 'Acao administrativa desconhecida.' }, 400);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error || 'Erro administrativo no Supabase.');

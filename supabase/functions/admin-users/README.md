@@ -4,6 +4,13 @@ Esta funcao ativa a tela administrativa de usuarios do painel.
 
 Ela deve ser publicada no Supabase porque usa `SERVICE_ROLE_KEY`, que nao pode ficar no HTML/JavaScript do site.
 
+## Acoes disponiveis
+
+- `list`: lista usuarios cadastrados.
+- `updateName`: atualiza o nome de exibicao.
+- `resetPassword`: envia e-mail de redefinicao de senha.
+- `deleteUser`: exclui um usuario do Auth e remove seu perfil.
+
 ## Publicacao
 
 O deploy foi preparado para rodar pelo GitHub Actions em:

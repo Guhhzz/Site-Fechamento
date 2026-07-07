@@ -214,7 +214,7 @@ function initLocalAuth(loginForm,signupForm){
    if(!saveAuthUsers(users)) return;
    localStorage.setItem(AUTH_SESSION_KEY,email);
    setSignedInUser(profile);
-   showAuthMessage('Cadastro criado com sucesso.','success');
+   showAuthMessage('Cadastro criado com sucesso. Você já pode acessar o painel.','success');
    maybeShowWelcome();
  });
  if(loginForm) loginForm.addEventListener('submit',e=>{
@@ -257,12 +257,12 @@ function initSupabaseAuth(client,loginForm,signupForm){
    if(error){ showAuthMessage(translateSupabaseAuthError(error),'error'); return; }
    if(data?.session && data?.user){
     hydrateSupabaseProfile(data.user);
-    showAuthMessage('Cadastro criado com sucesso.','success');
+   showAuthMessage('Cadastro criado com sucesso. Você já pode acessar o painel.','success');
     maybeShowWelcome();
     return;
    }
    setAuthMode('login');
-   showAuthMessage('Cadastro criado. Se o Supabase solicitar confirmação, confirme pelo e-mail antes de entrar.','success');
+   showAuthMessage('Cadastro criado! Enviamos um e-mail de confirmação para você. Abra sua caixa de entrada e confirme o acesso antes de entrar no painel.','success');
  });
  if(loginForm) loginForm.addEventListener('submit',async e=>{
    e.preventDefault();
@@ -373,6 +373,10 @@ function renderAdminUsers(users){
   const admin=user.perfil === 'admin' || isAdminEmail(user.email);
   const active=user.ativo !== false;
   const confirmed=user.email_confirmed_at ? 'Confirmado' : 'Pendente';
+  const isCurrentUser=normalizeEmail(CURRENT_USER?.email)===normalizeEmail(user.email) || String(CURRENT_USER?.id||'')===String(user.id||'');
+  const deleteButton=isCurrentUser
+   ? '<button type="button" data-action="delete-user" class="dangerBtn" disabled title="Você não pode excluir o próprio usuário logado.">Excluir usuário</button>'
+   : '<button type="button" data-action="delete-user" class="dangerBtn">Excluir usuário</button>';
   return `<article class="userRow" data-user-id="${esc(user.id)}" data-email="${esc(user.email)}">
     <div class="userSummary">
       <div><strong>${esc(name)}</strong><span>${esc(user.email || 'E-mail não informado')}</span></div>
@@ -383,6 +387,7 @@ function renderAdminUsers(users){
       <label>Nome de exibição<input class="adminUserNameInput" type="text" value="${esc(name)}" /></label>
       <button type="button" data-action="save-name">Salvar nome</button>
       <button type="button" data-action="reset-password">Enviar redefinição</button>
+      ${deleteButton}
     </div>
   </article>`;
  }).join('');
@@ -451,6 +456,14 @@ function setupAdminUsers(){
     if(!confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) return;
     await callAdminUsers({action:'resetPassword',email});
     if(status) status.textContent='E-mail de redefinição enviado.';
+   }
+   if(action==='delete-user'){
+    const email=row.dataset.email || 'este usuário';
+    if(!row.dataset.userId) throw new Error('Usuário sem identificador válido.');
+    if(!confirm(`Excluir o usuário ${email}?\n\nEssa ação remove o acesso dele ao site e não pode ser desfeita.`)) return;
+    await callAdminUsers({action:'deleteUser',userId:row.dataset.userId});
+    if(status) status.textContent='Usuário excluído com sucesso.';
+    await loadAdminUsers();
    }
   }catch(error){
    if(status) status.textContent=error.message;
