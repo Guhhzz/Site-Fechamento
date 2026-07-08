@@ -239,10 +239,11 @@ const WELCOME_TOUR_STEPS=[
  },
  {
   view:'geral',
-  target:'.hero',
+  mode:'conclusion',
+  pose:'conclusion',
   kicker:'Conclusão',
   title:'Por que este painel foi criado',
-  text:'O objetivo é substituir apresentações manuais por uma experiência centralizada, moderna e interativa, facilitando a leitura dos resultados e fortalecendo a cultura de dados no Atendimento ao Cliente.'
+  text:'Este projeto foi construído para centralizar o fechamento mensal em uma experiência mais moderna, padronizada e interativa. Ele reduz o trabalho manual, facilita a leitura dos resultados por núcleo e apoia decisões mais rápidas, claras e orientadas por dados no Atendimento ao Cliente.'
  }
 ];
 let welcomeTourIndex=0;
@@ -254,7 +255,8 @@ let welcomeTourOpenedHistory=false;
 const TOUR_AVATAR_POSES={
  left:'assets/apresentador-gustavo-tour-left.png',
  right:'assets/apresentador-gustavo-tour-right.png',
- talk:'assets/apresentador-gustavo-tour-talk.png'
+ talk:'assets/apresentador-gustavo-tour-talk.png',
+ conclusion:'assets/apresentador-gustavo-tour-conclusion.png'
 };
 Object.values(TOUR_AVATAR_POSES).forEach(src=>{
  const img=new Image();
@@ -271,7 +273,7 @@ function startTourAvatarMotion(basePose){
  const {modal,panel,avatar}=welcomeEls();
  if(!modal || !panel || !avatar) return;
  stopTourAvatarMotion();
- const sequence=basePose==='talk' ? ['talk','talk'] : [basePose,basePose,'talk',basePose];
+ const sequence=basePose==='talk' || basePose==='conclusion' ? [basePose,basePose] : [basePose,basePose,'talk',basePose];
  let frame=0;
  panel._tourAvatarMotionTimer=setInterval(()=>{
   if(!modal.classList.contains('open')){
@@ -457,7 +459,8 @@ function setTourAvatarPose(target,placement,panelRect,step){
  const {panel,avatar}=welcomeEls();
  if(!panel || !avatar) return;
  let pose='talk';
- if(step?.pose==='point' && target && placement && panelRect){
+ if(step?.pose==='conclusion') pose='conclusion';
+ else if(step?.pose==='point' && target && placement && panelRect){
   const targetRect=target.getBoundingClientRect();
   const targetCenterY=targetRect.top+(targetRect.height/2);
   const panelCenterY=placement.top+(panelRect.height/2);
@@ -484,7 +487,18 @@ function positionTourPanel(target,step){
  const vw=window.innerWidth, vh=window.innerHeight, margin=14, gap=20;
  panel.style.right='auto';
  panel.style.bottom='auto';
+ panel.dataset.mode=step?.mode || '';
  const panelRect=panel.getBoundingClientRect();
+ if(step?.mode==='conclusion'){
+  panel.style.left=clamp((vw-panelRect.width)/2,margin,vw-panelRect.width-margin)+'px';
+  panel.style.top=clamp((vh-panelRect.height)/2,margin,vh-panelRect.height-margin)+'px';
+  panel.dataset.placement='center';
+  setTourAvatarPose(null,{name:'center',left:parseFloat(panel.style.left) || margin,top:parseFloat(panel.style.top) || margin},panelRect,step);
+  panel.classList.add('isMoving');
+  clearTimeout(panel._tourMoveTimer);
+  panel._tourMoveTimer=setTimeout(()=>panel.classList.remove('isMoving'),360);
+  return;
+ }
  if(vw<=760){
   panel.style.left=margin+'px';
   panel.style.top=clamp(vh-panelRect.height-margin,margin,vh-panelRect.height-margin)+'px';
@@ -541,8 +555,10 @@ function renderWelcomeTourStep(index){
  if(step.view && currentViewKey!==step.view) setView(step.view);
  requestAnimationFrame(()=>{
  applyWelcomeTourAction(step);
- const els=welcomeEls();
- const target=tourTarget(step);
+  const els=welcomeEls();
+ const modal=els.modal;
+  const target=tourTarget(step);
+ if(modal) modal.classList.toggle('conclusionMode', step.mode==='conclusion');
  clearTourHighlight();
   if(els.counter) els.counter.textContent=`${index+1} de ${WELCOME_TOUR_STEPS.length}`;
   if(els.kicker) els.kicker.textContent=step.kicker;
@@ -607,6 +623,7 @@ function closeWelcomeModal(){
  cleanupWelcomeTourAction(null);
  stopTourAvatarMotion();
  modal.classList.remove('open');
+ modal.classList.remove('conclusionMode');
  unlockWelcomeTourScroll();
  modal.setAttribute('aria-hidden','true');
  if(welcomeTourPreviousView && currentViewKey!==welcomeTourPreviousView) setView(welcomeTourPreviousView);
