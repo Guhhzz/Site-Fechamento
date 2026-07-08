@@ -11,7 +11,7 @@ const HISTORY_NAME_KEY = 'gazin_fechamento_bases_names_v1';
 let ADMIN_UNLOCKED = false;
 const AUTH_USERS_KEY = 'site_tech_analytics_users_v1';
 const AUTH_SESSION_KEY = 'site_tech_analytics_session_v1';
-const AUTH_WELCOME_SEEN_KEY = 'site_tech_analytics_welcome_seen_v1';
+const AUTH_WELCOME_SEEN_KEY = 'site_tech_analytics_guided_tour_seen_v1';
 const THEME_KEY = 'site_tech_analytics_theme_v1';
 const SUPABASE_URL = 'https://evpjwlvozywnpsxgczxg.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_P2r-rZDvR2kcUaAm2ueN9g_SvLnybxr';
@@ -294,6 +294,47 @@ function clearTourHighlight(){
  document.querySelectorAll('.tourFocused').forEach(el=>el.classList.remove('tourFocused'));
  const {spotlight}=welcomeEls();
  if(spotlight) spotlight.classList.remove('visible');
+ const clone=document.getElementById('tourFocusClone');
+ if(clone){
+  clone.hidden=true;
+  clone.replaceChildren();
+ }
+}
+function stripCloneIds(el){
+ if(!el || !el.querySelectorAll) return;
+ if(el.id) el.removeAttribute('id');
+ el.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+}
+function syncTourFocusClone(el){
+ if(!el) return;
+ const modal=document.getElementById('welcomeModal');
+ if(!modal) return;
+ let clone=document.getElementById('tourFocusClone');
+ if(!clone){
+  clone=document.createElement('div');
+  clone.id='tourFocusClone';
+  clone.className='tourFocusClone';
+  clone.setAttribute('aria-hidden','true');
+  modal.appendChild(clone);
+ }
+ const rect=el.getBoundingClientRect();
+ const pad=12;
+ clone.style.left=Math.max(8,rect.left-pad)+'px';
+ clone.style.top=Math.max(8,rect.top-pad)+'px';
+ clone.style.width=Math.min(window.innerWidth-16,rect.width+pad*2)+'px';
+ clone.style.height=Math.min(window.innerHeight-16,rect.height+pad*2)+'px';
+ clone.replaceChildren();
+ const inner=document.createElement('div');
+ inner.className='tourFocusCloneInner';
+ inner.style.padding=pad+'px';
+ inner.style.width='100%';
+ inner.style.height='100%';
+ const copied=el.cloneNode(true);
+ stripCloneIds(copied);
+ copied.classList.remove('tourFocused');
+ inner.appendChild(copied);
+ clone.appendChild(inner);
+ clone.hidden=false;
 }
 function positionTourSpotlight(el){
  const {spotlight}=welcomeEls();
@@ -302,9 +343,10 @@ function positionTourSpotlight(el){
  const pad=12;
  spotlight.style.left=Math.max(8,rect.left-pad)+'px';
  spotlight.style.top=Math.max(8,rect.top-pad)+'px';
- spotlight.style.width=Math.min(window.innerWidth-16,rect.width+pad*2)+'px';
- spotlight.style.height=Math.min(window.innerHeight-16,rect.height+pad*2)+'px';
- spotlight.classList.add('visible');
+  spotlight.style.width=Math.min(window.innerWidth-16,rect.width+pad*2)+'px';
+  spotlight.style.height=Math.min(window.innerHeight-16,rect.height+pad*2)+'px';
+  spotlight.classList.add('visible');
+  syncTourFocusClone(el);
 }
 function clamp(n,min,max){
  if(max<min) return min;
@@ -473,7 +515,9 @@ function closeWelcomeModal(){
 }
 function maybeShowWelcome(){
  if(!CURRENT_USER || welcomeTourShownThisSession) return;
+ if(hasSeenWelcome(CURRENT_USER.email)) return;
  welcomeTourShownThisSession=true;
+ markWelcomeSeen(CURRENT_USER.email);
  setTimeout(openWelcomeModal,420);
 }
 async function signOut(){
@@ -579,14 +623,20 @@ function initSupabaseAuth(client,loginForm,signupForm){
  });
 client.auth.getSession().then(({data})=>{
   const user=data?.session?.user;
-  if(user) hydrateSupabaseProfile(user);
+  if(user){
+   hydrateSupabaseProfile(user);
+   setTimeout(maybeShowWelcome,0);
+  }
   else setSignedInUser(null);
 }).catch(()=>{
   setSignedInUser(null);
 });
 client.auth.onAuthStateChange((_event,session)=>{
   const user=session?.user;
-  if(user) hydrateSupabaseProfile(user);
+  if(user){
+   hydrateSupabaseProfile(user);
+   setTimeout(maybeShowWelcome,0);
+  }
   else setSignedInUser(null);
   if(_event==='PASSWORD_RECOVERY') setTimeout(openPasswordRecoveryModal,120);
  });

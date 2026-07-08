@@ -1684,6 +1684,37 @@ body.chartModalOpen .mobileTopBtn{display:none !important}
   z-index:232!important;
   filter:drop-shadow(0 18px 35px rgba(0,87,184,.18));
 }
+.tourFocusClone{
+  position:fixed;
+  z-index:234;
+  pointer-events:none;
+  overflow:hidden;
+  border-radius:24px;
+  opacity:0;
+  transform:translateZ(0);
+  transition:left .24s ease,top .24s ease,width .24s ease,height .24s ease,opacity .16s ease;
+}
+.tourFocusClone:not([hidden]){opacity:1}
+.tourFocusCloneInner{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:0;
+}
+.tourFocusClone .nav,
+.tourFocusClone .mobileNucleoPicker,
+.tourFocusClone .kpis,
+.tourFocusClone .sectionHeader,
+.tourFocusClone .chartActions,
+.tourFocusClone .hero,
+.tourFocusClone .historyBtn{
+  margin:0!important;
+}
+.tourFocusClone .nav button,
+.tourFocusClone .mobileNucleoBtn,
+.tourFocusClone .mobileNucleoOption,
+.tourFocusClone button{
+  pointer-events:none!important;
+}
 .tourPanel{
   position:fixed;
   right:26px;
@@ -1699,6 +1730,13 @@ body.chartModalOpen .mobileTopBtn{display:none !important}
   overflow:visible;
   transition:left .26s ease,top .26s ease;
   isolation:isolate;
+}
+.welcomePanel.tourPanel,
+body.darkMode .welcomePanel.tourPanel{
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  overflow:visible;
 }
 .tourCharacter{
   position:relative;
