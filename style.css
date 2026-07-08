@@ -1930,6 +1930,8 @@ body.darkMode .tourMeta #welcomeSceneCounter{
 @media (max-width:760px){
   .heroActions{align-items:flex-start;margin-top:12px}
   .tourReplayBtn{padding:9px 12px}
+  .tourFocusClone{display:none!important}
+  .tourPanel{z-index:280}
   .tourPanel{
     left:12px;
     right:12px;

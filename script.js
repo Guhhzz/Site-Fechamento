@@ -194,6 +194,7 @@ const WELCOME_TOUR_STEPS=[
   view:'geral',
   target:'#nav',
   mobileTarget:'.mobileNucleoPicker',
+  pose:'point',
   kicker:'Navegação',
   title:'Seleção por núcleo',
   text:'Use o menu lateral no desktop ou o seletor no celular para alternar entre Visão Geral, Consórcio, GazinBank, Assistência e demais núcleos.'
@@ -317,6 +318,11 @@ function syncTourFocusClone(el){
   clone.setAttribute('aria-hidden','true');
   modal.appendChild(clone);
  }
+ if(window.innerWidth<=760){
+  clone.hidden=true;
+  clone.replaceChildren();
+  return;
+ }
  const rect=el.getBoundingClientRect();
  const pad=12;
  clone.style.left=Math.max(8,rect.left-pad)+'px';
@@ -372,16 +378,16 @@ function scoreTourPlacement(candidate,targetRect,panelRect){
   Math.max(0,panel.bottom-(vh-margin));
   return (overflow*12000)+rectOverlap(panel,targetRect);
  }
-function setTourAvatarPose(target,placement,panelRect){
+function setTourAvatarPose(target,placement,panelRect,step){
  const {panel,avatar}=welcomeEls();
  if(!panel || !avatar) return;
  let pose='talk';
- if(target && placement && panelRect){
+ if(step?.pose==='point' && target && placement && panelRect){
   const targetRect=target.getBoundingClientRect();
   const targetCenterY=targetRect.top+(targetRect.height/2);
   const panelCenterY=placement.top+(panelRect.height/2);
   const verticalGap=Math.abs(targetCenterY-panelCenterY);
-  const alignedEnough=verticalGap<=Math.max(72,Math.min(128,panelRect.height*.42));
+  const alignedEnough=verticalGap<=Math.max(48,Math.min(84,panelRect.height*.28));
   if(alignedEnough && placement.name==='left') pose='right';
   else if(alignedEnough && placement.name==='right') pose='left';
  }
@@ -397,7 +403,7 @@ function setTourAvatarPose(target,placement,panelRect){
  }
  startTourAvatarMotion(pose);
 }
-function positionTourPanel(target){
+function positionTourPanel(target,step){
  const {panel}=welcomeEls();
  if(!panel) return;
  const vw=window.innerWidth, vh=window.innerHeight, margin=14, gap=20;
@@ -408,7 +414,7 @@ function positionTourPanel(target){
   panel.style.left=clamp(vw-panelRect.width-margin,margin,vw-panelRect.width-margin)+'px';
   panel.style.top=clamp(vh-panelRect.height-margin,margin,vh-panelRect.height-margin)+'px';
   panel.dataset.placement='bottomRight';
-  setTourAvatarPose(null,{name:'bottomRight',left:parseFloat(panel.style.left) || margin,top:parseFloat(panel.style.top) || margin},panelRect);
+  setTourAvatarPose(null,{name:'bottomRight',left:parseFloat(panel.style.left) || margin,top:parseFloat(panel.style.top) || margin},panelRect,step);
   return;
  }
  const targetRect=target.getBoundingClientRect();
@@ -434,7 +440,7 @@ function positionTourPanel(target){
  panel.style.left=best.left+'px';
  panel.style.top=best.top+'px';
  panel.dataset.placement=best.name;
- setTourAvatarPose(target,best,panelRect);
+ setTourAvatarPose(target,best,panelRect,step);
  panel.classList.add('isMoving');
  clearTimeout(panel._tourMoveTimer);
  panel._tourMoveTimer=setTimeout(()=>panel.classList.remove('isMoving'),360);
@@ -466,9 +472,9 @@ function renderWelcomeTourStep(index){
   if(els.prev) els.prev.disabled=index===0;
   if(els.next) els.next.textContent=index===WELCOME_TOUR_STEPS.length-1?'Concluir tour':'Próximo';
   renderWelcomeDots(index);
-  positionTourPanel(target);
-  setTimeout(()=>positionTourPanel(target),320);
-  setTimeout(()=>positionTourPanel(target),720);
+  positionTourPanel(target,step);
+  setTimeout(()=>positionTourPanel(target,step),320);
+  setTimeout(()=>positionTourPanel(target,step),720);
  });
 }
 function nextWelcomeTourStep(){
