@@ -237,6 +237,39 @@ const WELCOME_TOUR_STEPS=[
 let welcomeTourIndex=0;
 let welcomeTourPreviousView='geral';
 let welcomeTourShownThisSession=false;
+const TOUR_AVATAR_POSES={
+ left:'assets/apresentador-gustavo-tour-left.png',
+ right:'assets/apresentador-gustavo-tour-right.png',
+ talk:'assets/apresentador-gustavo-tour-talk.png'
+};
+Object.values(TOUR_AVATAR_POSES).forEach(src=>{
+ const img=new Image();
+ img.src=src;
+});
+function stopTourAvatarMotion(){
+ const {panel}=welcomeEls();
+ if(panel?._tourAvatarMotionTimer){
+  clearInterval(panel._tourAvatarMotionTimer);
+  panel._tourAvatarMotionTimer=null;
+ }
+}
+function startTourAvatarMotion(basePose){
+ const {modal,panel,avatar}=welcomeEls();
+ if(!modal || !panel || !avatar) return;
+ stopTourAvatarMotion();
+ const sequence=basePose==='talk' ? ['talk','talk'] : [basePose,basePose,'talk',basePose];
+ let frame=0;
+ panel._tourAvatarMotionTimer=setInterval(()=>{
+  if(!modal.classList.contains('open')){
+   stopTourAvatarMotion();
+   return;
+  }
+  frame=(frame+1)%sequence.length;
+  const framePose=sequence[frame];
+  avatar.src=TOUR_AVATAR_POSES[framePose] || TOUR_AVATAR_POSES.talk;
+  avatar.dataset.framePose=framePose;
+ },1250);
+}
 function welcomeEls(){
  return {
   modal:document.getElementById('welcomeModal'),
@@ -295,7 +328,33 @@ function scoreTourPlacement(candidate,targetRect,panelRect){
   Math.max(0,margin-panel.top)+
   Math.max(0,panel.right-(vw-margin))+
   Math.max(0,panel.bottom-(vh-margin));
- return (overflow*12000)+rectOverlap(panel,targetRect);
+  return (overflow*12000)+rectOverlap(panel,targetRect);
+ }
+function setTourAvatarPose(target,placement,panelRect){
+ const {panel,avatar}=welcomeEls();
+ if(!panel || !avatar) return;
+ let pose='talk';
+ if(target && placement && panelRect){
+  const targetRect=target.getBoundingClientRect();
+  const targetCenter=targetRect.left+(targetRect.width/2);
+  const panelLeft=placement.left;
+  const panelRight=placement.left+panelRect.width;
+  if(targetCenter<panelLeft-8) pose='left';
+  else if(targetCenter>panelRight+8) pose='right';
+  else if(placement.name==='left') pose='right';
+  else if(placement.name==='right') pose='left';
+ }
+ const nextSrc=TOUR_AVATAR_POSES[pose] || TOUR_AVATAR_POSES.talk;
+ panel.dataset.pose=pose;
+ if(avatar.dataset.pose!==pose || avatar.dataset.framePose!==pose){
+  avatar.dataset.pose=pose;
+  avatar.dataset.framePose=pose;
+  avatar.classList.add('poseChanging');
+  avatar.src=nextSrc;
+  clearTimeout(avatar._poseTimer);
+  avatar._poseTimer=setTimeout(()=>avatar.classList.remove('poseChanging'),260);
+ }
+ startTourAvatarMotion(pose);
 }
 function positionTourPanel(target){
  const {panel}=welcomeEls();
@@ -308,6 +367,7 @@ function positionTourPanel(target){
   panel.style.left=clamp(vw-panelRect.width-margin,margin,vw-panelRect.width-margin)+'px';
   panel.style.top=clamp(vh-panelRect.height-margin,margin,vh-panelRect.height-margin)+'px';
   panel.dataset.placement='bottomRight';
+  setTourAvatarPose(null,{name:'bottomRight',left:parseFloat(panel.style.left) || margin,top:parseFloat(panel.style.top) || margin},panelRect);
   return;
  }
  const targetRect=target.getBoundingClientRect();
@@ -333,6 +393,7 @@ function positionTourPanel(target){
  panel.style.left=best.left+'px';
  panel.style.top=best.top+'px';
  panel.dataset.placement=best.name;
+ setTourAvatarPose(target,best,panelRect);
  panel.classList.add('isMoving');
  clearTimeout(panel._tourMoveTimer);
  panel._tourMoveTimer=setTimeout(()=>panel.classList.remove('isMoving'),360);
@@ -405,6 +466,7 @@ function openWelcomeModal(){
 function closeWelcomeModal(){
  const modal=document.getElementById('welcomeModal'); if(!modal) return;
  clearTourHighlight();
+ stopTourAvatarMotion();
  modal.classList.remove('open');
  modal.setAttribute('aria-hidden','true');
  if(welcomeTourPreviousView && currentViewKey!==welcomeTourPreviousView) setView(welcomeTourPreviousView);
