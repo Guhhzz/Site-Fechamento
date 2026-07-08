@@ -230,6 +230,14 @@ const WELCOME_TOUR_STEPS=[
   text:'Nesta área ficam os arquivos usados no fechamento mensal, permitindo consulta e download da base original quando necessário.'
  },
  {
+  view:'GazinBank',
+  action:'openHistory',
+  target:'#historyList',
+  kicker:'Bases por mês',
+  title:'Seleção do fechamento mensal',
+  text:'Quando houver mais de uma base incorporada ao site, cada fechamento aparecerá nesta lista. Ao selecionar Junho, Julho ou outro mês disponível, o painel atualiza KPIs, gráficos e insights para a base escolhida.'
+ },
+ {
   view:'geral',
   target:'.hero',
   kicker:'Conclusão',
@@ -242,6 +250,7 @@ let welcomeTourPreviousView='geral';
 let welcomeTourShownThisSession=false;
 let welcomeTourScrollY=0;
 let welcomeTourAllowScroll=false;
+let welcomeTourOpenedHistory=false;
 const TOUR_AVATAR_POSES={
  left:'assets/apresentador-gustavo-tour-left.png',
  right:'assets/apresentador-gustavo-tour-right.png',
@@ -343,6 +352,19 @@ function keepWelcomeTourScrollLocked(){
 function tourTarget(step){
  const selector=(window.innerWidth<=760 && step.mobileTarget) ? step.mobileTarget : step.target;
  return selector ? document.querySelector(selector) : null;
+}
+function cleanupWelcomeTourAction(nextStep){
+ if(welcomeTourOpenedHistory && nextStep?.action!=='openHistory' && typeof closeHistory === 'function'){
+  closeHistory();
+  welcomeTourOpenedHistory=false;
+ }
+}
+function applyWelcomeTourAction(step){
+ cleanupWelcomeTourAction(step);
+ if(step?.action==='openHistory' && typeof openHistory === 'function'){
+  openHistory();
+  welcomeTourOpenedHistory=true;
+ }
 }
 function clearTourHighlight(){
  document.querySelectorAll('.tourFocused').forEach(el=>el.classList.remove('tourFocused'));
@@ -518,6 +540,7 @@ function renderWelcomeTourStep(index){
  welcomeTourIndex=index;
  if(step.view && currentViewKey!==step.view) setView(step.view);
  requestAnimationFrame(()=>{
+ applyWelcomeTourAction(step);
  const els=welcomeEls();
  const target=tourTarget(step);
  clearTourHighlight();
@@ -581,6 +604,7 @@ function openWelcomeModal(){
 function closeWelcomeModal(){
  const modal=document.getElementById('welcomeModal'); if(!modal) return;
  clearTourHighlight();
+ cleanupWelcomeTourAction(null);
  stopTourAvatarMotion();
  modal.classList.remove('open');
  unlockWelcomeTourScroll();

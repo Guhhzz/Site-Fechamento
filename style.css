@@ -1761,7 +1761,8 @@ body.darkMode .welcomePanel.tourPanel{
   transition:opacity .18s ease,transform .24s ease,filter .24s ease;
 }
 .tourCharacter:after{
-  content:"";
+  content:none;
+  display:none;
   position:absolute;
   right:26px;
   top:58px;
@@ -1777,8 +1778,8 @@ body.darkMode .welcomePanel.tourPanel{
   transition:opacity .18s ease;
 }
 .tourPanel[data-pose="talk"] .tourCharacter:after{
-  opacity:1;
-  animation:tourSpeechDots 1.1s ease-in-out infinite;
+  opacity:0;
+  animation:none;
 }
 .tourPanel[data-pose="talk"] .welcomeAvatar{
   animation:tourPresenterSpeak 1.9s ease-in-out infinite;
