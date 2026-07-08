@@ -179,6 +179,7 @@ const WELCOME_TOUR_STEPS=[
  {
   view:'geral',
   target:'#kpisSection .kpis',
+  mobileTarget:'#kpisSection .kpi',
   kicker:'Visão geral',
   title:'KPIs consolidados do departamento',
   text:'Aqui ficam os principais números do fechamento: ligações ofertadas, atendidas, abandonadas, tickets via WhatsApp, callbacks e NPS médio.'
@@ -202,6 +203,7 @@ const WELCOME_TOUR_STEPS=[
  {
   view:'GazinBank',
   target:'#kpisSection .kpis',
+  mobileTarget:'#kpisSection .kpi',
   kicker:'Exemplo de núcleo',
   title:'Indicadores específicos da área',
   text:'Ao entrar em um núcleo, a visão geral sai de cena e entram os indicadores específicos daquela operação, mantendo o mesmo padrão de leitura.'
@@ -238,6 +240,8 @@ const WELCOME_TOUR_STEPS=[
 let welcomeTourIndex=0;
 let welcomeTourPreviousView='geral';
 let welcomeTourShownThisSession=false;
+let welcomeTourScrollY=0;
+let welcomeTourAllowScroll=false;
 const TOUR_AVATAR_POSES={
  left:'assets/apresentador-gustavo-tour-left.png',
  right:'assets/apresentador-gustavo-tour-right.png',
@@ -286,6 +290,55 @@ function welcomeEls(){
   prev:document.getElementById('welcomePrevStep'),
   next:document.getElementById('welcomeNextStep')
  };
+}
+function isWelcomeTourOpen(){
+ return document.getElementById('welcomeModal')?.classList.contains('open');
+}
+function lockWelcomeTourScroll(){
+ if(document.body.classList.contains('tourOpen')) return;
+ welcomeTourScrollY=window.scrollY || document.documentElement.scrollTop || 0;
+ document.documentElement.classList.add('tourOpen');
+ document.body.classList.add('tourOpen');
+}
+function unlockWelcomeTourScroll(){
+ document.documentElement.classList.remove('tourOpen');
+ document.body.classList.remove('tourOpen');
+}
+function preventWelcomeTourScroll(e){
+ if(!isWelcomeTourOpen()) return;
+ e.preventDefault();
+}
+function preventWelcomeTourKeys(e){
+ if(!isWelcomeTourOpen()) return;
+ const blockedKeys=['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '];
+ if(blockedKeys.includes(e.key)) e.preventDefault();
+}
+function scrollTourTargetIntoView(target){
+ if(!target) return;
+ const isMobile=window.innerWidth<=760;
+ welcomeTourAllowScroll=true;
+ target.scrollIntoView({behavior:'auto',block:isMobile?'center':'center',inline:'center'});
+ if(isMobile){
+  const panel=document.querySelector('#welcomeModal .tourPanel');
+  const panelHeight=panel?.getBoundingClientRect().height || 0;
+  const safeBottom=window.innerHeight-panelHeight-28;
+  const rect=target.getBoundingClientRect();
+  let delta=0;
+  if(rect.bottom>safeBottom) delta=rect.bottom-safeBottom;
+  if(rect.top<14) delta=rect.top-14;
+  if(delta) window.scrollTo({top:Math.max(0,window.scrollY+delta),behavior:'auto'});
+ }
+ welcomeTourScrollY=window.scrollY || document.documentElement.scrollTop || 0;
+ setTimeout(()=>{ welcomeTourAllowScroll=false; welcomeTourScrollY=window.scrollY || document.documentElement.scrollTop || 0; },120);
+}
+function keepWelcomeTourScrollLocked(){
+ if(!isWelcomeTourOpen()) return;
+ if(welcomeTourAllowScroll){
+  welcomeTourScrollY=window.scrollY || document.documentElement.scrollTop || 0;
+  return;
+ }
+ const currentY=window.scrollY || document.documentElement.scrollTop || 0;
+ if(Math.abs(currentY-welcomeTourScrollY)>2) window.scrollTo({top:welcomeTourScrollY,behavior:'auto'});
 }
 function tourTarget(step){
  const selector=(window.innerWidth<=760 && step.mobileTarget) ? step.mobileTarget : step.target;
@@ -410,6 +463,16 @@ function positionTourPanel(target,step){
  panel.style.right='auto';
  panel.style.bottom='auto';
  const panelRect=panel.getBoundingClientRect();
+ if(vw<=760){
+  panel.style.left=margin+'px';
+  panel.style.top=clamp(vh-panelRect.height-margin,margin,vh-panelRect.height-margin)+'px';
+  panel.dataset.placement='mobileBottom';
+  setTourAvatarPose(target,{name:'mobileBottom',left:margin,top:parseFloat(panel.style.top) || margin},panelRect,step);
+  panel.classList.add('isMoving');
+  clearTimeout(panel._tourMoveTimer);
+  panel._tourMoveTimer=setTimeout(()=>panel.classList.remove('isMoving'),360);
+  return;
+ }
  if(!target){
   panel.style.left=clamp(vw-panelRect.width-margin,margin,vw-panelRect.width-margin)+'px';
   panel.style.top=clamp(vh-panelRect.height-margin,margin,vh-panelRect.height-margin)+'px';
@@ -455,15 +518,9 @@ function renderWelcomeTourStep(index){
  welcomeTourIndex=index;
  if(step.view && currentViewKey!==step.view) setView(step.view);
  requestAnimationFrame(()=>{
-  const els=welcomeEls();
-  const target=tourTarget(step);
-  clearTourHighlight();
-  if(target){
-   target.classList.add('tourFocused');
-   target.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
-   setTimeout(()=>positionTourSpotlight(target),280);
-   setTimeout(()=>positionTourSpotlight(target),680);
-  }
+ const els=welcomeEls();
+ const target=tourTarget(step);
+ clearTourHighlight();
   if(els.counter) els.counter.textContent=`${index+1} de ${WELCOME_TOUR_STEPS.length}`;
   if(els.kicker) els.kicker.textContent=step.kicker;
   if(els.title) els.title.textContent=step.title;
@@ -472,6 +529,12 @@ function renderWelcomeTourStep(index){
   if(els.prev) els.prev.disabled=index===0;
   if(els.next) els.next.textContent=index===WELCOME_TOUR_STEPS.length-1?'Concluir tour':'Próximo';
   renderWelcomeDots(index);
+ if(target){
+  target.classList.add('tourFocused');
+  scrollTourTargetIntoView(target);
+  setTimeout(()=>positionTourSpotlight(target),280);
+  setTimeout(()=>positionTourSpotlight(target),680);
+ }
   positionTourPanel(target,step);
   setTimeout(()=>positionTourPanel(target,step),320);
   setTimeout(()=>positionTourPanel(target,step),720);
@@ -494,6 +557,10 @@ function setupWelcomePresentation(){
  if(prev) prev.addEventListener('click',prevWelcomeTourStep);
  if(next) next.addEventListener('click',nextWelcomeTourStep);
  if(openTourBtn) openTourBtn.addEventListener('click',openWelcomeModal);
+ window.addEventListener('wheel',preventWelcomeTourScroll,{passive:false,capture:true});
+ window.addEventListener('touchmove',preventWelcomeTourScroll,{passive:false,capture:true});
+ window.addEventListener('scroll',keepWelcomeTourScrollLocked,{passive:true});
+ window.addEventListener('keydown',preventWelcomeTourKeys,true);
  window.addEventListener('resize',()=>{
   if(document.getElementById('welcomeModal')?.classList.contains('open')) renderWelcomeTourStep(welcomeTourIndex);
  });
@@ -507,6 +574,7 @@ function openWelcomeModal(){
  }
  welcomeTourPreviousView=currentViewKey || 'geral';
  modal.classList.add('open');
+ lockWelcomeTourScroll();
  modal.setAttribute('aria-hidden','false');
  renderWelcomeTourStep(0);
 }
@@ -515,6 +583,7 @@ function closeWelcomeModal(){
  clearTourHighlight();
  stopTourAvatarMotion();
  modal.classList.remove('open');
+ unlockWelcomeTourScroll();
  modal.setAttribute('aria-hidden','true');
  if(welcomeTourPreviousView && currentViewKey!==welcomeTourPreviousView) setView(welcomeTourPreviousView);
 }
