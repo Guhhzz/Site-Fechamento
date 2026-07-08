@@ -378,13 +378,12 @@ function setTourAvatarPose(target,placement,panelRect){
  let pose='talk';
  if(target && placement && panelRect){
   const targetRect=target.getBoundingClientRect();
-  const targetCenter=targetRect.left+(targetRect.width/2);
-  const panelLeft=placement.left;
-  const panelRight=placement.left+panelRect.width;
-  if(targetCenter<panelLeft-8) pose='left';
-  else if(targetCenter>panelRight+8) pose='right';
-  else if(placement.name==='left') pose='right';
-  else if(placement.name==='right') pose='left';
+  const targetCenterY=targetRect.top+(targetRect.height/2);
+  const panelCenterY=placement.top+(panelRect.height/2);
+  const verticalGap=Math.abs(targetCenterY-panelCenterY);
+  const alignedEnough=verticalGap<=Math.max(72,Math.min(128,panelRect.height*.42));
+  if(alignedEnough && placement.name==='left') pose='right';
+  else if(alignedEnough && placement.name==='right') pose='left';
  }
  const nextSrc=TOUR_AVATAR_POSES[pose] || TOUR_AVATAR_POSES.talk;
  panel.dataset.pose=pose;
