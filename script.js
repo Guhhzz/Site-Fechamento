@@ -395,7 +395,7 @@ function syncTourFocusClone(el){
   clone.setAttribute('aria-hidden','true');
   modal.appendChild(clone);
  }
- if(window.innerWidth<=760){
+ if(window.innerWidth<=760 || (window.innerWidth<=960 && window.innerHeight<=520) || el.classList.contains('sectionHeader')){
   clone.hidden=true;
   clone.replaceChildren();
   return;

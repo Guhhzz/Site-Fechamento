@@ -1214,15 +1214,16 @@ body.darkMode .welcomeContent p{color:#405873}
   .userPanel{
     display:grid;
     grid-template-columns:minmax(0,1fr) auto auto;
-    gap:10px;
+    gap:6px;
     width:100%;
-    max-width:calc(100vw - 48px);
+    max-width:100%;
     padding:8px 9px;
     border-radius:16px;
     margin-bottom:8px;
   }
   .userPanel span{max-width:125px}
-  .userPanel button{padding:8px 9px}
+  .userPanel button{padding:8px 8px;font-size:12px}
+  .themeToggle{min-width:54px}
   .mobileNucleoPicker{
     display:block;
     width:220px !important;
@@ -1980,29 +1981,30 @@ body.darkMode .tourMeta #welcomeSceneCounter{
   .tourFocusClone{display:none!important}
   .tourPanel{
     z-index:280;
-    left:14px;
+    left:10px;
     right:auto;
     bottom:auto;
-    width:auto;
-    grid-template-columns:92px 1fr;
+    width:calc(100vw - 20px);
+    grid-template-columns:minmax(38px,48px) minmax(0,1fr);
   }
   .tourPanel[data-mode="conclusion"]{
-    width:calc(100vw - 28px);
-    grid-template-columns:118px 1fr;
+    width:calc(100vw - 20px);
+    grid-template-columns:96px minmax(0,1fr);
   }
   .tourCharacter{min-height:150px}
   .tourCharacter .welcomeAvatar{
-    width:110px;
+    width:64px;
     max-height:160px;
   }
   .tourPanel[data-mode="conclusion"] .tourCharacter{
     min-height:210px;
   }
   .tourPanel[data-mode="conclusion"] .welcomeAvatar{
-    width:136px;
+    width:112px;
     max-height:260px;
   }
   .tourBubble{
+    min-width:0;
     padding:16px;
     border-radius:20px;
   }
@@ -2021,6 +2023,10 @@ body.darkMode .tourMeta #welcomeSceneCounter{
   }
   .tourBubble h3{font-size:18px}
   .tourBubble p{font-size:13px}
+  .tourMeta #welcomeSceneCounter{
+    font-size:11px;
+    padding:5px 7px;
+  }
   .tourBubble .welcomeActions{
     display:grid;
     grid-template-columns:1fr 1fr;
