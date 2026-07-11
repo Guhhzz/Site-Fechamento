@@ -97,7 +97,13 @@
       <div><strong>Convidar novo usuário</strong><span>Envie um convite por e-mail para a pessoa criar o acesso ao painel.</span></div>
       <label>Nome<input id="inviteName" type="text" placeholder="Nome da pessoa" autocomplete="name" /></label>
       <label>E-mail<input id="inviteEmail" type="email" placeholder="email@empresa.com.br" autocomplete="email" required /></label>
-      <label>Perfil<select id="inviteRole"><option value="usuario">Visualização</option><option value="admin">Admin</option></select></label>
+      <label>Perfil
+        <input id="inviteRole" type="hidden" value="usuario" />
+        <span class="inviteRolePicker" role="radiogroup" aria-label="Perfil do convite">
+          <button class="inviteRoleOption active" type="button" data-role="usuario" role="radio" aria-checked="true">Visualização</button>
+          <button class="inviteRoleOption" type="button" data-role="admin" role="radio" aria-checked="false">Admin</button>
+        </span>
+      </label>
       <button class="baseDownload" id="sendInviteBtn" type="submit">Enviar convite</button>
     </form>
     <div class="usersToolbar"><button class="baseDownload" id="refreshUsersBtn" type="button">Atualizar lista</button><span id="usersStatus">Conectando ao Supabase...</span></div>

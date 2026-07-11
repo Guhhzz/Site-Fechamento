@@ -875,6 +875,16 @@ function closeUsersModal(){
 }
 function setupAdminUsers(){
  const identity=document.getElementById('userIdentity'), openBtn=document.getElementById('openUsersBtn'), modal=document.getElementById('usersModal'), closeBtn=document.getElementById('closeUsersModal'), refreshBtn=document.getElementById('refreshUsersBtn'), list=document.getElementById('usersList'), inviteForm=document.getElementById('userInviteForm');
+ const setInviteRole=role=>{
+  const value=role==='admin'?'admin':'usuario';
+  const input=document.getElementById('inviteRole');
+  if(input) input.value=value;
+  document.querySelectorAll('.inviteRoleOption').forEach(option=>{
+   const active=option.dataset.role===value;
+   option.classList.toggle('active',active);
+   option.setAttribute('aria-checked',active?'true':'false');
+  });
+ };
  if(identity){
   identity.addEventListener('click',toggleUserMenu);
   identity.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleUserMenu(); } });
@@ -886,6 +896,9 @@ function setupAdminUsers(){
  document.addEventListener('click',e=>{
   const panel=document.getElementById('userPanel');
   if(panel && !panel.contains(e.target)) closeUserMenu();
+ });
+ document.querySelectorAll('.inviteRoleOption').forEach(option=>{
+  option.addEventListener('click',()=>setInviteRole(option.dataset.role));
  });
  if(inviteForm) inviteForm.addEventListener('submit',async e=>{
   e.preventDefault();
@@ -901,6 +914,7 @@ function setupAdminUsers(){
   try{
    await callAdminUsers({action:'inviteUser',email,name,perfil});
    inviteForm.reset();
+   setInviteRole('usuario');
    await loadAdminUsers();
    if(status) status.textContent=`Convite enviado para ${email}.`;
   }catch(error){

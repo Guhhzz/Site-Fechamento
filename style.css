@@ -254,8 +254,11 @@ body.darkMode .userSummary strong{color:#F4F9FF}
 body.darkMode .userSummary span{color:#DCEBFF}
 body.darkMode .userControls input,
 body.darkMode .userInviteForm input,
-body.darkMode .userInviteForm select,
 body.darkMode .passwordRecoveryForm input{background:#fff;color:#061A36;-webkit-text-fill-color:#061A36}
+body.darkMode .inviteRolePicker{background:linear-gradient(180deg,#132845,#0E1E36);border-color:#263C5F;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+body.darkMode .inviteRoleOption{color:#A9BCD4}
+body.darkMode .inviteRoleOption:hover{color:#FFFFFF;background:rgba(0,114,206,.18)}
+body.darkMode .inviteRoleOption.active{color:#FFFFFF;background:linear-gradient(135deg,#0057B8,#0072CE);box-shadow:0 10px 20px rgba(0,87,184,.24),inset 0 1px 0 rgba(255,255,255,.12)}
 body.darkMode .passwordRecoveryForm label{color:#DCEBFF}
 body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
 body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
@@ -450,7 +453,11 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .userInviteForm>div strong{display:block;color:#061A36;font-size:15px;margin-bottom:4px}
 .userInviteForm>div span{display:block;color:#5E748D;font-size:12px;line-height:1.35}
 .userInviteForm label{font-size:11px;font-weight:950;color:#5E748D;text-transform:uppercase;letter-spacing:.04em}
-.userInviteForm input,.userInviteForm select{display:block;width:100%;margin-top:6px;border:1px solid #D8E9FA;border-radius:14px;background:#fff;color:#061A36;padding:11px 12px;font-weight:850;outline:none}
+.userInviteForm input{display:block;width:100%;margin-top:6px;border:1px solid #D8E9FA;border-radius:14px;background:#fff;color:#061A36;padding:11px 12px;font-weight:850;outline:none}
+.inviteRolePicker{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%;margin-top:6px;padding:4px;border:1px solid #D8E9FA;border-radius:16px;background:linear-gradient(180deg,#EAF4FF,#F8FBFF);box-shadow:inset 0 1px 0 rgba(255,255,255,.95)}
+.inviteRoleOption{border:0;border-radius:12px;padding:10px 12px;background:transparent;color:#315879;font-size:13px;font-weight:950;cursor:pointer;transition:.18s;white-space:nowrap}
+.inviteRoleOption:hover{color:#0057B8;background:rgba(255,255,255,.72)}
+.inviteRoleOption.active{color:#FFFFFF;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));box-shadow:0 10px 20px rgba(0,87,184,.18),inset 0 1px 0 rgba(255,255,255,.16)}
 .userInviteForm button{white-space:nowrap}
 .usersToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .usersToolbar span{font-size:13px;font-weight:850;color:#5E748D}
