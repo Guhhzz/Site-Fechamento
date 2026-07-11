@@ -7,6 +7,7 @@ Ela deve ser publicada no Supabase porque usa `SERVICE_ROLE_KEY`, que nao pode f
 ## Acoes disponiveis
 
 - `list`: lista usuarios cadastrados.
+- `inviteUser`: envia convite por e-mail para criar acesso ao painel.
 - `updateName`: atualiza o nome de exibicao.
 - `resetPassword`: envia e-mail de redefinicao de senha.
 - `deleteUser`: exclui um usuario do Auth e remove seu perfil.

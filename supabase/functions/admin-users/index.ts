@@ -108,6 +108,41 @@ Deno.serve(async (req) => {
       return json({ users });
     }
 
+    if (body.action === 'inviteUser') {
+      const email = String(body.email || '').trim().toLowerCase();
+      const name = String(body.name || '').trim();
+      const perfil = String(body.perfil || 'usuario').trim().toLowerCase() === 'admin' ? 'admin' : 'usuario';
+      if (!email) return json({ error: 'Informe o e-mail para enviar o convite.' }, 400);
+
+      const displayName = name || email.split('@')[0] || 'Usuario';
+      const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
+        redirectTo: SITE_URL,
+        data: {
+          name: displayName,
+          full_name: displayName,
+          perfil,
+        },
+      });
+      if (error) throw error;
+
+      const invitedUser = data?.user;
+      if (invitedUser?.id) {
+        const { error: profileUpsertError } = await adminClient
+          .from('profiles')
+          .upsert({
+            id: invitedUser.id,
+            email,
+            nome: displayName,
+            perfil,
+            ativo: true,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' });
+        if (profileUpsertError) throw profileUpsertError;
+      }
+
+      return json({ ok: true, user: invitedUser ? publicUser(invitedUser, { nome: displayName, email, perfil, ativo: true }) : null });
+    }
+
     if (body.action === 'updateName') {
       const userId = String(body.userId || '').trim();
       const name = String(body.name || '').trim();

@@ -874,7 +874,7 @@ function closeUsersModal(){
  modal.setAttribute('aria-hidden','true');
 }
 function setupAdminUsers(){
- const identity=document.getElementById('userIdentity'), openBtn=document.getElementById('openUsersBtn'), modal=document.getElementById('usersModal'), closeBtn=document.getElementById('closeUsersModal'), refreshBtn=document.getElementById('refreshUsersBtn'), list=document.getElementById('usersList');
+ const identity=document.getElementById('userIdentity'), openBtn=document.getElementById('openUsersBtn'), modal=document.getElementById('usersModal'), closeBtn=document.getElementById('closeUsersModal'), refreshBtn=document.getElementById('refreshUsersBtn'), list=document.getElementById('usersList'), inviteForm=document.getElementById('userInviteForm');
  if(identity){
   identity.addEventListener('click',toggleUserMenu);
   identity.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleUserMenu(); } });
@@ -886,6 +886,29 @@ function setupAdminUsers(){
  document.addEventListener('click',e=>{
   const panel=document.getElementById('userPanel');
   if(panel && !panel.contains(e.target)) closeUserMenu();
+ });
+ if(inviteForm) inviteForm.addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!canManageHistory()) return;
+  const status=document.getElementById('usersStatus');
+  const btn=document.getElementById('sendInviteBtn');
+  const name=String(document.getElementById('inviteName')?.value||'').trim();
+  const email=normalizeEmail(document.getElementById('inviteEmail')?.value);
+  const perfil=String(document.getElementById('inviteRole')?.value||'usuario').trim().toLowerCase();
+  if(!email){ if(status) status.textContent='Informe o e-mail para enviar o convite.'; return; }
+  if(btn) btn.disabled=true;
+  if(status) status.textContent='Enviando convite...';
+  try{
+   await callAdminUsers({action:'inviteUser',email,name,perfil});
+   inviteForm.reset();
+   await loadAdminUsers();
+   if(status) status.textContent=`Convite enviado para ${email}.`;
+  }catch(error){
+   if(status) status.textContent=error.message;
+   alert(error.message);
+  }finally{
+   if(btn) btn.disabled=false;
+  }
  });
  if(list) list.addEventListener('click',async e=>{
   const btn=e.target.closest('button[data-action]');
@@ -929,6 +952,11 @@ function setupAdminUsers(){
 function openPasswordRecoveryModal(){
  const modal=document.getElementById('passwordRecoveryModal');
  if(!modal) return;
+ const isInvite=String(location.hash+location.search).includes('type=invite');
+ const title=modal.querySelector('.modalHead h3');
+ const subtitle=modal.querySelector('.modalHead p');
+ if(title) title.textContent=isInvite?'Criar senha de acesso':'Definir nova senha';
+ if(subtitle) subtitle.textContent=isInvite?'Escolha uma senha para concluir seu convite e acessar o painel.':'Informe uma senha nova para concluir a recuperação do acesso.';
  modal.classList.add('open');
  modal.setAttribute('aria-hidden','false');
  const input=document.getElementById('newPassword');
@@ -960,7 +988,8 @@ function setupPasswordRecoveryModal(){
   if(history.replaceState) history.replaceState({},document.title,location.pathname);
   setTimeout(closePasswordRecoveryModal,900);
  });
- if(String(location.hash+location.search).includes('type=recovery')) setTimeout(openPasswordRecoveryModal,800);
+ const authReturn=String(location.hash+location.search);
+ if(authReturn.includes('type=recovery') || authReturn.includes('type=invite')) setTimeout(openPasswordRecoveryModal,800);
 }
 
 const subtitles = {ofertadas:'Chamadas recebidas no período',atendidas:'Chamadas efetivamente atendidas',abandonadas:'Chamadas abandonadas',callback:'Retornos registrados na fila do núcleo',whatsapp:'Tickets via WhatsApp'};

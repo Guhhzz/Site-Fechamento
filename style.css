@@ -240,15 +240,21 @@ body.darkMode .historyIntro strong{color:#F4F9FF}
 body.darkMode .tableScroll:after{background:linear-gradient(90deg,rgba(16,29,51,0),rgba(16,29,51,.96))}
 body.darkMode .modal{background:rgba(0,5,15,.78)}
 body.darkMode .userMenu,
+body.darkMode .userInviteForm,
 body.darkMode .userRow,
 body.darkMode .usersEmpty{background:#101D33;border-color:#263C5F}
 body.darkMode .userMenu button{background:#132845;border-color:#263C5F;color:#DCEBFF}
+body.darkMode .userInviteForm>div strong{color:#F4F9FF}
+body.darkMode .userInviteForm>div span{color:#A9BCD4}
 body.darkMode .usersToolbar span,
 body.darkMode .userSummary small,
+body.darkMode .userInviteForm label,
 body.darkMode .userControls label{color:#A9BCD4}
 body.darkMode .userSummary strong{color:#F4F9FF}
 body.darkMode .userSummary span{color:#DCEBFF}
 body.darkMode .userControls input,
+body.darkMode .userInviteForm input,
+body.darkMode .userInviteForm select,
 body.darkMode .passwordRecoveryForm input{background:#fff;color:#061A36;-webkit-text-fill-color:#061A36}
 body.darkMode .passwordRecoveryForm label{color:#DCEBFF}
 body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
@@ -440,6 +446,12 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 
 .baseSelect.disabled{background:#EAF4FF;color:#285B91;box-shadow:none;cursor:default}.baseSelect.active{background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;box-shadow:0 12px 24px rgba(0,87,184,.22);cursor:default}.baseRemove{background:#FFF0F0;color:#B42318;border:1px solid rgba(180,35,24,.16)}.baseEdit{background:#F3F7FC;color:#0057B8;border:1px solid #D8E9FA}.baseEdit,.baseRemove{border-radius:999px;padding:9px 12px;font-weight:950;cursor:pointer;transition:.18s}.baseEdit:hover,.baseRemove:hover{transform:translateY(-1px)}.basePill.current{background:#EAF4FF;color:#0057B8;border-color:rgba(0,87,184,.18)}.baseAdminActions{display:none;gap:8px;flex-wrap:wrap;position:relative;z-index:1;margin-top:8px}.adminUnlocked .baseAdminActions{display:flex}.historyEmpty{padding:24px;border-radius:20px;background:#F8FBFF;border:1px dashed #B9CDE5;color:#6B7F98;text-align:center}.passwordBox{padding:10px 0 4px}.passwordBox label{display:block;font-size:13px;font-weight:850;color:#315879;margin-bottom:8px}.passwordInput{width:100%;border:1px solid #D8E9FA;border-radius:16px;padding:13px 14px;font-size:15px;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.95);background:#F8FBFF;color:#061A36}.passwordActions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}.adminHint{margin-top:10px;color:#6B7F98;font-size:12px;line-height:1.35}.smallModalPanel{width:min(520px,94vw);height:auto;min-height:0}
 .usersPanel{width:min(1080px,96vw);height:min(780px,92vh)}
+.userInviteForm{display:grid;grid-template-columns:minmax(210px,1fr) minmax(170px,.8fr) minmax(220px,1fr) minmax(130px,.55fr) auto;gap:10px;align-items:end;margin-bottom:14px;padding:14px;border:1px solid #D8E9FA;border-radius:22px;background:linear-gradient(180deg,#F8FBFF,#FFFFFF);box-shadow:0 12px 28px rgba(6,26,54,.07)}
+.userInviteForm>div strong{display:block;color:#061A36;font-size:15px;margin-bottom:4px}
+.userInviteForm>div span{display:block;color:#5E748D;font-size:12px;line-height:1.35}
+.userInviteForm label{font-size:11px;font-weight:950;color:#5E748D;text-transform:uppercase;letter-spacing:.04em}
+.userInviteForm input,.userInviteForm select{display:block;width:100%;margin-top:6px;border:1px solid #D8E9FA;border-radius:14px;background:#fff;color:#061A36;padding:11px 12px;font-weight:850;outline:none}
+.userInviteForm button{white-space:nowrap}
 .usersToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .usersToolbar span{font-size:13px;font-weight:850;color:#5E748D}
 .usersList{display:grid;gap:12px;overflow:auto;padding:2px 4px 6px}
@@ -458,10 +470,11 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .userControls button[data-action="delete-user"]{background:linear-gradient(135deg,#E05252,#B42318);box-shadow:0 10px 20px rgba(224,82,82,.18)}
 .userControls button:disabled{opacity:.62;cursor:progress}
 .userControls button[data-action="delete-user"]:disabled{cursor:not-allowed;background:linear-gradient(135deg,#B9C7D8,#8EA1B8);box-shadow:none}
+.userInviteForm button:disabled{opacity:.62;cursor:progress}
 .passwordRecoveryForm{display:grid;gap:10px}
 .passwordRecoveryForm label{font-size:12px;font-weight:950;color:#315879}
-@media (max-width:980px){.userRow{grid-template-columns:1fr}.userControls{grid-template-columns:1fr}.userControls button{width:100%}}
-@media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}.usersPanel{height:calc(100vh - 20px)}.usersToolbar{display:grid}.usersToolbar .baseDownload{width:100%}}
+@media (max-width:980px){.userInviteForm,.userRow{grid-template-columns:1fr}.userControls{grid-template-columns:1fr}.userControls button,.userInviteForm button{width:100%}}
+@media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}.usersPanel{height:calc(100vh - 20px)}.usersToolbar{display:grid}.usersToolbar .baseDownload{width:100%}.userInviteForm{padding:12px}}
 
 .tooltip{position:fixed;pointer-events:none;background:#061A36;color:#fff;padding:8px 10px;border-radius:10px;font-size:12px;opacity:0;transform:translate(-50%,-120%);transition:opacity .1s;box-shadow:0 10px 28px rgba(0,0,0,.28);z-index:99}
 .modal{position:fixed;inset:0;background:rgba(4,16,34,.70);z-index:120;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}

@@ -92,7 +92,14 @@
 </div>
 <div class="modal" id="usersModal" aria-hidden="true">
   <div class="modalPanel usersPanel">
-    <div class="modalHead"><div><h3>Usuários cadastrados</h3><p>Controle administrativo de acesso, nome de exibição e redefinição de senha.</p></div><button class="closeBtn" id="closeUsersModal">Fechar</button></div>
+    <div class="modalHead"><div><h3>Usuários cadastrados</h3><p>Controle administrativo de acesso, convites, nome de exibição e redefinição de senha.</p></div><button class="closeBtn" id="closeUsersModal">Fechar</button></div>
+    <form class="userInviteForm" id="userInviteForm">
+      <div><strong>Convidar novo usuário</strong><span>Envie um convite por e-mail para a pessoa criar o acesso ao painel.</span></div>
+      <label>Nome<input id="inviteName" type="text" placeholder="Nome da pessoa" autocomplete="name" /></label>
+      <label>E-mail<input id="inviteEmail" type="email" placeholder="email@empresa.com.br" autocomplete="email" required /></label>
+      <label>Perfil<select id="inviteRole"><option value="usuario">Visualização</option><option value="admin">Admin</option></select></label>
+      <button class="baseDownload" id="sendInviteBtn" type="submit">Enviar convite</button>
+    </form>
     <div class="usersToolbar"><button class="baseDownload" id="refreshUsersBtn" type="button">Atualizar lista</button><span id="usersStatus">Conectando ao Supabase...</span></div>
     <div class="usersList" id="usersList"></div>
   </div>
