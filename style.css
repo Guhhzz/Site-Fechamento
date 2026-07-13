@@ -356,6 +356,14 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .ufMapVal{font-weight:1000;color:#083C77;font-size:9px}
 .ufMapQty.empty{display:none}
 .ufMapDot{display:none}
+body.darkMode .ufMapLegend{color:#DCEBFF}
+body.darkMode .ufMapNote{color:#A9BCD4}
+body.darkMode .ufMapBase{filter:drop-shadow(0 16px 28px rgba(0,0,0,.32))}
+body.darkMode .ufMapChip{
+  background:linear-gradient(180deg,#F4F9FF,#DCEBFF);
+  border-color:rgba(216,235,255,.96);
+  box-shadow:0 7px 16px rgba(0,0,0,.28);
+}
 
 .tableCard{background:linear-gradient(180deg,#fff,#F9FCFF);border:1px solid rgba(0,87,184,.12);border-radius:26px;box-shadow:var(--glow);padding:22px;margin-top:22px;position:relative;overflow:hidden}
 .tableCard:after{content:"";position:absolute;right:-80px;top:-80px;width:240px;height:240px;border-radius:50%;background:rgba(0,114,206,.08)}

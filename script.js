@@ -1405,7 +1405,7 @@ function chartPreviewValue(c,d){
 }
 function mobileChartPreview(c){
  const rows=chartData(c);
- if(!rows.length || rows.length<=5 || c.type==='pie' || c.type==='ufMap') return '';
+ if(!rows.length || rows.length<=5 || c.type==='pie' || c.type==='ufMap' || isUfDistributionChart(c)) return '';
  const top=rows.slice().sort((a,b)=>chartPreviewValue(c,b)-chartPreviewValue(c,a)).slice(0,5);
  return `<div class="mobileChartPreview">${top.map((d,i)=>{
    const val=chartPreviewValue(c,d);
@@ -1516,6 +1516,12 @@ function activeMonthLabel(){ return DATA?.month || activeHistoryItem()?.fechamen
 function updateDocumentTitle(){ document.title=`Fechamento ${activeMonthLabel()} | Atendimento ao Cliente`; }
 function showTip(txt,x,y){tooltip.innerHTML=txt; tooltip.style.left=x+'px'; tooltip.style.top=y+'px'; tooltip.style.opacity=1;}
 function hideTip(){tooltip.style.opacity=0;}
+const UF_CODES = new Set(['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']);
+function isUfDistributionChart(c){
+ const title=String(c?.title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const rows=chartData(c);
+ return title.includes('distribuicao por uf') && rows.length>0 && rows.every(d=>UF_CODES.has(String(d.uf||d.label||'').toUpperCase().trim()));
+}
 function renderChart(el,c,expanded=false){
  if(!el) return;
  el.classList.remove('lineChartCanvas','lineChartExpanded');
@@ -1523,7 +1529,7 @@ function renderChart(el,c,expanded=false){
  if(c.type==='line') return lineChart(el,rows,expanded);
  if(c.type==='groupedBar') return groupedChart(el,rows);
  if(c.type==='groupedColumn') return groupedColumnChart(el,rows);
- if(c.type==='ufMap') return ufMapChart(el,rows,expanded);
+ if(c.type==='ufMap' || isUfDistributionChart(c)) return ufMapChart(el,rows,expanded);
  if(c.type==='pie') return pieChart(el,rows,expanded);
  return barChart(el,rows);
 }
@@ -1718,7 +1724,7 @@ function chartRowsForExcel(c){
  if(c.type==='groupedBar' || c.type==='groupedColumn'){
    return {headers:['Carteira','Finalizado com sucesso','Finalizado sem sucesso'], rows:c.data.map(d=>[d.label, Math.round(+d.sucesso||0), Math.round(+d.semSucesso||0)])};
  }
- if(c.type==='ufMap'){
+ if(c.type==='ufMap' || isUfDistributionChart(c)){
    return {headers:['UF','Quantidade'], rows:c.data.map(d=>[d.uf||d.label, Math.round(+d.value||0)])};
  }
  return {headers:['Categoria','Quantidade'], rows:c.data.map(d=>[d.label, Math.round(+d.value||0)])};
