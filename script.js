@@ -1563,6 +1563,12 @@ const UF_MAP_SHAPES={
  BA:{x:374,y:332,w:100,h:98}, GO:{x:270,y:354,w:82,h:68}, DF:{x:356,y:378,w:30,h:28}, MS:{x:224,y:456,w:90,h:76}, MG:{x:338,y:454,w:104,h:84},
  ES:{x:454,y:488,w:40,h:44}, RJ:{x:416,y:548,w:52,h:34}, SP:{x:320,y:548,w:92,h:58}, PR:{x:296,y:618,w:82,h:44}, SC:{x:374,y:640,w:66,h:34}, RS:{x:306,y:678,w:82,h:52}
 };
+const UF_REAL_MAP_POS={
+ AC:[22.2,43.2], AL:[80.9,52.2], AP:[58.4,18.0], AM:[35.0,31.9], BA:[68.9,56.7], CE:[81.1,39.8], DF:[58.8,59.6],
+ ES:[77.5,68.8], GO:[57.2,60.1], MA:[70.3,38.7], MT:[49.6,52.8], MS:[50.8,70.6], MG:[65.6,67.1], PA:[52.8,30.3],
+ PB:[83.6,46.4], PR:[57.3,81.2], PE:[82.1,49.8], PI:[75.7,43.2], RJ:[71.9,74.0], RN:[85.4,41.0], RS:[56.6,92.0],
+ RO:[35.5,48.0], RR:[42.5,13.8], SC:[60.0,86.0], SP:[61.6,76.2], SE:[79.9,55.0], TO:[62.4,45.8]
+};
 
 function ufMapChart(el,data,expanded=false){
  const pos={
@@ -1596,27 +1602,16 @@ function ufMapChart(el,data,expanded=false){
 function renderUfMapSvg(el,rows){
  const wrapper=el.querySelector('.ufMapWrapper');
  if(!wrapper) return;
- const valueByUf=Object.fromEntries(rows.map(d=>[d.uf,d.value]));
+ const mapSrc=wrapper.querySelector('.ufMapBase')?.getAttribute('src') || '';
  const max=Math.max(...rows.map(d=>d.value),1);
- const states=Object.keys(UF_MAP_SHAPES).map(uf=>{
-   const s=UF_MAP_SHAPES[uf];
-   const has=valueByUf[uf]>0;
-   const rx=Math.min(18,s.w/4,s.h/4);
-   const labelX=s.x+s.w/2;
-   const labelY=s.y+s.h/2+4;
-   const label=has?`${uf}: ${fmt.format(Math.round(valueByUf[uf]))} acionamento(s)`:uf;
-   return `<g class="ufSvgState${has?' hasData':''}" data-uf="${uf}" tabindex="${has?0:-1}" role="${has?'button':'img'}" aria-label="${label}"><rect class="ufSvgShape" x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="${rx}"></rect><text class="ufSvgLabel" x="${labelX}" y="${labelY}" text-anchor="middle">${uf}</text></g>`;
- }).join('');
  const markers=rows.map(d=>{
-   const s=UF_MAP_SHAPES[d.uf];
-   if(!s) return '';
-   const cx=s.x+s.w/2;
-   const cy=s.y+s.h/2;
+   const pos=UF_REAL_MAP_POS[d.uf] || d.pos;
+   if(!pos) return '';
    const qty=fmt.format(Math.round(d.value));
-   const r=7+Math.min(8,(d.value/max)*8);
-   return `<g class="ufSvgMarker bar" data-uf="${d.uf}" data-x="${cx}" data-y="${cy}" data-tip="${d.uf}: ${qty} acionamento(s)" tabindex="0" role="button" aria-label="${d.uf}: ${qty} acionamento(s)"><circle class="ufSvgPulse" cx="${cx}" cy="${cy}" r="${r+8}"></circle><circle class="ufSvgDot" cx="${cx}" cy="${cy}" r="${r}"></circle></g>`;
+   const scale=1+Math.min(.55,d.value/max*.55);
+   return `<button type="button" class="ufRealMapPoint bar" style="left:${pos[0]}%;top:${pos[1]}%;--pointScale:${scale.toFixed(2)}" data-uf="${d.uf}" data-x="${pos[0]}" data-y="${pos[1]}" data-tip="${d.uf}: ${qty} acionamento(s)" aria-label="${d.uf}: ${qty} acionamento(s)"><span></span></button>`;
  }).join('');
- wrapper.innerHTML=`<div class="ufSvgStage"><svg class="ufSvgMap" viewBox="0 0 ${UF_MAP_VIEWBOX.w} ${UF_MAP_VIEWBOX.h}" aria-label="Mapa executivo do Brasil por UF" role="img"><defs><linearGradient id="ufStateGradient" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#38A7F1"></stop><stop offset="100%" stop-color="#0B61AD"></stop></linearGradient><linearGradient id="ufStateActiveGradient" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#7AD9FF"></stop><stop offset="100%" stop-color="#0072CE"></stop></linearGradient><filter id="ufSoftShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#00366F" flood-opacity=".24"></feDropShadow></filter></defs><path class="ufSvgSilhouette" d="M206 18C260 4 310 22 342 64C390 70 438 96 472 150C516 198 510 286 476 350C500 414 458 490 400 510C372 550 358 640 320 728C288 682 250 636 238 578C196 546 168 492 178 430C128 392 114 340 138 286C86 264 46 212 78 156C112 92 148 52 206 18Z"></path><g filter="url(#ufSoftShadow)">${states}</g>${markers}</svg><div class="ufMapPopup" hidden><span></span><strong></strong><small></small></div></div>`;
+ wrapper.innerHTML=`<div class="ufRealMapStage"><img class="ufRealMapImage" src="${mapSrc}" alt="Mapa do Brasil por UF"><div class="ufRealMapOverlay">${markers}</div><div class="ufMapPopup" hidden><span></span><strong></strong><small></small></div></div>`;
 }
 
 function setupUfMapInteractions(el,ranking,rows=[]){
@@ -1629,20 +1624,20 @@ function setupUfMapInteractions(el,ranking,rows=[]){
  const rowByUf=Object.fromEntries(rows.map(d=>[d.uf,d]));
  const popup=el.querySelector('.ufMapPopup');
  const setActive=uf=>{
-   el.querySelectorAll('.ufMapPoint,.ufRankItem,.ufSvgState,.ufSvgMarker').forEach(node=>node.classList.toggle('active',node.dataset.uf===uf));
+   el.querySelectorAll('.ufMapPoint,.ufRankItem,.ufSvgState,.ufSvgMarker,.ufRealMapPoint').forEach(node=>node.classList.toggle('active',node.dataset.uf===uf));
    const row=rowByUf[uf];
-   const shape=UF_MAP_SHAPES[uf];
-   if(!popup || !row || !shape) return;
-   const cx=shape.x+shape.w/2;
-   const cy=shape.y+shape.h/2;
+   const point=Array.from(el.querySelectorAll('.ufRealMapPoint')).find(node=>node.dataset.uf===uf);
+   if(!popup || !row || !point) return;
+   const cx=Number(point.dataset.x);
+   const cy=Number(point.dataset.y);
    popup.hidden=false;
-   popup.style.left=`${Math.max(18,Math.min(82,(cx/UF_MAP_VIEWBOX.w)*100))}%`;
-   popup.style.top=`${Math.max(14,Math.min(84,(cy/UF_MAP_VIEWBOX.h)*100))}%`;
+   popup.style.left=`${Math.max(18,Math.min(82,cx))}%`;
+   popup.style.top=`${Math.max(14,Math.min(84,cy))}%`;
    popup.querySelector('span').textContent='UF selecionada';
    popup.querySelector('strong').textContent=uf;
    popup.querySelector('small').textContent=`${fmt.format(Math.round(row.value))} acionamento(s)`;
  };
- el.querySelectorAll('.ufMapPoint,.ufRankItem,.ufSvgMarker,.ufSvgState.hasData').forEach(node=>{
+ el.querySelectorAll('.ufMapPoint,.ufRankItem,.ufSvgMarker,.ufSvgState.hasData,.ufRealMapPoint').forEach(node=>{
    node.addEventListener('mouseenter',()=>setActive(node.dataset.uf));
    node.addEventListener('focus',()=>setActive(node.dataset.uf));
    node.addEventListener('click',()=>setActive(node.dataset.uf));
