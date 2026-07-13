@@ -23,6 +23,13 @@ const ADMIN_EMAILS = [
 ];
 let CURRENT_USER = null;
 let SUPABASE_CLIENT = null;
+let PRESENCE_CHANNEL = null;
+let PRESENCE_HEARTBEAT = null;
+let PRESENCE_STATE = {};
+let PRESENCE_KNOWN_USERS = [];
+let PRESENCE_USERS_LOADING = false;
+const PRESENCE_CHANNEL_NAME = 'site-fechamento-presenca-online';
+const PRESENCE_SESSION_ID = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 function normalizeEmail(email){ return String(email||'').trim().toLowerCase(); }
 function getSupabaseClient(){
@@ -166,6 +173,8 @@ function setSignedInUser(user){
   userIdentity.title=isAdmin ? 'Abrir menu administrativo' : 'Usuário conectado';
  }
  closeUserMenu();
+ if(isLogged) startPresenceTracking();
+ else stopPresenceTracking();
  if(typeof renderHistoryBases === 'function') renderHistoryBases();
 }
 const WELCOME_TOUR_STEPS=[
@@ -812,6 +821,213 @@ async function callAdminUsers(payload){
  try{ data=text?JSON.parse(text):{}; }catch(e){ data={error:text}; }
  if(!res.ok) throw new Error(data.error || 'Não foi possível concluir a solicitação administrativa.');
  return data;
+}
+function presencePayload(){
+ return {
+  sessionId:PRESENCE_SESSION_ID,
+  userId:CURRENT_USER?.id || '',
+  name:CURRENT_USER?.name || CURRENT_USER?.email || 'Usuario',
+  email:normalizeEmail(CURRENT_USER?.email),
+  perfil:CURRENT_USER?.perfil || 'usuario',
+  view:(typeof currentViewKey === 'string' && currentViewKey) ? currentViewKey : 'geral',
+  visibility:document.hidden ? 'away' : 'active',
+  at:new Date().toISOString()
+ };
+}
+function trackPresenceNow(){
+ if(!PRESENCE_CHANNEL || !CURRENT_USER) return;
+ try{ PRESENCE_CHANNEL.track(presencePayload()); }
+ catch(e){ console.warn('Falha ao atualizar presenca.',e); }
+}
+function startPresenceTracking(){
+ const client=getSupabaseClient();
+ if(!client || !CURRENT_USER?.email || CURRENT_USER.provider !== 'supabase') return;
+ if(PRESENCE_CHANNEL){ trackPresenceNow(); return; }
+ PRESENCE_CHANNEL=client.channel(PRESENCE_CHANNEL_NAME,{config:{presence:{key:normalizeEmail(CURRENT_USER.email)}}});
+ PRESENCE_CHANNEL
+  .on('presence',{event:'sync'},()=>{
+   PRESENCE_STATE=PRESENCE_CHANNEL?.presenceState() || {};
+   renderPresenceDashboard();
+  })
+  .subscribe(status=>{
+   if(status === 'SUBSCRIBED'){
+    trackPresenceNow();
+    if(PRESENCE_HEARTBEAT) clearInterval(PRESENCE_HEARTBEAT);
+    PRESENCE_HEARTBEAT=setInterval(trackPresenceNow,25000);
+   }
+  });
+}
+function stopPresenceTracking(){
+ if(PRESENCE_HEARTBEAT) clearInterval(PRESENCE_HEARTBEAT);
+ PRESENCE_HEARTBEAT=null;
+ const channel=PRESENCE_CHANNEL;
+ PRESENCE_CHANNEL=null;
+ PRESENCE_STATE={};
+ if(channel){
+  try{ channel.untrack(); }catch(e){}
+  try{ getSupabaseClient()?.removeChannel(channel); }catch(e){}
+ }
+ renderPresenceDashboard();
+}
+function flattenPresenceState(){
+ return Object.values(PRESENCE_STATE || {}).flat().filter(item=>item && item.email);
+}
+function latestPresenceMeta(metas){
+ return metas.slice().sort((a,b)=>new Date(b.at || b.online_at || 0)-new Date(a.at || a.online_at || 0))[0] || {};
+}
+function presenceStatusFor(meta){
+ if(!meta?.email) return 'offline';
+ if(meta.visibility === 'away') return 'away';
+ const seen=new Date(meta.at || meta.online_at || 0).getTime();
+ if(!seen || Date.now() - seen > 90000) return 'away';
+ return 'online';
+}
+function presenceStatusLabel(status){
+ if(status === 'online') return 'Online';
+ if(status === 'away') return 'Ausente';
+ return 'Offline';
+}
+function presenceInitials(name,email){
+ const source=String(name || email || '?').trim();
+ const parts=source.split(/\s+/).filter(Boolean);
+ if(parts.length > 1) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+ return source.slice(0,2).toUpperCase();
+}
+function formatPresenceTime(value){
+ if(!value) return 'Sem registro recente';
+ const date=new Date(value);
+ if(Number.isNaN(date.getTime())) return 'Sem registro recente';
+ return date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+}
+function buildPresenceRows(){
+ const activeMetas=flattenPresenceState();
+ const grouped=new Map();
+ activeMetas.forEach(meta=>{
+  const email=normalizeEmail(meta.email);
+  if(!email) return;
+  if(!grouped.has(email)) grouped.set(email,[]);
+  grouped.get(email).push(meta);
+ });
+ const rows=new Map();
+ (PRESENCE_KNOWN_USERS || []).forEach(user=>{
+  const email=normalizeEmail(user.email);
+  if(!email) return;
+  rows.set(email,{
+   id:user.id || email,
+   name:user.name || user.nome || email,
+   email,
+   perfil:user.perfil || 'usuario',
+   known:true,
+   sessions:0,
+   status:'offline',
+   lastSeen:user.last_sign_in_at || '',
+   view:''
+  });
+ });
+ grouped.forEach((metas,email)=>{
+  const latest=latestPresenceMeta(metas);
+  const existing=rows.get(email) || {};
+  rows.set(email,{
+   ...existing,
+   id:existing.id || latest.userId || email,
+   name:latest.name || existing.name || email,
+   email,
+   perfil:latest.perfil || existing.perfil || 'usuario',
+   known:!!existing.known,
+   sessions:metas.length,
+   status:presenceStatusFor(latest),
+   lastSeen:latest.at || latest.online_at || existing.lastSeen || '',
+   view:latest.view || existing.view || ''
+  });
+ });
+ return Array.from(rows.values()).sort((a,b)=>{
+  const order={online:0,away:1,offline:2};
+  const status=(order[a.status]??3)-(order[b.status]??3);
+  if(status) return status;
+  return String(a.name || a.email).localeCompare(String(b.name || b.email),'pt-BR');
+ });
+}
+function renderPresenceDashboard(){
+ const list=document.getElementById('presenceList');
+ const onlineEl=document.getElementById('presenceOnlineCount');
+ const sessionsEl=document.getElementById('presenceSessionCount');
+ const offlineEl=document.getElementById('presenceOfflineCount');
+ const updatedEl=document.getElementById('presenceUpdatedAt');
+ if(!list && !onlineEl && !sessionsEl && !offlineEl) return;
+ const rows=buildPresenceRows();
+ const onlineCount=rows.filter(row=>row.status === 'online').length;
+ const sessionCount=rows.reduce((sum,row)=>sum+(Number(row.sessions)||0),0);
+ const offlineCount=rows.filter(row=>row.status === 'offline').length;
+ if(onlineEl) onlineEl.textContent=String(onlineCount);
+ if(sessionsEl) sessionsEl.textContent=String(sessionCount);
+ if(offlineEl) offlineEl.textContent=String(offlineCount);
+ if(updatedEl) updatedEl.textContent=`Atualizado em ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+ if(!list) return;
+ if(PRESENCE_USERS_LOADING && !rows.length){
+  list.innerHTML='<div class="presenceEmpty">Carregando usuarios cadastrados...</div>';
+  return;
+ }
+ if(!rows.length){
+  list.innerHTML='<div class="presenceEmpty">Nenhum usuario encontrado ainda.\nAbra esta tela depois que os usuarios acessarem o painel.</div>';
+  return;
+ }
+ list.innerHTML=rows.map(row=>{
+  const status=row.status || 'offline';
+  const statusText=presenceStatusLabel(status);
+  const you=normalizeEmail(row.email)===normalizeEmail(CURRENT_USER?.email) ? ' - Voce' : '';
+  const sessionText=row.sessions ? `${row.sessions} sessao(oes)` : 'Sem sessao ativa';
+  const viewText=row.view ? ` - Tela: ${row.view === 'geral' ? 'Visao Geral' : row.view}` : '';
+  return `<article class="presenceRow">
+    <div class="presenceAvatar">${esc(presenceInitials(row.name,row.email))}</div>
+    <div>
+      <strong class="presenceName">${esc(row.name || row.email || 'Usuario')}</strong>
+      <span class="presenceEmail">${esc(row.email || 'E-mail nao informado')}${you}</span>
+      <small class="presenceMeta">${esc(sessionText)}${esc(viewText)} - Ultimo sinal ${esc(formatPresenceTime(row.lastSeen))}</small>
+    </div>
+    <span class="presenceStatus ${esc(status)}">${esc(statusText)}</span>
+  </article>`;
+ }).join('');
+}
+async function loadPresenceUsers(){
+ if(!canManageHistory()) return;
+ PRESENCE_USERS_LOADING=true;
+ renderPresenceDashboard();
+ try{
+  const data=await callAdminUsers({action:'list'});
+  PRESENCE_KNOWN_USERS=data.users || [];
+ }catch(error){
+  const list=document.getElementById('presenceList');
+  if(list) list.innerHTML=`<div class="presenceEmpty">${esc(error.message)}</div>`;
+ }finally{
+  PRESENCE_USERS_LOADING=false;
+  renderPresenceDashboard();
+ }
+}
+function openPresenceModal(){
+ if(!canManageHistory()){ alert('Acesso restrito a administradores.'); return; }
+ closeUserMenu();
+ const modal=document.getElementById('presenceModal');
+ if(!modal) return;
+ modal.classList.add('open');
+ modal.setAttribute('aria-hidden','false');
+ trackPresenceNow();
+ renderPresenceDashboard();
+ loadPresenceUsers();
+}
+function closePresenceModal(){
+ const modal=document.getElementById('presenceModal');
+ if(!modal) return;
+ modal.classList.remove('open');
+ modal.setAttribute('aria-hidden','true');
+}
+function setupPresenceDashboard(){
+ const openBtn=document.getElementById('openPresenceBtn'), closeBtn=document.getElementById('closePresenceModal'), refreshBtn=document.getElementById('refreshPresenceBtn'), modal=document.getElementById('presenceModal');
+ if(openBtn) openBtn.addEventListener('click',openPresenceModal);
+ if(closeBtn) closeBtn.addEventListener('click',closePresenceModal);
+ if(refreshBtn) refreshBtn.addEventListener('click',loadPresenceUsers);
+ if(modal) modal.addEventListener('click',e=>{if(e.target===modal) closePresenceModal();});
+ document.addEventListener('visibilitychange',trackPresenceNow);
+ window.addEventListener('beforeunload',()=>{try{PRESENCE_CHANNEL?.untrack();}catch(e){}});
 }
 function usersEmpty(message){
  const list=document.getElementById('usersList');
@@ -1603,10 +1819,11 @@ initAuth();
 buildMenu();
 setupHistoryModal();
 setupAdminUsers();
+setupPresenceDashboard();
 setupPasswordRecoveryModal();
 setupMobileTopButton();
 setView(initialViewFromHash());
-function setView(key){ key==='geral'?generalView():nucleoView(key); window.scrollTo({top:0,behavior:'smooth'}); }
+function setView(key){ key==='geral'?generalView():nucleoView(key); window.scrollTo({top:0,behavior:'smooth'}); trackPresenceNow(); }
 function initialViewFromHash(){
  const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,'')).trim();
  if(!raw || raw.toLowerCase()==='geral') return 'geral';

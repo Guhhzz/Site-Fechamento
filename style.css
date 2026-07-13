@@ -242,14 +242,25 @@ body.darkMode .modal{background:rgba(0,5,15,.78)}
 body.darkMode .userMenu,
 body.darkMode .userInviteForm,
 body.darkMode .userRow,
-body.darkMode .usersEmpty{background:#101D33;border-color:#263C5F}
+body.darkMode .presencePanel,
+body.darkMode .presenceSummary article,
+body.darkMode .presenceRow,
+body.darkMode .usersEmpty,
+body.darkMode .presenceEmpty{background:#101D33;border-color:#263C5F}
 body.darkMode .userMenu button{background:#132845;border-color:#263C5F;color:#DCEBFF}
 body.darkMode .userInviteForm>div strong{color:#F4F9FF}
 body.darkMode .userInviteForm>div span{color:#A9BCD4}
 body.darkMode .usersToolbar span,
+body.darkMode .presenceToolbar span,
+body.darkMode .presenceNote,
+body.darkMode .presenceMeta,
 body.darkMode .userSummary small,
 body.darkMode .userInviteForm label,
 body.darkMode .userControls label{color:#A9BCD4}
+body.darkMode .presenceSummary span,
+body.darkMode .presenceEmail{color:#A9BCD4}
+body.darkMode .presenceSummary strong,
+body.darkMode .presenceName{color:#F4F9FF}
 body.darkMode .userSummary strong{color:#F4F9FF}
 body.darkMode .userSummary span{color:#DCEBFF}
 body.darkMode .userControls input,
@@ -481,8 +492,28 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .userInviteForm button:disabled{opacity:.62;cursor:progress}
 .passwordRecoveryForm{display:grid;gap:10px}
 .passwordRecoveryForm label{font-size:12px;font-weight:950;color:#315879}
+.presencePanel{width:min(960px,96vw);height:min(760px,92vh)}
+.presenceSummary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.presenceSummary article{padding:16px;border-radius:20px;border:1px solid #D8E9FA;background:linear-gradient(180deg,#F8FBFF,#FFFFFF);box-shadow:0 12px 28px rgba(6,26,54,.07)}
+.presenceSummary span{display:block;font-size:12px;font-weight:950;color:#5E748D;text-transform:uppercase;letter-spacing:.04em}
+.presenceSummary strong{display:block;margin-top:6px;font-size:30px;line-height:1;color:#061A36}
+.presenceToolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.presenceToolbar span{font-size:13px;font-weight:850;color:#5E748D}
+.presenceList{display:grid;gap:12px;overflow:auto;padding:2px 4px 8px;min-height:0}
+.presenceRow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px;border:1px solid #D8E9FA;border-radius:20px;background:linear-gradient(180deg,#FFFFFF,#F8FBFF);box-shadow:0 12px 28px rgba(6,26,54,.08)}
+.presenceAvatar{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;font-weight:950;box-shadow:0 10px 22px rgba(0,87,184,.18)}
+.presenceName{display:block;color:#061A36;font-size:15px;font-weight:950;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.presenceEmail{display:block;margin-top:3px;color:#315879;font-size:12px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.presenceMeta{display:block;margin-top:8px;color:#6B7F98;font-size:12px;font-weight:800}
+.presenceStatus{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:8px 10px;font-size:12px;font-weight:950;white-space:nowrap;border:1px solid transparent}
+.presenceStatus:before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px rgba(0,0,0,.04)}
+.presenceStatus.online{color:#0A7F43;background:#E9FBEF;border-color:#BCEBCB}
+.presenceStatus.away{color:#A15C00;background:#FFF7E8;border-color:#FFE1A8}
+.presenceStatus.offline{color:#6B7F98;background:#EEF4FA;border-color:#D8E9FA}
+.presenceEmpty{white-space:pre-line;padding:24px;border-radius:20px;background:#F8FBFF;border:1px dashed #B9CDE5;color:#5E748D;font-weight:800;line-height:1.45;text-align:center}
+.presenceNote{margin:12px 2px 0;color:#6B7F98;font-size:12px;line-height:1.45}
 @media (max-width:980px){.userInviteForm,.userRow{grid-template-columns:1fr}.userControls{grid-template-columns:1fr}.userControls button,.userInviteForm button{width:100%}}
-@media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}.usersPanel{height:calc(100vh - 20px)}.usersToolbar{display:grid}.usersToolbar .baseDownload{width:100%}.userInviteForm{padding:12px}}
+@media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}.usersPanel,.presencePanel{height:calc(100vh - 20px)}.usersToolbar,.presenceToolbar{display:grid}.usersToolbar .baseDownload,.presenceToolbar .baseDownload{width:100%}.userInviteForm{padding:12px}.presenceSummary{grid-template-columns:1fr}.presenceRow{grid-template-columns:auto minmax(0,1fr);align-items:start}.presenceStatus{grid-column:2;justify-self:start}.presenceSummary strong{font-size:26px}}
 
 .tooltip{position:fixed;pointer-events:none;background:#061A36;color:#fff;padding:8px 10px;border-radius:10px;font-size:12px;opacity:0;transform:translate(-50%,-120%);transition:opacity .1s;box-shadow:0 10px 28px rgba(0,0,0,.28);z-index:99}
 .modal{position:fixed;inset:0;background:rgba(4,16,34,.70);z-index:120;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
@@ -677,6 +708,8 @@ body.authLoading .authPrimary{
   background:#FFFFFF;
   border:1px solid #D8E9FA;
   box-shadow:0 18px 40px rgba(6,26,54,.22);
+  display:grid;
+  gap:6px;
 }
 .userMenu button{
   width:100%;
