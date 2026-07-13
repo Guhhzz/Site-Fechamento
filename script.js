@@ -1391,7 +1391,7 @@ function setActive(key){
  if(customSelectMenu) customSelectMenu.querySelectorAll('.customOption').forEach(b=>b.classList.toggle('active', b.dataset.key===key));
 }
 function generalView(){
- setActive('geral'); pageTitle.textContent='Visão Geral Executiva'; pageDesc.textContent='Indicadores consolidados dos canais de atendimento'; activeBadge.textContent=DATA.month;
+ setActive('geral'); pageTitle.textContent='Visão Geral Executiva'; pageDesc.textContent='Indicadores consolidados dos canais de atendimento'; activeBadge.textContent=activeMonthLabel(); updateDocumentTitle();
  const g=DATA.general;
  const npsAvg=averageNps(DATA.sheets);
  const generalChannel = npsAvg===null ? g : {...g,nps:npsAvg};
@@ -1414,7 +1414,7 @@ function mobileChartPreview(c){
 }
 function nucleoView(name){
  const s=DATA.sheets.find(x=>x.name===name); if(!s) return generalView(); setActive(name);
- pageTitle.textContent=s.name; pageDesc.textContent='Indicadores, gráficos e destaques específicos do núcleo selecionado.'; activeBadge.textContent=s.status==='parcial'?'Dados parciais':DATA.month;
+ pageTitle.textContent=s.name; pageDesc.textContent='Indicadores, gráficos e destaques específicos do núcleo selecionado.'; activeBadge.textContent=s.status==='parcial'?'Dados parciais':activeMonthLabel(); updateDocumentTitle();
  let kpis = (s.channel && Object.values(s.channel).some(v=>+v)) ? kpisForChannel(s.channel) : '';
  // KPI de Total do período removido dos núcleos; o total permanece visível nos gráficos.
  const hasCharts=!!(s.charts && s.charts.length), hasTable=s.name==='Assistência' && (s.brandTable||[]).length;
@@ -1462,6 +1462,58 @@ function chartTotal(c){
  return rows.reduce((a,d)=>a+(+d.value||0),0);
 }
 function slug(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]/g,'_')}
+function historyIdFromLabel(label){
+ const clean=String(label||'fechamento').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+ return clean.startsWith('fechamento-') ? clean : `fechamento-${clean}`;
+}
+function cloneDashboard(dashboard){ return JSON.parse(JSON.stringify(dashboard)); }
+function normalizeDashboardBundle(bundle,index=0){
+ const dashboard=bundle?.dashboard || bundle?.data || bundle?.DATA;
+ if(!dashboard || !dashboard.general || !Array.isArray(dashboard.sheets)) return null;
+ const fechamento=bundle.fechamento || bundle.month || dashboard.month || `Fechamento ${index+1}`;
+ const id=bundle.id || historyIdFromLabel(fechamento);
+ return {
+  id,
+  fechamento,
+  nome:bundle.nome || bundle.fileName || `${fechamento}.xlsx`,
+  data:bundle.data || bundle.date || '',
+  size:+bundle.size || 0,
+  mime:bundle.mime || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  base64:bundle.base64 || '',
+  dashboardKey:id,
+  dashboard
+ };
+}
+function registerDashboardBundle(bundle,index=0,{persistLocal=false}={}){
+ const item=normalizeDashboardBundle(bundle,index);
+ if(!item) return null;
+ EMBEDDED_DASHBOARDS[item.dashboardKey]=cloneDashboard(item.dashboard);
+ const historyItem={...item};
+ delete historyItem.dashboard;
+ if(persistLocal){
+  const items=getLocalBases();
+  const stored={...historyItem,dashboard:item.dashboard};
+  const existingIndex=items.findIndex(x=>x.id===historyItem.id);
+  if(existingIndex>=0) items[existingIndex]=stored;
+  else items.unshift(stored);
+  saveLocalBases(items);
+ } else if(!EMBEDDED_BASES.some(x=>x.id===historyItem.id) && !getLocalBases().some(x=>x.id===historyItem.id)){
+  EMBEDDED_BASES.push(historyItem);
+ }
+ return historyItem;
+}
+function registerMonthlyDashboardBundles(){
+ const bundles=Array.isArray(window.MONTHLY_DASHBOARD_BUNDLES) ? window.MONTHLY_DASHBOARD_BUNDLES : [];
+ bundles.forEach((bundle,index)=>registerDashboardBundle(bundle,index));
+}
+function registerLocalDashboardItems(items=getLocalBases()){
+ items.forEach(item=>{ if(item?.dashboard && (item.dashboardKey || item.id)) EMBEDDED_DASHBOARDS[item.dashboardKey||item.id]=cloneDashboard(item.dashboard); });
+}
+function dashboardKeyForItem(item){ return item?.dashboardKey || item?.id; }
+function dashboardForBaseItem(item){ return EMBEDDED_DASHBOARDS[dashboardKeyForItem(item)]; }
+function activeHistoryItem(){ return allHistoryBases().find(x=>x.id===ACTIVE_HISTORY_ID); }
+function activeMonthLabel(){ return DATA?.month || activeHistoryItem()?.fechamento || 'Fechamento Mensal'; }
+function updateDocumentTitle(){ document.title=`Fechamento ${activeMonthLabel()} | Atendimento ao Cliente`; }
 function showTip(txt,x,y){tooltip.innerHTML=txt; tooltip.style.left=x+'px'; tooltip.style.top=y+'px'; tooltip.style.opacity=1;}
 function hideTip(){tooltip.style.opacity=0;}
 function renderChart(el,c,expanded=false){
@@ -1688,7 +1740,7 @@ function exportBrandTableExcel(sheetName='Assistência'){
  ]);
  const headerHtml=headers.map(h=>`<th>${excelCell(h)}</th>`).join('');
  const rowsHtml=tableRows.map(row=>`<tr>${row.map(v=>`<td>${excelCell(v)}</td>`).join('')}</tr>`).join('');
- const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse}th{background:#0057B8;color:#fff;font-weight:bold}th,td{border:1px solid #C9DDF3;padding:8px 10px}h2{color:#061A36}</style></head><body><h2>Tabela Executiva - Top 20 Marcas</h2><p>${excelCell(sheetName)} - Junho 2026</p><table><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
+ const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse}th{background:#0057B8;color:#fff;font-weight:bold}th,td{border:1px solid #C9DDF3;padding:8px 10px}h2{color:#061A36}</style></head><body><h2>Tabela Executiva - Top 20 Marcas</h2><p>${excelCell(sheetName)} - ${excelCell(activeMonthLabel())}</p><table><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
  const blob=new Blob(['﻿',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(sheetName)}_Top_20_Marcas.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
@@ -1723,9 +1775,17 @@ function saveHiddenBases(items){ localStorage.setItem(HISTORY_HIDDEN_KEY,JSON.st
 function getBaseNameOverrides(){ try{return JSON.parse(localStorage.getItem(HISTORY_NAME_KEY)||'{}')}catch(e){return {}} }
 function saveBaseNameOverrides(obj){ localStorage.setItem(HISTORY_NAME_KEY,JSON.stringify(obj||{})); }
 function withNameOverrides(items){ const names=getBaseNameOverrides(); return items.map(x=>names[x.id]?{...x,fechamento:names[x.id]}:x); }
-function allHistoryBases(){ const hidden=new Set(getHiddenBases()); return withNameOverrides(EMBEDDED_BASES.concat(getLocalBases()).filter(x=>!hidden.has(x.id))); }
+function allHistoryBases(){
+ const hidden=new Set(getHiddenBases());
+ const local=getLocalBases();
+ registerLocalDashboardItems(local);
+ const byId=new Map();
+ EMBEDDED_BASES.concat(local).filter(x=>!hidden.has(x.id)).forEach(item=>byId.set(item.id,item));
+ return withNameOverrides(Array.from(byId.values()));
+}
 function downloadHistoryBase(id){
  const item=allHistoryBases().find(x=>x.id===id); if(!item) return;
+ if(!item.base64){ alert('Esta base ja alimenta o painel, mas o arquivo Excel original nao foi incorporado para download nesta versao.'); return; }
  const a=document.createElement('a'); a.href=`data:${item.mime||'application/vnd.ms-excel'};base64,${item.base64}`; a.download=item.nome||'base_fechamento.xlsx'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 function removeLocalBase(id){ deleteHistoryBase(id); }
@@ -1756,25 +1816,27 @@ function renderHistoryBases(){
  wrap.classList.toggle('adminUnlocked', canManageHistory());
  wrap.innerHTML=items.map(item=>{
    const isLocal=!EMBEDDED_BASES.some(x=>x.id===item.id);
-   const canLoad=!!EMBEDDED_DASHBOARDS[item.id];
+   const canLoad=!!dashboardForBaseItem(item);
    const isActive=item.id===ACTIVE_HISTORY_ID;
+   const canDownload=!!item.base64;
    const loadButton = canLoad
      ? (isActive ? `<button class="baseSelect active" type="button">✓ Em uso no painel</button>` : `<button class="baseSelect" onclick="requestHistoryLoad('${escAttr(item.id)}')">↻ Selecionar painel</button>`)
-     : `<button class="baseSelect pending" onclick="requestHistoryLoad('${escAttr(item.id)}')" title="Base disponível no histórico. Para atualizar gráficos, ela precisa ser incorporada em uma nova versão do painel.">↻ Selecionar base</button>`;
+     : `<button class="baseSelect pending" onclick="requestHistoryLoad('${escAttr(item.id)}')" title="Base disponível no histórico. Para atualizar gráficos, ela precisa ser processada e publicada como painel mensal.">↻ Aguardando processamento</button>`;
+   const downloadButton=canDownload ? `<button class="baseDownload" onclick="downloadHistoryBase('${escAttr(item.id)}')">⬇ Baixar Excel</button>` : `<button class="baseDownload disabled" type="button" title="Excel original não incorporado nesta versão.">Sem Excel</button>`;
    const adminButtons = canManageHistory() ? `<div class="baseAdminActions"><button class="baseEdit" onclick="editHistoryBaseName('${escAttr(item.id)}')">✎ Editar nome</button><button class="baseRemove" onclick="deleteHistoryBase('${escAttr(item.id)}')">Excluir base</button></div>` : '';
-   return `<article class="baseCard"><div class="baseTop"><div class="baseFileIcon">XLS</div><div class="baseInfo"><h4>${esc(item.fechamento||'Fechamento')}</h4><p>${esc(item.nome||'Base de fechamento.xlsx')}</p></div></div><div class="baseMeta"><span class="basePill">Data: ${esc(item.data||'Não informada')}</span><span class="basePill">${esc(bytesToSize(item.size))}</span><span class="basePill ${isLocal?'':'available'}">${isLocal?'Base local':'Disponível'}</span></div><div class="baseActions"><button class="baseDownload" onclick="downloadHistoryBase('${escAttr(item.id)}')">⬇ Baixar Excel</button>${loadButton}</div>${adminButtons}</article>`;
+   return `<article class="baseCard"><div class="baseTop"><div class="baseFileIcon">XLS</div><div class="baseInfo"><h4>${esc(item.fechamento||'Fechamento')}</h4><p>${esc(item.nome||'Base de fechamento.xlsx')}</p></div></div><div class="baseMeta"><span class="basePill">Data: ${esc(item.data||'Não informada')}</span><span class="basePill">${esc(bytesToSize(item.size))}</span><span class="basePill ${canLoad?'available':''}">${canLoad?'Painel disponível':(isLocal?'Base local':'Histórico')}</span></div><div class="baseActions">${downloadButton}${loadButton}</div>${adminButtons}</article>`;
  }).join('');
 }
 function requestHistoryLoad(id){
  const item=allHistoryBases().find(x=>x.id===id); if(!item) return;
- const dashboard=EMBEDDED_DASHBOARDS[id];
+ const dashboard=dashboardForBaseItem(item);
  if(!dashboard){
-   alert('Esta base está salva no histórico e disponível para download.\n\nPara que ela altere KPIs, gráficos e insights do painel, os dados precisam ser processados e incorporados em uma nova versão do HTML.');
+   alert('Esta base está salva no histórico e disponível para download.\n\nPara que ela altere KPIs, gráficos e insights para todos os usuários, ela precisa ser processada e publicada como um painel mensal dentro do site.');
    return;
  }
  const ok=confirm(`Deseja carregar o painel do fechamento "${item.fechamento||item.nome}"?\n\nAo confirmar, todos os KPIs, gráficos e insights serão atualizados para os dados dessa base.`);
  if(!ok) return;
- DATA=JSON.parse(JSON.stringify(dashboard));
+ DATA=cloneDashboard(dashboard);
  ACTIVE_HISTORY_ID=id;
  buildMenu();
  closeHistory();
@@ -1793,12 +1855,25 @@ function setupHistoryModal(){
    const file=e.target.files && e.target.files[0]; if(!file) return;
    const reader=new FileReader();
    reader.onload=()=>{
+     if(/\.json$/i.test(file.name)){
+       try{
+        const bundle=JSON.parse(String(reader.result||'{}'));
+        const item=registerDashboardBundle({...bundle,nome:bundle.nome||file.name,size:bundle.size||file.size,data:bundle.data||new Date().toLocaleDateString('pt-BR')},0,{persistLocal:true});
+        if(!item) throw new Error('Formato inválido');
+        renderHistoryBases();
+        alert(`Painel mensal carregado no navegador: ${item.fechamento||item.nome}\n\nPara todos os usuários visualizarem este mês, publique este pacote no arquivo data/monthly-dashboards.js e suba para o Git.`);
+       }catch(err){ alert('Não foi possível ler este pacote mensal. Envie um JSON de dashboard válido.'); }
+       return;
+     }
      const result=String(reader.result||''); const base64=result.split(',')[1]||'';
      const label=prompt('Informe o mês/ano desta base:', file.name.replace(/\.(xlsx|xls)$/i,'')) || file.name.replace(/\.(xlsx|xls)$/i,'');
      const item={id:'local-'+Date.now(),fechamento:label,nome:file.name,data:new Date().toLocaleDateString('pt-BR'),size:file.size,mime:file.type||'application/vnd.ms-excel',base64};
      const items=getLocalBases(); items.unshift(item); if(saveLocalBases(items)) renderHistoryBases();
+     alert('Excel salvo no histórico para consulta e download.\n\nPara ele atualizar KPIs, gráficos e insights para todos os usuários, a base precisa ser processada e publicada como painel mensal.');
    };
-   reader.readAsDataURL(file); e.target.value='';
+   if(/\.json$/i.test(file.name)) reader.readAsText(file);
+   else reader.readAsDataURL(file);
+   e.target.value='';
  });
 }
 function setupMobileTopButton(){
@@ -1816,6 +1891,7 @@ function setupMobileTopButton(){
 
 initTheme();
 initAuth();
+registerMonthlyDashboardBundles();
 buildMenu();
 setupHistoryModal();
 setupAdminUsers();
