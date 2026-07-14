@@ -819,7 +819,16 @@ async function callAdminUsers(payload){
  const text=await res.text();
  let data={};
  try{ data=text?JSON.parse(text):{}; }catch(e){ data={error:text}; }
- if(!res.ok) throw new Error(data.error || 'Não foi possível concluir a solicitação administrativa.');
+ if(!res.ok){
+  const raw=data?.error || data?.message || text;
+  let message='';
+  if(typeof raw === 'string') message=raw;
+  else if(raw && typeof raw === 'object') message=raw.message || raw.error_description || raw.error || raw.details || '';
+  if(!message && raw && typeof raw === 'object'){
+   try{ const serialized=JSON.stringify(raw); if(serialized && serialized !== '{}') message=serialized; }catch(e){}
+  }
+  throw new Error(message || 'Não foi possível concluir a solicitação administrativa. Verifique a Edge Function admin-users no Supabase.');
+ }
  return data;
 }
 function presencePayload(){

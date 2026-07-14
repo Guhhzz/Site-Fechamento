@@ -20,10 +20,28 @@ function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
 
+function errorMessage(error: any, fallback = 'Erro administrativo no Supabase.') {
+  if (!error) return fallback;
+  if (typeof error === 'string') return error;
+  if (error instanceof Error && error.message) return error.message;
+  const keys = ['message', 'error_description', 'error', 'details', 'hint'];
+  for (const key of keys) {
+    const value = error?.[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  try {
+    const serialized = JSON.stringify(error);
+    if (serialized && serialized !== '{}') return serialized;
+  } catch (_) {
+    // Ignore serialization failures and use the fallback below.
+  }
+  return fallback;
+}
+
 function profileName(user: any, profile?: any) {
   if (profile?.nome) return String(profile.nome).trim();
   const meta = user?.user_metadata || {};
-  return String(meta.name || meta.full_name || user?.email?.split('@')[0] || 'Usuario').trim();
+  return String(meta.display_name || meta.name || meta.full_name || user?.email?.split('@')[0] || 'Usuario').trim();
 }
 
 function publicUser(user: any, profile?: any) {
@@ -115,6 +133,18 @@ Deno.serve(async (req) => {
       if (!email) return json({ error: 'Informe o e-mail para enviar o convite.' }, 400);
 
       const displayName = name || email.split('@')[0] || 'Usuario';
+      const { data: existingData, error: existingError } = await adminClient.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
+      if (existingError) throw existingError;
+      const existingUser = (existingData?.users || []).find((user) => String(user.email || '').toLowerCase() === email);
+      if (existingUser) {
+        return json({
+          error: 'Este e-mail ja possui cadastro no painel. Use a lista de usuarios para enviar redefinicao de senha ou ajustar o nome/perfil.',
+        }, 409);
+      }
+
       const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
         redirectTo: SITE_URL,
         data: {
@@ -124,7 +154,7 @@ Deno.serve(async (req) => {
           perfil,
         },
       });
-      if (error) throw error;
+      if (error) return json({ error: errorMessage(error, 'Nao foi possivel enviar o convite pelo Supabase Auth.') }, 400);
 
       const invitedUser = data?.user;
       if (invitedUser?.id) {
@@ -184,7 +214,6 @@ Deno.serve(async (req) => {
 
     return json({ error: 'Acao administrativa desconhecida.' }, 400);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error || 'Erro administrativo no Supabase.');
-    return json({ error: message }, 500);
+    return json({ error: errorMessage(error) }, 500);
   }
 });
