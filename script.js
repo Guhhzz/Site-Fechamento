@@ -831,6 +831,22 @@ async function callAdminUsers(payload){
  }
  return data;
 }
+function adminErrorMessage(error,fallback='Não foi possível concluir a solicitação administrativa.'){
+ const raw=error?.message || error;
+ if(typeof raw === 'string'){
+  const text=raw.trim();
+  if(text && text !== '{}') return text;
+ }
+ if(raw && typeof raw === 'object'){
+  const direct=raw.message || raw.error_description || raw.error || raw.details || raw.hint;
+  if(typeof direct === 'string' && direct.trim() && direct.trim() !== '{}') return direct.trim();
+  try{
+   const serialized=JSON.stringify(raw);
+   if(serialized && serialized !== '{}') return serialized;
+  }catch(e){}
+ }
+ return fallback;
+}
 function presencePayload(){
  return {
   sessionId:PRESENCE_SESSION_ID,
@@ -1143,8 +1159,9 @@ function setupAdminUsers(){
    await loadAdminUsers();
    if(status) status.textContent=`Convite enviado para ${email}.`;
   }catch(error){
-   if(status) status.textContent=error.message;
-   alert(error.message);
+   const message=adminErrorMessage(error,'Não foi possível enviar o convite. Verifique se o e-mail já existe ou se o envio de e-mail do Supabase está configurado.');
+   if(status) status.textContent=message;
+   alert(message);
   }finally{
    if(btn) btn.disabled=false;
   }
@@ -1180,9 +1197,10 @@ function setupAdminUsers(){
     if(status) status.textContent='Usuário excluído com sucesso.';
     await loadAdminUsers();
    }
-  }catch(error){
-   if(status) status.textContent=error.message;
-   alert(error.message);
+ }catch(error){
+   const message=adminErrorMessage(error);
+   if(status) status.textContent=message;
+   alert(message);
   }finally{
    btn.disabled=false;
   }
