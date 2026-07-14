@@ -46,7 +46,7 @@ function supabaseProfile(user){
  const email=normalizeEmail(user?.email);
  return {
   id:user?.id || email,
-  name:String(meta.name || meta.full_name || email.split('@')[0] || 'Usuário').trim(),
+  name:String(meta.display_name || meta.name || meta.full_name || email.split('@')[0] || 'Usuário').trim(),
   email,
   perfil:String(meta.perfil || 'usuario').trim().toLowerCase(),
   ativo:true,
@@ -700,7 +700,7 @@ function initSupabaseAuth(client,loginForm,signupForm){
    let data,error;
    try {
     ({data,error}=await withTimeout(
-     client.auth.signUp({email,password,options:{data:{name},emailRedirectTo:redirectTo}}),
+     client.auth.signUp({email,password,options:{data:{name,display_name:name,full_name:name},emailRedirectTo:redirectTo}}),
      15000,
      'O cadastro demorou para responder. Verifique a conexão e tente novamente.'
     ));

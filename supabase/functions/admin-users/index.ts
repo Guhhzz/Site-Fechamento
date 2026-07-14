@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
         redirectTo: SITE_URL,
         data: {
           name: displayName,
+          display_name: displayName,
           full_name: displayName,
           perfil,
         },
@@ -152,7 +153,7 @@ Deno.serve(async (req) => {
       if (getError) throw getError;
       const currentMeta = currentData?.user?.user_metadata || {};
       const { data, error } = await adminClient.auth.admin.updateUserById(userId, {
-        user_metadata: { ...currentMeta, name, full_name: name },
+        user_metadata: { ...currentMeta, name, display_name: name, full_name: name },
       });
       if (error) throw error;
       await adminClient.from('profiles').update({ nome: name, updated_at: new Date().toISOString() }).eq('id', userId);
