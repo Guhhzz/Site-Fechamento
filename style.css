@@ -88,10 +88,11 @@ select{display:none}
 .sectionHeader h3{margin:0;font-size:24px;color:var(--gazin-dark)}
 .sectionHeader p{margin:6px 0 0;color:var(--muted)}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:18px}
-.kpi{background:rgba(255,255,255,.88);border:1px solid rgba(0,87,184,.10);box-shadow:0 13px 34px rgba(9,42,86,.08);border-radius:22px;padding:19px;position:relative;overflow:hidden}
-.kpi:before{content:"";position:absolute;right:-34px;top:-38px;width:108px;height:108px;border-radius:50%;background:linear-gradient(135deg,rgba(0,87,184,.15),rgba(0,114,206,.05))}
+.kpi{background:rgba(255,255,255,.88);border:1px solid rgba(0,87,184,.10);box-shadow:0 13px 34px rgba(9,42,86,.08);border-radius:22px;padding:19px;position:relative;overflow:hidden;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease,background .22s ease;will-change:transform}
+.kpi:before{content:"";position:absolute;right:-34px;top:-38px;width:108px;height:108px;border-radius:50%;background:linear-gradient(135deg,rgba(0,87,184,.15),rgba(0,114,206,.05));transition:transform .22s ease,filter .22s ease}
+.kpi:after{content:"";position:absolute;inset:-1px;border-radius:inherit;background:linear-gradient(120deg,transparent 22%,rgba(255,255,255,.38) 46%,transparent 68%);opacity:0;transform:translateX(-70%);transition:opacity .22s ease,transform .48s ease;pointer-events:none}
 .kpi .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:950}
-.kpi .value{font-size:32px;font-weight:950;margin-top:8px;color:var(--gazin-dark)}
+.kpi .value{font-size:32px;font-weight:950;margin-top:8px;color:var(--gazin-dark);position:relative;z-index:2;transition:transform .22s ease,color .22s ease}
 .kpi .sub{font-size:12px;color:var(--muted);margin-top:6px}
 .kpiRate{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:950;border:1px solid rgba(0,87,184,.12);background:#EAF4FF;color:#0057B8;position:relative;z-index:2}
 .kpiRate.good{background:#EAF8EF;color:#157347;border-color:rgba(21,115,71,.16)}
@@ -102,12 +103,25 @@ select{display:none}
 .kpiGoal{display:block;margin-top:6px;font-size:11px;font-weight:850;color:#6B83A0;position:relative;z-index:2}
 
 .insightsGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px}
-.insightCard{background:linear-gradient(180deg,#FFFFFF,#FAFDFF);border:1px solid rgba(0,87,184,.11);border-radius:24px;padding:20px 20px 18px;box-shadow:0 18px 42px rgba(9,42,86,.08);position:relative;overflow:hidden;min-height:148px}
-.insightCard:before{content:"";position:absolute;right:-34px;top:-40px;width:118px;height:118px;border-radius:50%;background:radial-gradient(circle,rgba(0,163,255,.13),rgba(0,87,184,.04) 58%,transparent 70%)}
+.insightCard{background:linear-gradient(180deg,#FFFFFF,#FAFDFF);border:1px solid rgba(0,87,184,.11);border-radius:24px;padding:20px 20px 18px;box-shadow:0 18px 42px rgba(9,42,86,.08);position:relative;overflow:hidden;min-height:148px;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease,background .22s ease;will-change:transform}
+.insightCard:before{content:"";position:absolute;right:-34px;top:-40px;width:118px;height:118px;border-radius:50%;background:radial-gradient(circle,rgba(0,163,255,.13),rgba(0,87,184,.04) 58%,transparent 70%);transition:transform .22s ease,filter .22s ease}
+.insightCard:after{content:"";position:absolute;inset:-1px;border-radius:inherit;background:linear-gradient(120deg,transparent 18%,rgba(255,255,255,.32) 45%,transparent 70%);opacity:0;transform:translateX(-70%);transition:opacity .22s ease,transform .5s ease;pointer-events:none}
 .insightTag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#EAF4FF;color:#0057B8;font-size:11px;font-weight:950;letter-spacing:.04em;text-transform:uppercase}
 .insightTitle{margin:14px 0 8px;font-size:18px;line-height:1.15;color:#061A36;font-weight:950}
 .insightText{margin:0;color:#4B617D;font-size:13px;line-height:1.45}.insightText strong{color:#0B2E5E;font-weight:950}
-.insightValue{font-size:25px;font-weight:1000;color:#0057B8;margin-top:10px;line-height:1}
+.insightValue{font-size:25px;font-weight:1000;color:#0057B8;margin-top:10px;line-height:1;position:relative;z-index:2;transition:transform .22s ease,color .22s ease}
+.kpi:hover,.insightCard:hover{transform:translateY(-4px);border-color:rgba(0,114,206,.28);box-shadow:0 22px 48px rgba(0,87,184,.14),0 0 0 1px rgba(0,163,255,.08) inset}
+.kpi:hover:after,.insightCard:hover:after{opacity:1;transform:translateX(70%)}
+.kpi:hover:before,.insightCard:hover:before{filter:saturate(1.25);transform:scale(1.05)}
+.kpi:hover .value,.insightCard:hover .insightValue{transform:translateX(2px) scale(1.025);color:var(--gazin-blue-2)}
+.kpi:active,.insightCard:active{transform:translateY(-1px) scale(.992);box-shadow:0 14px 34px rgba(0,87,184,.16)}
+@media (prefers-reduced-motion:reduce){
+  .kpi,.kpi:before,.kpi:after,.kpi .value,
+  .insightCard,.insightCard:before,.insightCard:after,.insightValue{transition:none!important}
+  .kpi:hover,.insightCard:hover,.kpi:hover .value,.insightCard:hover .insightValue,
+  .kpi:active,.insightCard:active{transform:none!important}
+  .kpi:after,.insightCard:after{display:none}
+}
 .mobileExecutiveSummary,.mobileSectionNav,.mobileChartPreview,.mobileMoreBtn,.mobileTopBtn{display:none}
 @media (max-width:1200px){.insightsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:680px){.insightsGrid{grid-template-columns:1fr}}
@@ -162,6 +176,12 @@ body.darkMode .kpi:before,
 body.darkMode .chartCard:before,
 body.darkMode .tableCard:after,
 body.darkMode .insightCard:before{background:radial-gradient(circle,rgba(0,163,255,.14),transparent 68%)}
+body.darkMode .kpi:after,
+body.darkMode .insightCard:after{background:linear-gradient(120deg,transparent 22%,rgba(68,166,255,.18) 48%,transparent 70%)}
+body.darkMode .kpi:hover,
+body.darkMode .insightCard:hover{border-color:rgba(96,190,255,.34);box-shadow:0 22px 52px rgba(0,0,0,.34),0 0 0 1px rgba(0,163,255,.12) inset,0 0 28px rgba(0,114,206,.12)}
+body.darkMode .kpi:hover .value,
+body.darkMode .insightCard:hover .insightValue{color:#40B6FF}
 body.darkMode .sectionHeader h3,
 body.darkMode .kpi .value,
 body.darkMode .chartTitle,
