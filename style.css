@@ -83,6 +83,8 @@ select{display:none}
 .heroActions{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:0 0 auto}
 .tourReplayBtn{border:1px solid rgba(255,255,255,.34);border-radius:999px;padding:10px 14px;color:#073A78;background:#FFFFFF;font-size:12px;font-weight:1000;cursor:pointer;box-shadow:0 14px 30px rgba(0,25,70,.20);transition:.18s}
 .tourReplayBtn:hover{transform:translateY(-1px);box-shadow:0 18px 34px rgba(0,25,70,.24)}
+.assistantOpenBtn{border:1px solid rgba(255,255,255,.34);border-radius:999px;padding:10px 14px;color:#FFFFFF;background:linear-gradient(135deg,#0057B8,#00A3FF);font-size:12px;font-weight:1000;cursor:pointer;box-shadow:0 14px 30px rgba(0,25,70,.20);transition:.18s}
+.assistantOpenBtn:hover{transform:translateY(-1px);box-shadow:0 18px 34px rgba(0,25,70,.24)}
 .badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);padding:12px 16px;border-radius:16px;font-weight:900;white-space:nowrap}
 .sectionHeader{margin:30px 0 16px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
 .sectionHeader h3{margin:0;font-size:24px;color:var(--gazin-dark)}
@@ -587,6 +589,7 @@ body.authPending{overflow:hidden}
 body.authPending .app,
 body.authPending .tooltip,
 body.authPending .modal{display:none !important}
+body.authPending .assistantFloatingBtn{display:none !important}
 body.authReady .authShell{display:none}
 .authShell{
   position:fixed;
@@ -2359,4 +2362,56 @@ body.darkMode .tourMeta #welcomeSceneCounter{
   }
   .mobileTopBtn{display:grid}
   body.chartModalOpen .mobileTopBtn{display:none !important}
+}
+
+.srOnly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.assistantFloatingBtn{position:fixed;right:24px;bottom:24px;z-index:85;border:1px solid rgba(255,255,255,.36);border-radius:999px;padding:12px 16px;color:#fff;background:linear-gradient(135deg,#0057B8,#00A3FF);font-size:12px;font-weight:1000;box-shadow:0 18px 42px rgba(0,61,135,.28);cursor:pointer;transition:.18s}
+.assistantFloatingBtn:hover{transform:translateY(-2px);box-shadow:0 24px 52px rgba(0,61,135,.34)}
+.assistantPanel{width:min(920px,96vw);height:min(760px,92vh);padding:0;overflow:hidden;background:linear-gradient(180deg,#FFFFFF,#F6FAFF)}
+.assistantHead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;border-bottom:1px solid #E2EEFB;background:linear-gradient(135deg,#F8FBFF,#EAF4FF)}
+.assistantIdentity{display:flex;align-items:center;gap:14px;min-width:0}
+.assistantIdentity img{width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 12px 18px rgba(6,26,54,.18))}
+.assistantIdentity h3{margin:0;color:#061A36;font-size:23px;line-height:1.05}
+.assistantIdentity p{margin:5px 0 0;color:#526A86;font-size:13px;line-height:1.35}
+.assistantQuickActions{display:flex;gap:8px;overflow-x:auto;padding:14px 22px 10px;border-bottom:1px solid #E8F1FB;background:#FFFFFF;scrollbar-width:thin}
+.assistantQuickActions button{flex:0 0 auto;border:1px solid rgba(0,87,184,.14);border-radius:999px;padding:9px 12px;color:#0057B8;background:#EAF4FF;font-size:12px;font-weight:950;cursor:pointer;transition:.18s}
+.assistantQuickActions button:hover{transform:translateY(-1px);background:#DFF0FF;box-shadow:0 10px 22px rgba(0,87,184,.12)}
+.assistantMessages{flex:1;min-height:0;overflow:auto;padding:20px 22px;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg,#F8FBFF,#FFFFFF)}
+.assistantMsg{max-width:82%;border-radius:20px;padding:13px 15px;line-height:1.48;font-size:14px;box-shadow:0 12px 28px rgba(6,26,54,.07)}
+.assistantMsg.user{align-self:flex-end;background:linear-gradient(135deg,#0057B8,#0072CE);color:#fff;border-bottom-right-radius:8px}
+.assistantMsg.bot{align-self:flex-start;background:#FFFFFF;color:#15385F;border:1px solid #DDEBFA;border-bottom-left-radius:8px}
+.assistantMsg strong{font-weight:1000}
+.assistantMsg ul{margin:8px 0 0;padding-left:18px}
+.assistantMsg li{margin:4px 0}
+.assistantHintGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.assistantHintGrid span{border-radius:13px;padding:9px 10px;background:#EAF4FF;color:#0057B8;font-size:12px;font-weight:950}
+.assistantForm{display:flex;gap:10px;padding:16px 22px 20px;border-top:1px solid #E2EEFB;background:#FFFFFF}
+.assistantForm input{flex:1;min-width:0;border:1px solid #CFE2F6;border-radius:16px;padding:13px 14px;color:#061A36;background:#FFFFFF;font-size:14px;font-weight:850;outline:none}
+.assistantForm input:focus{border-color:#00A3FF;box-shadow:0 0 0 4px rgba(0,163,255,.12)}
+.assistantForm .authPrimary{flex:0 0 auto;width:auto;margin:0;padding:0 20px;border-radius:16px}
+body.darkMode .assistantPanel{background:linear-gradient(180deg,#101D33,#071120)}
+body.darkMode .assistantHead{background:linear-gradient(135deg,#132845,#071D3A);border-color:#263C5F}
+body.darkMode .assistantIdentity h3{color:#F4F9FF}
+body.darkMode .assistantIdentity p{color:#A9BCD4}
+body.darkMode .assistantQuickActions{background:#0B172B;border-color:#263C5F}
+body.darkMode .assistantMessages{background:linear-gradient(180deg,#08172B,#071120)}
+body.darkMode .assistantMsg.bot{background:#101D33;color:#DCEBFF;border-color:#263C5F}
+body.darkMode .assistantHintGrid span{background:#132845;color:#DCEBFF}
+body.darkMode .assistantForm{background:#0B172B;border-color:#263C5F}
+body.darkMode .assistantForm input{background:#FFFFFF;color:#061A36;-webkit-text-fill-color:#061A36}
+@media (max-width:680px){
+  .assistantOpenBtn{width:100%;text-align:center}
+  .assistantFloatingBtn{right:14px;bottom:74px;padding:11px 13px}
+  .assistantPanel{height:calc(100vh - 16px);border-radius:22px}
+  .assistantHead{padding:14px;align-items:flex-start}
+  .assistantIdentity img{width:58px;height:58px}
+  .assistantIdentity h3{font-size:20px}
+  .assistantIdentity p{font-size:12px}
+  .assistantHead .closeBtn{min-width:auto;padding:9px 12px}
+  .assistantQuickActions{padding:12px 14px 8px}
+  .assistantMessages{padding:14px}
+  .assistantMsg{max-width:94%;font-size:13px}
+  .assistantHintGrid{grid-template-columns:1fr}
+  .assistantForm{padding:12px 14px 14px;display:grid;grid-template-columns:1fr}
+  .assistantForm .authPrimary{height:44px}
 }

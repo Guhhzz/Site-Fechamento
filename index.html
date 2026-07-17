@@ -9,7 +9,7 @@
 <title>Fechamento Mensal | Atendimento ao Cliente</title>
 <link rel="icon" type="image/png" href="assets/logo-dados-cx.png" />
 <link rel="apple-touch-icon" href="assets/logo-dados-cx.png" />
-<link rel="stylesheet" href="style.css?v=20260714-admin-invite" />
+<link rel="stylesheet" href="style.css?v=20260717-assistente-tech" />
 </head>
 <body class="authPending">
 <section class="authShell" id="authShell" aria-label="Acesso ao painel">
@@ -73,13 +73,37 @@
     <section class="hero">
       <div class="heroContent">
         <div><div class="eyebrow">Núcleo de Dados · Gazin</div><h2 id="pageTitle">Visão Geral Executiva</h2><p id="pageDesc">Consolidação dos canais de atendimento do Departamento de Atendimento ao Cliente para o fechamento mensal.</p></div>
-        <div class="heroActions"><div class="badge" id="activeBadge">Junho 2026</div><button class="tourReplayBtn" id="openTourBtn" type="button">Ver tutorial</button></div>
+        <div class="heroActions"><div class="badge" id="activeBadge">Junho 2026</div><button class="tourReplayBtn" id="openTourBtn" type="button">Ver tutorial</button><button class="assistantOpenBtn" id="openAssistantBtn" type="button">Assistente Tech</button></div>
       </div>
     </section>
     <section id="content"></section>
   </main>
 </div>
+<button class="assistantFloatingBtn" id="assistantFloatingBtn" type="button" aria-label="Abrir Assistente Tech">
+  <span>Assistente Tech</span>
+</button>
 <div class="tooltip" id="tooltip"></div>
+<div class="modal assistantModal" id="assistantModal" aria-hidden="true">
+  <div class="modalPanel assistantPanel" role="dialog" aria-modal="true" aria-labelledby="assistantTitle">
+    <div class="assistantHead">
+      <div class="assistantIdentity">
+        <img src="assets/apresentador-gustavo-tour-talk.png" alt="Assistente Tech" />
+        <div>
+          <h3 id="assistantTitle">Assistente Tech</h3>
+          <p>Faça perguntas sobre KPIs, núcleos, gráficos, bases e indicadores do painel.</p>
+        </div>
+      </div>
+      <button class="closeBtn" id="closeAssistantModal" type="button">Fechar</button>
+    </div>
+    <div class="assistantQuickActions" id="assistantQuickActions" aria-label="Perguntas rápidas"></div>
+    <div class="assistantMessages" id="assistantMessages" aria-live="polite"></div>
+    <form class="assistantForm" id="assistantForm">
+      <label class="srOnly" for="assistantInput">Pergunte ao Assistente Tech</label>
+      <input id="assistantInput" type="text" autocomplete="off" placeholder="Ex.: qual núcleo teve maior abandono?" />
+      <button class="authPrimary" type="submit">Enviar</button>
+    </form>
+  </div>
+</div>
 <div class="modal" id="chartModal" aria-hidden="true">
   <div class="modalPanel">
     <div class="modalHead"><div><h3 id="modalTitle"></h3><p id="modalSubtitle"></p></div><button class="closeBtn" id="closeModal">Fechar</button></div>
@@ -170,6 +194,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/monthly-dashboards.js?v=20260714-admin-invite"></script>
-<script src="script.js?v=20260717-excel-chart-layout"></script>
+<script src="script.js?v=20260717-assistente-tech"></script>
 </body>
 </html>
