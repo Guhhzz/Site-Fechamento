@@ -9,7 +9,7 @@
 <title>Fechamento Mensal | Atendimento ao Cliente</title>
 <link rel="icon" type="image/png" href="assets/logo-dados-cx.png" />
 <link rel="apple-touch-icon" href="assets/logo-dados-cx.png" />
-<link rel="stylesheet" href="style.css?v=20260717-assistente-tech-ui" />
+<link rel="stylesheet" href="style.css?v=20260717-assistente-dock" />
 </head>
 <body class="authPending">
 <section class="authShell" id="authShell" aria-label="Acesso ao painel">
@@ -68,20 +68,21 @@
   <button class="historyBtn" id="openHistoryBtn" type="button"><span class="historyIcon">▣</span><span class="historyBtnText"><strong>Bases de Fechamento</strong><small>Histórico e exportação</small></span></button>
   <p>Consulte e baixe as bases Excel utilizadas nos fechamentos mensais.</p>
 </div>
+<div class="assistantDock">
+  <button class="assistantDockBtn" id="openAssistantBtn" type="button"><span class="assistantDockIcon">AI</span><span class="assistantDockText"><strong>Assistente Tech</strong><small>Perguntas e apoio à análise</small></span></button>
+  <p>Tire dúvidas rápidas sobre KPIs, núcleos, gráficos e bases do painel.</p>
+</div>
   </aside>
   <main class="main">
     <section class="hero">
       <div class="heroContent">
         <div><div class="eyebrow">Núcleo de Dados · Gazin</div><h2 id="pageTitle">Visão Geral Executiva</h2><p id="pageDesc">Consolidação dos canais de atendimento do Departamento de Atendimento ao Cliente para o fechamento mensal.</p></div>
-        <div class="heroActions"><div class="badge" id="activeBadge">Junho 2026</div><button class="tourReplayBtn" id="openTourBtn" type="button">Ver tutorial</button><button class="assistantOpenBtn" id="openAssistantBtn" type="button">Assistente Tech</button></div>
+        <div class="heroActions"><div class="badge" id="activeBadge">Junho 2026</div><button class="tourReplayBtn" id="openTourBtn" type="button">Ver tutorial</button></div>
       </div>
     </section>
     <section id="content"></section>
   </main>
 </div>
-<button class="assistantFloatingBtn" id="assistantFloatingBtn" type="button" aria-label="Abrir Assistente Tech">
-  <span>Assistente Tech</span>
-</button>
 <div class="tooltip" id="tooltip"></div>
 <div class="modal assistantModal" id="assistantModal" aria-hidden="true">
   <div class="modalPanel assistantPanel" role="dialog" aria-modal="true" aria-labelledby="assistantTitle">
@@ -194,6 +195,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/monthly-dashboards.js?v=20260714-admin-invite"></script>
-<script src="script.js?v=20260717-assistente-tech-ui"></script>
+<script src="script.js?v=20260717-assistente-dock"></script>
 </body>
 </html>

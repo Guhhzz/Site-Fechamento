@@ -2332,7 +2332,6 @@ function closeAssistantModal(){
 }
 function setupAssistantTech(){
  const openBtn=document.getElementById('openAssistantBtn');
- const floatBtn=document.getElementById('assistantFloatingBtn');
  const closeBtn=document.getElementById('closeAssistantModal');
  const modal=document.getElementById('assistantModal');
  const form=document.getElementById('assistantForm');
@@ -2340,7 +2339,6 @@ function setupAssistantTech(){
  const quick=document.getElementById('assistantQuickActions');
  if(quick) quick.innerHTML=ASSISTANT_QUICK_PROMPTS.map(prompt=>`<button type="button" data-prompt="${escAttr(prompt)}">${esc(prompt)}</button>`).join('');
  if(openBtn) openBtn.addEventListener('click',()=>openAssistantModal());
- if(floatBtn) floatBtn.addEventListener('click',()=>openAssistantModal());
  if(closeBtn) closeBtn.addEventListener('click',closeAssistantModal);
  if(modal) modal.addEventListener('click',e=>{ if(e.target===modal) closeAssistantModal(); });
  if(quick) quick.addEventListener('click',e=>{
