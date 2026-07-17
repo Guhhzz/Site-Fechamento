@@ -2128,11 +2128,11 @@ function setupMobileTopButton(){
 
 const ASSISTANT_QUICK_PROMPTS=[
  'Resumo do fechamento',
- 'Qual núcleo teve maior abandono?',
- 'Como está o NPS?',
+ 'Maior abandono',
+ 'NPS por núcleo',
  'Maior volume de WhatsApp',
- 'Como exportar gráficos?',
- 'Como trocar a base mensal?'
+ 'Exportar gráficos',
+ 'Trocar base mensal'
 ];
 function normalizeAssistantText(value){
  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9%]+/g,' ').trim();
@@ -2317,7 +2317,7 @@ function openAssistantModal(seed=''){
  if(!modal) return;
  modal.classList.add('open');
  modal.setAttribute('aria-hidden','false');
- if(messages && !messages.children.length) appendAssistantMessage('bot',`Olá! Eu sou o <strong>Assistente Tech</strong>. Estou lendo a base ativa <strong>${esc(activeMonthLabel())}</strong>. ${assistantCapabilities()}`);
+ if(messages && !messages.children.length) appendAssistantMessage('bot',`Olá! Eu sou o <strong>Assistente Tech</strong>. Estou lendo a base ativa <strong>${esc(activeMonthLabel())}</strong>. Use as perguntas rápidas acima ou digite algo como <strong>qual foi a volumetria do Atacado?</strong>, <strong>como está o NPS?</strong> ou <strong>maior abandono</strong>.`);
  if(seed){
   appendAssistantMessage('user',seed);
   appendAssistantMessage('bot',assistantAnswer(seed));
