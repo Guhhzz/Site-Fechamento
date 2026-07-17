@@ -1877,60 +1877,86 @@ function chartRowsForExcel(c){
  }
  return {headers:['Categoria','Quantidade'], rows:c.data.map(d=>[d.label, Math.round(+d.value||0)])};
 }
-function svgEsc(v){ return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[m])); }
-function svgBase64(svg){
- const bytes=new TextEncoder().encode(svg);
- let bin='';
- bytes.forEach(b=>bin+=String.fromCharCode(b));
- return btoa(bin);
+function xlsxXml(v){ return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[m])); }
+function xlsxCol(n){ let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+function xlsxCell(r,c,v){
+ const ref=xlsxCol(c)+r;
+ if(typeof v==='number' && Number.isFinite(v)) return `<c r="${ref}"><v>${v}</v></c>`;
+ return `<c r="${ref}" t="inlineStr"><is><t>${xlsxXml(v)}</t></is></c>`;
 }
-function exportChartSvg(c){
- const data=(c?.data||[]).filter(Boolean);
- if(!data.length) return '';
- const W=760, blue='#0070C0', blue2='#00A3FF', navy='#061A36', muted='#5D718C', grid='#D9E8F8', red='#EF4E5A', white='#FFFFFF';
- if(c.type==='line'){
-  const values=data.map(d=>+d.value||0), max=Math.max(...values,1), min=Math.min(...values,0);
-  const top=52,bottom=62,left=52,right=28,H=380,span=Math.max(max-min,1);
-  const step=(W-left-right)/Math.max(data.length-1,1);
-  const pts=data.map((d,i)=>[left+(step*i), top+((max-(+d.value||0))/span)*(H-top-bottom)]);
-  const area=`M ${pts[0][0]} ${H-bottom} L ${pts.map(p=>p.join(' ')).join(' L ')} L ${pts[pts.length-1][0]} ${H-bottom} Z`;
-  const line=`M ${pts.map(p=>p.join(' ')).join(' L ')}`;
-  const labelStep=Math.max(1,Math.ceil(data.length/10));
-  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="18" fill="#F7FBFF"/><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${blue2}" stop-opacity=".25"/><stop offset="1" stop-color="${blue2}" stop-opacity=".02"/></linearGradient></defs><text x="26" y="32" font-family="Arial" font-size="18" font-weight="700" fill="${navy}">${svgEsc(c.title)}</text><path d="${area}" fill="url(#g)"/><path d="${line}" fill="none" stroke="${blue}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
-  pts.forEach((p,i)=>{
-   const val=Math.round(values[i]);
-   svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="${white}" stroke="${blue}" stroke-width="3"/><text x="${p[0]}" y="${Math.max(58,p[1]-12)}" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">${val}</text>`;
-   if(i%labelStep===0 || i===data.length-1) svg+=`<text x="${p[0]}" y="${H-28}" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="${muted}">${svgEsc(data[i].label)}</text>`;
-  });
-  svg+=`<line x1="${left}" y1="${H-bottom}" x2="${W-right}" y2="${H-bottom}" stroke="${grid}" stroke-width="2"/></svg>`;
-  return svg;
+function xlsxRange(col,row1,row2){ return `'Dados'!$${xlsxCol(col)}$${row1}:$${xlsxCol(col)}$${row2}`; }
+function xlsxFormulaCache(values,type='num'){
+ if(type==='str') return `<c:strCache><c:ptCount val="${values.length}"/>${values.map((v,i)=>`<c:pt idx="${i}"><c:v>${xlsxXml(v)}</c:v></c:pt>`).join('')}</c:strCache>`;
+ return `<c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="${values.length}"/>${values.map((v,i)=>`<c:pt idx="${i}"><c:v>${Number(v)||0}</c:v></c:pt>`).join('')}</c:numCache>`;
+}
+function xlsxSer(idx,name,catValues,valValues,catFormula,valFormula,color){
+ const sp=color?`<c:spPr><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr>`:'';
+ return `<c:ser><c:idx val="${idx}"/><c:order val="${idx}"/><c:tx><c:v>${xlsxXml(name)}</c:v></c:tx>${sp}<c:cat><c:strRef><c:f>${catFormula}</c:f>${xlsxFormulaCache(catValues,'str')}</c:strRef></c:cat><c:val><c:numRef><c:f>${valFormula}</c:f>${xlsxFormulaCache(valValues,'num')}</c:numRef></c:val></c:ser>`;
+}
+function xlsxChartXml(c,pack){
+ const title=xlsxXml(c.title||'Grafico');
+ const end=pack.rows.length+1;
+ const cats=pack.rows.map(r=>r[0]);
+ const type=c.type==='line'?'line':(c.type==='groupedBar'||c.type==='groupedColumn'?'grouped':(c.type==='pie'?'pie':'bar'));
+ const color1='0070C0', color2='EF4E5A';
+ let plot='';
+ if(type==='line'){
+  const values=pack.rows.map(r=>+r[1]||0);
+  plot=`<c:lineChart><c:grouping val="standard"/>${xlsxSer(0,pack.headers[1]||'Quantidade',cats,values,xlsxRange(1,2,end),xlsxRange(2,2,end),color1)}<c:marker val="1"/><c:smooth val="0"/><c:axId val="1001"/><c:axId val="1002"/></c:lineChart>`;
+ } else if(type==='grouped'){
+  const v1=pack.rows.map(r=>+r[1]||0), v2=pack.rows.map(r=>+r[2]||0);
+  plot=`<c:barChart><c:barDir val="col"/><c:grouping val="clustered"/>${xlsxSer(0,pack.headers[1],cats,v1,xlsxRange(1,2,end),xlsxRange(2,2,end),color1)}${xlsxSer(1,pack.headers[2],cats,v2,xlsxRange(1,2,end),xlsxRange(3,2,end),color2)}<c:axId val="1001"/><c:axId val="1002"/></c:barChart>`;
+ } else if(type==='pie'){
+  const values=pack.rows.map(r=>+r[1]||0);
+  plot=`<c:pieChart><c:varyColors val="1"/>${xlsxSer(0,pack.headers[1]||'Quantidade',cats,values,xlsxRange(1,2,end),xlsxRange(2,2,end),color1)}<c:dLbls><c:showVal val="1"/><c:showPercent val="0"/><c:showLeaderLines val="1"/></c:dLbls></c:pieChart>`;
+ } else {
+  const values=pack.rows.map(r=>+r[1]||0);
+  plot=`<c:barChart><c:barDir val="bar"/><c:grouping val="clustered"/>${xlsxSer(0,pack.headers[1]||'Quantidade',cats,values,xlsxRange(1,2,end),xlsxRange(2,2,end),color1)}<c:axId val="1001"/><c:axId val="1002"/></c:barChart>`;
  }
- if(c.type==='groupedBar' || c.type==='groupedColumn'){
-  const rows=data.slice(0,12), max=Math.max(...rows.flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1);
-  const H=400, top=64, bottom=76, left=52, right=32, groupW=(W-left-right)/Math.max(rows.length,1), barW=Math.min(34,groupW*.24);
-  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="18" fill="#F7FBFF"/><text x="26" y="32" font-family="Arial" font-size="18" font-weight="700" fill="${navy}">${svgEsc(c.title)}</text><rect x="30" y="46" width="12" height="12" rx="3" fill="${blue}"/><text x="48" y="57" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">Com sucesso</text><rect x="150" y="46" width="12" height="12" rx="3" fill="${red}"/><text x="168" y="57" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">Sem sucesso</text><line x1="${left}" y1="${H-bottom}" x2="${W-right}" y2="${H-bottom}" stroke="${grid}" stroke-width="2"/>`;
-  rows.forEach((d,i)=>{
-   const baseX=left+i*groupW+groupW/2, h1=((+d.sucesso||0)/max)*(H-top-bottom), h2=((+d.semSucesso||0)/max)*(H-top-bottom);
-   const y1=H-bottom-h1, y2=H-bottom-h2;
-   svg+=`<rect x="${baseX-barW-3}" y="${y1}" width="${barW}" height="${h1}" rx="7" fill="${blue}"/><rect x="${baseX+3}" y="${y2}" width="${barW}" height="${h2}" rx="7" fill="${red}"/><text x="${baseX-barW/2-3}" y="${Math.max(78,y1-8)}" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="${navy}">${Math.round(+d.sucesso||0)}</text><text x="${baseX+barW/2+3}" y="${Math.max(78,y2-8)}" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="${navy}">${Math.round(+d.semSucesso||0)}</text><text x="${baseX}" y="${H-44}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="${muted}">${svgEsc(String(d.label||'').slice(0,18))}</text>`;
-  });
-  svg+=`</svg>`;
-  return svg;
- }
- const rows=data.map(d=>({label:d.uf||d.label,value:+d.value||0})).sort((a,b)=>b.value-a.value).slice(0,15);
- const H=Math.max(320,86+rows.length*30), labelW=210, chartW=W-labelW-84, max=Math.max(...rows.map(d=>d.value),1);
- let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="18" fill="#F7FBFF"/><text x="26" y="32" font-family="Arial" font-size="18" font-weight="700" fill="${navy}">${svgEsc(c.title)}</text>`;
- rows.forEach((d,i)=>{
-  const y=66+i*30, barW=Math.max(12,(d.value/max)*chartW);
-  svg+=`<text x="${labelW-12}" y="${y+15}" text-anchor="end" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">${svgEsc(String(d.label).slice(0,28))}</text><rect x="${labelW}" y="${y}" width="${barW}" height="21" rx="8" fill="${blue}"/><text x="${labelW+barW+10}" y="${y+15}" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">${Math.round(d.value)}</text>`;
+ const axes=type==='pie'?'':`<c:catAx><c:axId val="1001"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:tickLblPos val="nextTo"/><c:crossAx val="1002"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/></c:catAx><c:valAx><c:axId val="1002"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:numFmt formatCode="General" sourceLinked="1"/><c:tickLblPos val="nextTo"/><c:crossAx val="1001"/><c:crosses val="autoZero"/></c:valAx>`;
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><c:date1904 val="0"/><c:lang val="pt-BR"/><c:chart><c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="pt-BR" sz="1400" b="1"/><a:t>${title}</a:t></a:r></a:p></c:rich></c:tx><c:layout/></c:title><c:plotArea><c:layout/>${plot}${axes}</c:plotArea><c:legend><c:legendPos val="b"/><c:layout/></c:legend><c:plotVisOnly val="1"/></c:chart><c:printSettings><c:headerFooter/><c:pageMargins b="0.75" l="0.7" r="0.7" t="0.75" header="0.3" footer="0.3"/><c:pageSetup/></c:printSettings></c:chartSpace>`;
+}
+function crc32(bytes){
+ let c=-1;
+ for(let i=0;i<bytes.length;i++){ c^=bytes[i]; for(let k=0;k<8;k++) c=(c>>>1)^(0xEDB88320&-(c&1)); }
+ return (c^(-1))>>>0;
+}
+function u16(n){ return [n&255,(n>>>8)&255]; }
+function u32(n){ return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]; }
+function zipStore(files){
+ const enc=new TextEncoder(); let offset=0; const local=[], central=[];
+ files.forEach(file=>{
+  const name=enc.encode(file.name), data=typeof file.data==='string'?enc.encode(file.data):file.data, crc=crc32(data);
+  const localHeader=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...name]);
+  local.push(localHeader,data);
+  central.push(new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset),...name]));
+  offset+=localHeader.length+data.length;
  });
- svg+=`</svg>`;
- return svg;
+ const centralSize=central.reduce((s,a)=>s+a.length,0), centralOffset=offset;
+ const end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(centralSize),...u32(centralOffset),...u16(0)]);
+ const size=centralOffset+centralSize+end.length, out=new Uint8Array(size); let p=0;
+ local.concat(central,[end]).forEach(part=>{ out.set(part,p); p+=part.length; });
+ return out;
 }
-function buildExcelChartBlock(c,pack){
- const svg=exportChartSvg(c);
- if(!svg) return '';
- return `<div class="excelChartBox"><h3>Gráfico pronto</h3><p>Visualização gerada automaticamente a partir da tabela ao lado.</p><img class="excelChartImg" src="data:image/svg+xml;base64,${svgBase64(svg)}" alt="Gráfico ${excelCell(c.title)}" /></div>`;
+function buildChartXlsx(title,subtitle,pack,c){
+ const rows=[pack.headers,...pack.rows];
+ const sheetRows=rows.map((row,ri)=>`<row r="${ri+1}">${row.map((v,ci)=>xlsxCell(ri+1,ci+1,v)).join('')}</row>`).join('');
+ const cols=pack.headers.map((h,i)=>`<col min="${i+1}" max="${i+1}" width="${i===0?34:18}" customWidth="1"/>`).join('');
+ const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><cols>${cols}</cols><sheetData>${sheetRows}</sheetData><drawing r:id="rId1"/></worksheet>`;
+ const drawing=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><xdr:twoCellAnchor><xdr:from><xdr:col>4</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>1</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>13</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>22</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="2" name="Grafico"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId1"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor></xdr:wsDr>`;
+ const files=[
+  {name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/><Override PartName="/xl/charts/chart1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`},
+  {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+  {name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Dados" sheetId="1" r:id="rId1"/></sheets></workbook>`},
+  {name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+  {name:'xl/styles.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts><fills count="1"><fill><patternFill patternType="none"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="1"><xf/></cellXfs></styleSheet>`},
+  {name:'xl/worksheets/sheet1.xml',data:sheet},
+  {name:'xl/worksheets/_rels/sheet1.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>`},
+  {name:'xl/drawings/drawing1.xml',data:drawing},
+  {name:'xl/drawings/_rels/drawing1.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart1.xml"/></Relationships>`},
+  {name:'xl/charts/chart1.xml',data:xlsxChartXml(c,pack)}
+ ];
+ return zipStore(files);
 }
 function exportBrandTableExcel(sheetName='Assistência'){
  const s=DATA.sheets.find(x=>x.name===sheetName);
@@ -1957,13 +1983,9 @@ function exportChartExcel(sheetName,index){
  const s=DATA.sheets.find(x=>x.name===sheetName); if(!s || !s.charts[index]) return;
  const c=s.charts[index]; const pack=chartRowsForExcel(c);
  const title=`${s.name} - ${c.title}`;
- const headerHtml=pack.headers.map(h=>`<th>${excelCell(h)}</th>`).join('');
- const rowsHtml=pack.rows.map(row=>`<tr>${row.map(v=>`<td>${excelCell(v)}</td>`).join('')}</tr>`).join('');
- const tableHtml=`<table class="dataTable"><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
- const chartHtml=buildExcelChartBlock(c,pack);
- const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;color:#061A36}table{border-collapse:collapse}.dataTable th{background:#0057B8;color:#fff;font-weight:bold}.dataTable th,.dataTable td{border:1px solid #C9DDF3;padding:8px 10px}.exportLayout td{border:0;vertical-align:top;padding:0 20px 0 0}h2{color:#061A36;margin-bottom:4px}p{color:#425A78}.excelChartBox{border:1px solid #C9DDF3;border-radius:14px;background:#F7FBFF;padding:14px}.excelChartBox h3{margin:0 0 4px;color:#0057B8}.excelChartBox p{margin:0 0 10px}.excelChartImg{width:760px;max-width:760px;height:auto;display:block}</style></head><body><h2>${excelCell(title)}</h2><p>${excelCell(c.subtitle||'')}</p><table class="exportLayout"><tr><td>${tableHtml}</td><td>${chartHtml}</td></tr></table></body></html>`;
- const blob=new Blob(['﻿',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
- const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(s.name)}_${safeFileName(c.title)}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ const bytes=buildChartXlsx(title,c.subtitle||'',pack,c);
+ const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(s.name)}_${safeFileName(c.title)}.xlsx`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 function openChartModal(sheetName,index){
