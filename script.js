@@ -1877,6 +1877,61 @@ function chartRowsForExcel(c){
  }
  return {headers:['Categoria','Quantidade'], rows:c.data.map(d=>[d.label, Math.round(+d.value||0)])};
 }
+function svgEsc(v){ return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[m])); }
+function svgBase64(svg){
+ const bytes=new TextEncoder().encode(svg);
+ let bin='';
+ bytes.forEach(b=>bin+=String.fromCharCode(b));
+ return btoa(bin);
+}
+function exportChartSvg(c){
+ const data=(c?.data||[]).filter(Boolean);
+ if(!data.length) return '';
+ const W=760, blue='#0070C0', blue2='#00A3FF', navy='#061A36', muted='#5D718C', grid='#D9E8F8', red='#EF4E5A', white='#FFFFFF';
+ if(c.type==='line'){
+  const values=data.map(d=>+d.value||0), max=Math.max(...values,1), min=Math.min(...values,0);
+  const top=52,bottom=62,left=52,right=28,H=380,span=Math.max(max-min,1);
+  const step=(W-left-right)/Math.max(data.length-1,1);
+  const pts=data.map((d,i)=>[left+(step*i), top+((max-(+d.value||0))/span)*(H-top-bottom)]);
+  const area=`M ${pts[0][0]} ${H-bottom} L ${pts.map(p=>p.join(' ')).join(' L ')} L ${pts[pts.length-1][0]} ${H-bottom} Z`;
+  const line=`M ${pts.map(p=>p.join(' ')).join(' L ')}`;
+  const labelStep=Math.max(1,Math.ceil(data.length/10));
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="18" fill="#F7FBFF"/><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${blue2}" stop-opacity=".25"/><stop offset="1" stop-color="${blue2}" stop-opacity=".02"/></linearGradient></defs><text x="26" y="32" font-family="Arial" font-size="18" font-weight="700" fill="${navy}">${svgEsc(c.title)}</text><path d="${area}" fill="url(#g)"/><path d="${line}" fill="none" stroke="${blue}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>{
+   const val=Math.round(values[i]);
+   svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="${white}" stroke="${blue}" stroke-width="3"/><text x="${p[0]}" y="${Math.max(58,p[1]-12)}" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">${val}</text>`;
+   if(i%labelStep===0 || i===data.length-1) svg+=`<text x="${p[0]}" y="${H-28}" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="${muted}">${svgEsc(data[i].label)}</text>`;
+  });
+  svg+=`<line x1="${left}" y1="${H-bottom}" x2="${W-right}" y2="${H-bottom}" stroke="${grid}" stroke-width="2"/></svg>`;
+  return svg;
+ }
+ if(c.type==='groupedBar' || c.type==='groupedColumn'){
+  const rows=data.slice(0,12), max=Math.max(...rows.flatMap(d=>[+d.sucesso||0,+d.semSucesso||0]),1);
+  const H=400, top=64, bottom=76, left=52, right=32, groupW=(W-left-right)/Math.max(rows.length,1), barW=Math.min(34,groupW*.24);
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="18" fill="#F7FBFF"/><text x="26" y="32" font-family="Arial" font-size="18" font-weight="700" fill="${navy}">${svgEsc(c.title)}</text><rect x="30" y="46" width="12" height="12" rx="3" fill="${blue}"/><text x="48" y="57" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">Com sucesso</text><rect x="150" y="46" width="12" height="12" rx="3" fill="${red}"/><text x="168" y="57" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">Sem sucesso</text><line x1="${left}" y1="${H-bottom}" x2="${W-right}" y2="${H-bottom}" stroke="${grid}" stroke-width="2"/>`;
+  rows.forEach((d,i)=>{
+   const baseX=left+i*groupW+groupW/2, h1=((+d.sucesso||0)/max)*(H-top-bottom), h2=((+d.semSucesso||0)/max)*(H-top-bottom);
+   const y1=H-bottom-h1, y2=H-bottom-h2;
+   svg+=`<rect x="${baseX-barW-3}" y="${y1}" width="${barW}" height="${h1}" rx="7" fill="${blue}"/><rect x="${baseX+3}" y="${y2}" width="${barW}" height="${h2}" rx="7" fill="${red}"/><text x="${baseX-barW/2-3}" y="${Math.max(78,y1-8)}" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="${navy}">${Math.round(+d.sucesso||0)}</text><text x="${baseX+barW/2+3}" y="${Math.max(78,y2-8)}" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="${navy}">${Math.round(+d.semSucesso||0)}</text><text x="${baseX}" y="${H-44}" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="${muted}">${svgEsc(String(d.label||'').slice(0,18))}</text>`;
+  });
+  svg+=`</svg>`;
+  return svg;
+ }
+ const rows=data.map(d=>({label:d.uf||d.label,value:+d.value||0})).sort((a,b)=>b.value-a.value).slice(0,15);
+ const H=Math.max(320,86+rows.length*30), labelW=210, chartW=W-labelW-84, max=Math.max(...rows.map(d=>d.value),1);
+ let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="18" fill="#F7FBFF"/><text x="26" y="32" font-family="Arial" font-size="18" font-weight="700" fill="${navy}">${svgEsc(c.title)}</text>`;
+ rows.forEach((d,i)=>{
+  const y=66+i*30, barW=Math.max(12,(d.value/max)*chartW);
+  svg+=`<text x="${labelW-12}" y="${y+15}" text-anchor="end" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">${svgEsc(String(d.label).slice(0,28))}</text><rect x="${labelW}" y="${y}" width="${barW}" height="21" rx="8" fill="${blue}"/><text x="${labelW+barW+10}" y="${y+15}" font-family="Arial" font-size="12" font-weight="700" fill="${navy}">${Math.round(d.value)}</text>`;
+ });
+ svg+=`</svg>`;
+ return svg;
+}
+function buildExcelChartBlock(c,pack){
+ const svg=exportChartSvg(c);
+ if(!svg) return '';
+ return `<div class="excelChartBox"><h3>Gráfico pronto</h3><p>Visualização gerada automaticamente a partir da tabela ao lado.</p><img class="excelChartImg" src="data:image/svg+xml;base64,${svgBase64(svg)}" alt="Gráfico ${excelCell(c.title)}" /></div>`;
+}
 function exportBrandTableExcel(sheetName='Assistência'){
  const s=DATA.sheets.find(x=>x.name===sheetName);
  const rows=s?.brandTable||[];
@@ -1904,7 +1959,9 @@ function exportChartExcel(sheetName,index){
  const title=`${s.name} - ${c.title}`;
  const headerHtml=pack.headers.map(h=>`<th>${excelCell(h)}</th>`).join('');
  const rowsHtml=pack.rows.map(row=>`<tr>${row.map(v=>`<td>${excelCell(v)}</td>`).join('')}</tr>`).join('');
- const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse}th{background:#0057B8;color:#fff;font-weight:bold}th,td{border:1px solid #C9DDF3;padding:8px 10px}h2{color:#061A36}</style></head><body><h2>${excelCell(title)}</h2><p>${excelCell(c.subtitle||'')}</p><table><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
+ const tableHtml=`<table class="dataTable"><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
+ const chartHtml=buildExcelChartBlock(c,pack);
+ const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;color:#061A36}table{border-collapse:collapse}.dataTable th{background:#0057B8;color:#fff;font-weight:bold}.dataTable th,.dataTable td{border:1px solid #C9DDF3;padding:8px 10px}.exportLayout td{border:0;vertical-align:top;padding:0 20px 0 0}h2{color:#061A36;margin-bottom:4px}p{color:#425A78}.excelChartBox{border:1px solid #C9DDF3;border-radius:14px;background:#F7FBFF;padding:14px}.excelChartBox h3{margin:0 0 4px;color:#0057B8}.excelChartBox p{margin:0 0 10px}.excelChartImg{width:760px;max-width:760px;height:auto;display:block}</style></head><body><h2>${excelCell(title)}</h2><p>${excelCell(c.subtitle||'')}</p><table class="exportLayout"><tr><td>${tableHtml}</td><td>${chartHtml}</td></tr></table></body></html>`;
  const blob=new Blob(['﻿',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(s.name)}_${safeFileName(c.title)}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
