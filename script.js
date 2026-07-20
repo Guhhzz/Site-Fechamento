@@ -2301,6 +2301,308 @@ function assistantAnswer(question){
  if(text.includes('menu') || text.includes('navegar') || text.includes('nucleo')) return 'Use o menu lateral no desktop ou o seletor suspenso no mobile para alternar entre Visão Geral, Consórcio, GazinBank, Assistência, E-commerce, Chilli Seguros, Canais Especiais, Teleatendimento e Atacado.';
  return `Ainda não tenho uma resposta precisa para essa pergunta, mas posso ajudar com KPIs, NPS, WhatsApp, abandono, atendimento, rankings, gráficos, Excel e bases mensais. ${assistantCapabilities()}`;
 }
+ASSISTANT_QUICK_PROMPTS.splice(0,ASSISTANT_QUICK_PROMPTS.length,
+ 'Resumo executivo da base',
+ 'Comparar os núcleos',
+ 'Qual núcleo teve maior abandono?',
+ 'Como está o NPS?',
+ 'Maior volume de WhatsApp',
+ 'Top rankings do núcleo atual',
+ 'Como exportar Excel?',
+ 'Como trocar a base mensal?',
+ 'Como usar o tutorial?',
+ 'O que só admin consegue fazer?'
+);
+function assistantIncludesAny(text,terms){ return terms.some(term=>text.includes(term)); }
+function assistantCurrentSheet(){
+ return currentViewKey && currentViewKey!=='geral' ? (DATA.sheets||[]).find(s=>s.name===currentViewKey) || null : null;
+}
+function assistantVisibleSheets(){ return DATA.sheets || []; }
+function assistantMetricValue(sheet,metric){
+ const c=sheet?.channel||{};
+ if(metric==='taxa_atendimento') return c.ofertadas ? (c.atendidas||0)/(c.ofertadas||1)*100 : null;
+ if(metric==='taxa_abandono') return c.ofertadas ? (c.abandonadas||0)/(c.ofertadas||1)*100 : null;
+ return Number.isFinite(Number(c[metric])) ? Number(c[metric]) : null;
+}
+function assistantMetricLabel(metric){
+ return {
+  ofertadas:'ligações ofertadas',
+  atendidas:'ligações atendidas',
+  abandonadas:'ligações abandonadas',
+  callback:'callbacks',
+  whatsapp:'tickets via WhatsApp',
+  nps:'NPS',
+  taxa_atendimento:'taxa de atendimento',
+  taxa_abandono:'taxa de abandono'
+ }[metric] || metric;
+}
+function assistantDetectMetric(text){
+ if(text.includes('nps') || text.includes('experiencia')) return 'nps';
+ if(text.includes('whatsapp') || text.includes('zap') || text.includes('ticket digital')) return 'whatsapp';
+ if(text.includes('callback') || text.includes('call back') || text.includes('retorno') || text.includes('fila')) return 'callback';
+ if(text.includes('abandono') || text.includes('abandonada') || text.includes('abandonadas')) return assistantIncludesAny(text,['taxa','%','percentual','maior','menor','melhor','pior']) ? 'taxa_abandono' : 'abandonadas';
+ if(text.includes('atendimento') || text.includes('atendida') || text.includes('atendidas') || text.includes('eficiencia')) return assistantIncludesAny(text,['taxa','%','percentual','eficiencia','melhor','pior']) ? 'taxa_atendimento' : 'atendidas';
+ if(text.includes('ofertada') || text.includes('ofertadas') || text.includes('ligacao') || text.includes('ligacoes') || text.includes('chamada') || text.includes('volumetria') || text.includes('volume')) return 'ofertadas';
+ return null;
+}
+function assistantFindSheet(text){
+ const aliases=[
+  ['geral',['geral','visao geral','departamento','consolidado','fechamento']],
+  ['E-commerce',['e commerce','ecommerce','gazin com','gazincom','marketplace','magalu','meli','shopee','amazon','kabum']],
+  ['GazinBank',['gazinbank','gazin bank','bank','banco','emprestimo','cartao','fatura']],
+  ['Consórcio',['consorcio','carteira','lance','contemplacao']],
+  ['Assistência',['assistencia','assistencia tecnica','top marcas','marca','marcas','filiais','filial','fornecedor','fornecedores','os','o s']],
+  ['Chilli Seguros',['chilli','chili','seguros','uf','estado','mapa','distribuicao por uf']],
+  ['Canais Especiais',['canais especiais','reclame aqui','procon','consumidor gov','acao judicial','acoes judiciais']],
+  ['Teleatendimento',['teleatendimento','tele atendimento','pesquisa','pesquisas']],
+  ['Atacado',['atacado','admin','ocorrencia','ocorrencias']]
+ ];
+ for(const [name,terms] of aliases){
+  if(terms.some(term=>text.includes(term))){
+   if(name==='geral') return null;
+   return assistantVisibleSheets().find(s=>s.name===name) || null;
+  }
+ }
+ return assistantVisibleSheets().find(s=>text.includes(normalizeAssistantText(s.name))) || null;
+}
+function assistantBestSheet(metric,mode='max'){
+ const rows=assistantVisibleSheets().map(sheet=>({sheet,value:assistantMetricValue(sheet,metric)})).filter(x=>Number.isFinite(x.value));
+ if(!rows.length) return null;
+ rows.sort((a,b)=>mode==='min'?a.value-b.value:b.value-a.value);
+ return rows[0];
+}
+function assistantRankSheets(metric,mode='max',limit=8){
+ const rows=assistantVisibleSheets().map(sheet=>({sheet,value:assistantMetricValue(sheet,metric)})).filter(x=>Number.isFinite(x.value));
+ rows.sort((a,b)=>mode==='min'?a.value-b.value:b.value-a.value);
+ return rows.slice(0,limit);
+}
+function assistantFormatMetric(metric,value){
+ if(value===null || value===undefined || !Number.isFinite(Number(value))) return 'sem dado';
+ if(metric==='taxa_atendimento' || metric==='taxa_abandono') return pct(Number(value));
+ if(metric==='nps') return formatNps(value);
+ return fmt.format(Math.round(Number(value)));
+}
+function assistantMetricDetail(metric,sheet,value){
+ const c=sheet?.channel||{};
+ if(metric==='taxa_atendimento') return `${fmt.format(Math.round(c.atendidas||0))} atendidas de ${fmt.format(Math.round(c.ofertadas||0))} ofertadas`;
+ if(metric==='taxa_abandono') return `${fmt.format(Math.round(c.abandonadas||0))} abandonadas de ${fmt.format(Math.round(c.ofertadas||0))} ofertadas`;
+ if(metric==='nps' && hasNps(c)) return npsInfo(c.nps).label;
+ return '';
+}
+function assistantSheetSummary(sheet){
+ const c=sheet.channel||{};
+ const atRate=c.ofertadas ? c.atendidas/c.ofertadas*100 : 0;
+ const abRate=c.ofertadas ? c.abandonadas/c.ofertadas*100 : 0;
+ const parts=[
+  `<strong>${esc(sheet.name)}</strong> na base <strong>${esc(activeMonthLabel())}</strong>:`,
+  `${fmt.format(Math.round(c.ofertadas||0))} ligações ofertadas`,
+  `${fmt.format(Math.round(c.atendidas||0))} atendidas (${pct(atRate)})`,
+  `${fmt.format(Math.round(c.abandonadas||0))} abandonadas (${pct(abRate)})`,
+  `${fmt.format(Math.round(c.whatsapp||0))} tickets WhatsApp`
+ ];
+ if(c.callback) parts.push(`${fmt.format(Math.round(c.callback||0))} callbacks`);
+ if(hasNps(c)) parts.push(`NPS ${formatNps(c.nps)} (${npsInfo(c.nps).label})`);
+ if(sheet.charts?.length) parts.push(`${fmt.format(sheet.charts.length)} gráfico(s) disponível(is) para análise`);
+ if(sheet.name==='Assistência' && sheet.brandTable?.length) parts.push(`Tabela executiva com Top ${fmt.format(sheet.brandTable.length)} marcas`);
+ return `<ul>${parts.map(item=>`<li>${item}</li>`).join('')}</ul>`;
+}
+function assistantGeneralSummary(){
+ const g=DATA.general||{};
+ const npsAvg=averageNps(DATA.sheets);
+ const atRate=g.ofertadas ? g.atendidas/g.ofertadas*100 : 0;
+ const abRate=g.ofertadas ? g.abandonadas/g.ofertadas*100 : 0;
+ const topCalls=assistantBestSheet('ofertadas','max');
+ const topWhatsapp=assistantBestSheet('whatsapp','max');
+ const highAb=assistantBestSheet('taxa_abandono','max');
+ const bestAt=assistantBestSheet('taxa_atendimento','max');
+ return `<strong>Resumo executivo da base ${esc(activeMonthLabel())}</strong><ul>
+  <li>${fmt.format(Math.round(g.ofertadas||0))} ligações ofertadas no consolidado.</li>
+  <li>${fmt.format(Math.round(g.atendidas||0))} atendidas, com taxa de ${pct(atRate)}.</li>
+  <li>${fmt.format(Math.round(g.abandonadas||0))} abandonadas, com taxa de ${pct(abRate)}.</li>
+  <li>${fmt.format(Math.round(g.whatsapp||0))} tickets via WhatsApp.</li>
+  ${npsAvg!==null?`<li>NPS médio ${formatNps(npsAvg)}, classificado em ${esc(npsInfo(npsAvg).label)}.</li>`:''}
+  ${topCalls?`<li>Maior volume de ligações: ${esc(topCalls.sheet.name)} (${fmt.format(Math.round(topCalls.value))}).</li>`:''}
+  ${topWhatsapp?`<li>Maior volume WhatsApp: ${esc(topWhatsapp.sheet.name)} (${fmt.format(Math.round(topWhatsapp.value))}).</li>`:''}
+  ${bestAt?`<li>Melhor taxa de atendimento: ${esc(bestAt.sheet.name)} (${pct(bestAt.value)}).</li>`:''}
+  ${highAb?`<li>Ponto de atenção em abandono: ${esc(highAb.sheet.name)} (${pct(highAb.value)}).</li>`:''}
+ </ul>`;
+}
+function assistantComparisonAnswer(metric,mode='max'){
+ const rows=assistantRankSheets(metric,mode,8);
+ if(!rows.length) return `Não encontrei dados de ${esc(assistantMetricLabel(metric))} nos núcleos desta base.`;
+ const title=mode==='min' ? `Menores valores de ${assistantMetricLabel(metric)}` : `Maiores valores de ${assistantMetricLabel(metric)}`;
+ return `<strong>${esc(title)} - ${esc(activeMonthLabel())}</strong><ul>${rows.map((r,i)=>{
+  const detail=assistantMetricDetail(metric,r.sheet,r.value);
+  return `<li>${i+1}. <strong>${esc(r.sheet.name)}</strong>: ${assistantFormatMetric(metric,r.value)}${detail?` <small>(${esc(detail)})</small>`:''}</li>`;
+ }).join('')}</ul>`;
+}
+function assistantCompareSpecificSheets(metric,questionText){
+ const sheets=assistantVisibleSheets().filter(s=>questionText.includes(normalizeAssistantText(s.name)));
+ const unique=[...new Map(sheets.map(s=>[s.name,s])).values()];
+ if(unique.length<2) return null;
+ return `<strong>Comparativo de ${esc(assistantMetricLabel(metric))}</strong><ul>${unique.map(s=>{
+  const value=assistantMetricValue(s,metric);
+  return `<li>${esc(s.name)}: <strong>${assistantFormatMetric(metric,value)}</strong>${assistantMetricDetail(metric,s,value)?` (${esc(assistantMetricDetail(metric,s,value))})`:''}</li>`;
+ }).join('')}</ul>`;
+}
+function assistantNpsAnswer(sheet,mode='rank'){
+ if(sheet){
+  if(!hasNps(sheet.channel)) return `O núcleo <strong>${esc(sheet.name)}</strong> não possui NPS informado nesta base.`;
+  const info=npsInfo(sheet.channel.nps);
+  return `O NPS de <strong>${esc(sheet.name)}</strong> é <strong>${formatNps(sheet.channel.nps)}</strong>, classificado em <strong>${esc(info.label)}</strong> (${esc(info.range)}).`;
+ }
+ const entries=getNpsEntries(DATA.sheets);
+ if(!entries.length) return 'Não encontrei NPS informado nos núcleos desta base.';
+ const avg=averageNps(DATA.sheets);
+ const best=entries.slice().sort((a,b)=>b.value-a.value)[0];
+ const attention=entries.slice().sort((a,b)=>a.value-b.value)[0];
+ const ordered=entries.slice().sort((a,b)=>mode==='min'?a.value-b.value:b.value-a.value);
+ return `<strong>NPS na base ${esc(activeMonthLabel())}</strong><ul>
+  <li>Média dos núcleos medidos: <strong>${formatNps(avg)}</strong> (${esc(npsInfo(avg).label)}).</li>
+  <li>Melhor NPS: <strong>${esc(best.name)}</strong>, com ${formatNps(best.value)}.</li>
+  <li>Ponto de atenção: <strong>${esc(attention.name)}</strong>, com ${formatNps(attention.value)}.</li>
+  <li>Ranking: ${ordered.map(x=>`${esc(x.name)} ${formatNps(x.value)} (${esc(npsInfo(x.value).label)})`).join(' · ')}</li>
+ </ul>`;
+}
+function assistantChartHelp(sheet){
+ const target=sheet || assistantCurrentSheet();
+ if(target && target.charts?.length){
+  return `<strong>Gráficos de ${esc(target.name)}</strong><ul>${target.charts.map(c=>`<li>${esc(c.title)}: ${esc(c.subtitle||'sem subtítulo')}. Total: <strong>${fmt.format(Math.round(chartTotal(c)))}</strong>.</li>`).join('')}</ul>Use <strong>Expandir</strong> para ver maior e <strong>Excel</strong> para baixar a tabela com o gráfico pronto.`;
+ }
+ return 'Cada núcleo possui gráficos específicos. Entre em um núcleo pelo menu lateral ou seletor mobile e use os botões <strong>Expandir</strong> e <strong>Excel</strong> para aprofundar a análise.';
+}
+function assistantFindChart(text,sheet){
+ const charts=sheet?.charts||[];
+ if(!charts.length) return null;
+ const chartAliases=[
+  ['uf',['uf','estado','mapa','distribuicao']],
+  ['marketplace',['marketplace','magalu','meli','shopee','amazon','kabum']],
+  ['diario',['diario','dia','periodo','linha','evolucao']],
+  ['ranking',['ranking','top','recorrente','motivo','assunto','etapa','filial','marca']],
+  ['judiciais',['judicial','procon','consumidor']],
+  ['pesquisas',['pesquisa']],
+  ['carteira',['carteira']],
+  ['status',['status']]
+ ];
+ for(const [term,aliases] of chartAliases){
+  if(aliases.some(alias=>text.includes(alias))){
+   const found=charts.find(c=>normalizeAssistantText(`${c.title} ${c.subtitle}`).includes(term) || aliases.some(alias=>normalizeAssistantText(`${c.title} ${c.subtitle}`).includes(alias)));
+   if(found) return found;
+  }
+ }
+ return charts.find(c=>normalizeAssistantText(`${c.title} ${c.subtitle}`).split(' ').some(part=>part.length>3 && text.includes(part))) || charts.find(c=>chartData(c).length) || charts[0];
+}
+function assistantRankingAnswer(sheet,questionText=''){
+ const target=sheet || assistantCurrentSheet();
+ if(!target || !target.charts?.length) return 'Para ver rankings, selecione ou cite um núcleo com gráficos. Exemplo: <strong>top motivos do Atacado</strong> ou <strong>ranking de filiais da Assistência</strong>.';
+ const chart=assistantFindChart(questionText,target);
+ const rows=chartData(chart).map(d=>({label:d.label||d.uf||'Item',value:chartPreviewValue(chart,d)})).sort((a,b)=>b.value-a.value).slice(0,8);
+ if(!rows.length) return `Não encontrei itens ranqueáveis em <strong>${esc(chart.title)}</strong>.`;
+ return `<strong>Top ${fmt.format(rows.length)} em ${esc(chart.title)} (${esc(target.name)})</strong><ul>${rows.map((r,i)=>`<li>${i+1}. ${esc(r.label)}: <strong>${fmt.format(Math.round(r.value))}</strong></li>`).join('')}</ul>`;
+}
+function assistantBrandTableAnswer(){
+ const sheet=assistantVisibleSheets().find(s=>s.name==='Assistência');
+ const rows=(sheet?.brandTable||[]).slice(0,10);
+ if(!rows.length) return 'A tabela executiva de marcas da Assistência não está disponível nesta base.';
+ const worst=sheet.brandTable.slice().sort((a,b)=>(+b.custoOSPorFaturamento||0)-(+a.custoOSPorFaturamento||0))[0];
+ return `<strong>Tabela Executiva da Assistência</strong><ul>
+  <li>Mostra o Top 20 marcas com quantidade de O.S, vendas, faturamento, custo médio e custo por faturamento.</li>
+  <li>Top 5 por O.S: ${rows.slice(0,5).map(r=>`${esc(r.marca)} (${fmt.format(Math.round(+r.quantidadeOS||0))})`).join(' · ')}.</li>
+  ${worst?`<li>Maior custo O.S por faturamento: <strong>${esc(worst.marca)}</strong>, com ${brPercent.format(+worst.custoOSPorFaturamento||0)}.</li>`:''}
+  <li>Use a barra de rolagem da tabela para ver do Top 1 ao Top 20 e o botão Excel para exportar.</li>
+ </ul>`;
+}
+function assistantBaseHelp(){
+ const bases=typeof allHistoryBases==='function' ? allHistoryBases() : [];
+ const count=bases.length || 1;
+ const labels=bases.slice(0,6).map(b=>b.fechamento||b.nome).filter(Boolean);
+ return `A área <strong>Bases de Fechamento</strong> concentra os arquivos mensais. Hoje o painel está usando <strong>${esc(activeMonthLabel())}</strong>. Quando novos meses estiverem publicados no site, a pessoa poderá selecionar o mês desejado e o painel atualizará KPIs, gráficos, insights e tabelas. Há <strong>${fmt.format(count)}</strong> base(s) listada(s) no histórico${labels.length?`: ${labels.map(esc).join(' · ')}`:''}.`;
+}
+function assistantNavigationHelp(){
+ return `<strong>Como navegar no painel</strong><ul>
+  <li>No desktop, use o menu lateral para alternar entre Visão Geral, Consórcio, GazinBank, Assistência, E-commerce, Chilli Seguros, Canais Especiais, Teleatendimento e Atacado.</li>
+  <li>No celular, use o seletor suspenso no topo.</li>
+  <li>Os botões <strong>KPIs</strong>, <strong>Gráficos</strong> e <strong>Tabela</strong> levam direto para as seções do núcleo.</li>
+  <li>O botão <strong>Ver tutorial</strong> abre novamente o tour guiado do site.</li>
+ </ul>`;
+}
+function assistantAdminHelp(){
+ return `<strong>Recursos administrativos</strong><ul>
+  <li>Admins conseguem abrir a lista de usuários pelo menu do perfil.</li>
+  <li>Na tela de usuários, é possível convidar novos acessos, editar nome de exibição, enviar redefinição de senha e excluir usuários quando necessário.</li>
+  <li>A área <strong>Status Usuários</strong> mostra presença online, últimos acessos e usuários offline.</li>
+  <li>Usuários de visualização continuam apenas consultando os dados do painel.</li>
+ </ul>`;
+}
+function assistantExcelHelp(){
+ return `<strong>Exportação em Excel</strong><ul>
+  <li>Em gráficos, o botão <strong>Excel</strong> baixa a tabela do gráfico e já monta um gráfico dentro do arquivo.</li>
+  <li>Na tabela executiva da Assistência, o botão Excel exporta os dados tabulados para análise.</li>
+  <li>O botão <strong>Expandir</strong> serve para ampliar a leitura do gráfico dentro do site antes de exportar.</li>
+ </ul>`;
+}
+function assistantPurposeHelp(){
+ return `<strong>Objetivo do painel</strong><ul>
+  <li>Centralizar o fechamento mensal do Atendimento ao Cliente em uma leitura executiva.</li>
+  <li>Reduzir apresentações manuais e facilitar a comparação entre núcleos.</li>
+  <li>Organizar KPIs, NPS, gráficos, rankings, mapas, bases mensais e insights no mesmo ambiente.</li>
+  <li>Apoiar uma cultura de dados mais prática para acompanhamento mensal e tomada de decisão.</li>
+ </ul>`;
+}
+function assistantCapabilities(){
+ return `Posso responder perguntas sobre dados, navegação e uso do painel ativo. Exemplos:
+ <div class="assistantHintGrid">
+  <span>Resumo executivo</span>
+  <span>Comparar núcleos</span>
+  <span>Maior abandono</span>
+  <span>NPS por núcleo</span>
+  <span>Top rankings</span>
+  <span>Volume WhatsApp</span>
+  <span>Como exportar Excel</span>
+  <span>Bases mensais</span>
+  <span>Usuários e admin</span>
+  <span>Objetivo do painel</span>
+ </div>`;
+}
+function assistantAnswer(question){
+ const text=normalizeAssistantText(question);
+ const sheet=assistantFindSheet(text);
+ const metric=assistantDetectMetric(text);
+ const wantsMin=assistantIncludesAny(text,['menor','menos','baixo','baixa','pior']);
+ if(!text) return 'Digite uma pergunta sobre o painel para eu te ajudar.';
+ if(/\b(oi|ola|bom dia|boa tarde|boa noite|hello)\b/.test(text)) return `Olá! Sou o Assistente Tech do painel e estou lendo a base <strong>${esc(activeMonthLabel())}</strong>. ${assistantCapabilities()}`;
+ if(assistantIncludesAny(text,['ajuda','o que voce faz','perguntas','treinado','consegue responder','como perguntar'])) return assistantCapabilities();
+ if(assistantIncludesAny(text,['objetivo','porque foi criado','para que serve','proposito','finalidade','painel inteiro','projeto'])) return assistantPurposeHelp();
+ if(assistantIncludesAny(text,['admin','administrador','usuario','usuarios','perfil','convite','convidar','senha','redefinir','excluir','status usuarios','presenca','online','offline'])) return assistantAdminHelp();
+ if(assistantIncludesAny(text,['base','trocar','selecionar mes','mes anterior','historico','fechamento mensal','julho','junho','agosto'])) return assistantBaseHelp();
+ if(assistantIncludesAny(text,['menu','navegar','navegacao','nucleo','mobile','celular','tutorial','tour','ver tutorial'])) return assistantNavigationHelp();
+ if(assistantIncludesAny(text,['export','excel','baixar','download','expandir','grafico pronto'])) return assistantExcelHelp();
+ if(assistantIncludesAny(text,['tabela executiva','top 20','marcas','fornecedores','fornecedor','custo medio','faturamento','o s por faturamento'])) return assistantBrandTableAnswer();
+ if(metric==='nps') return assistantNpsAnswer(sheet,wantsMin?'min':'rank');
+ if(assistantIncludesAny(text,['ranking','top','maior recorrente','mais recorrente','assunto','motivo','etapa','filial','uf','estado','mapa','carteira','status']) && (sheet || assistantCurrentSheet())) return assistantRankingAnswer(sheet,text);
+ if(assistantIncludesAny(text,['comparar','comparativo','comparacao','todos os nucleos','por nucleo','entre nucleos']) && metric){
+  const specific=assistantCompareSpecificSheets(metric,text);
+  if(specific) return specific;
+  return assistantComparisonAnswer(metric,wantsMin?'min':'max');
+ }
+ if(assistantIncludesAny(text,['resumo','visao geral','consolidado','geral','fechamento','volumetria'])){
+  return sheet ? assistantSheetSummary(sheet) : assistantGeneralSummary();
+ }
+ if(metric){
+  if(sheet){
+   const value=assistantMetricValue(sheet,metric);
+   if(value===null) return `Não encontrei ${esc(assistantMetricLabel(metric))} para ${esc(sheet.name)} nesta base.`;
+   const detail=assistantMetricDetail(metric,sheet,value);
+   return `Em <strong>${esc(sheet.name)}</strong>, ${esc(assistantMetricLabel(metric))} está em <strong>${assistantFormatMetric(metric,value)}</strong> na base <strong>${esc(activeMonthLabel())}</strong>${detail?` (${esc(detail)})`:''}.`;
+  }
+  const mode=(wantsMin || (metric==='taxa_abandono' && text.includes('melhor'))) ? 'min' : 'max';
+  const best=assistantBestSheet(metric,mode);
+  if(best) return `O ${mode==='min'?'menor':'maior'} valor de <strong>${esc(assistantMetricLabel(metric))}</strong> é de <strong>${esc(best.sheet.name)}</strong>: <strong>${assistantFormatMetric(metric,best.value)}</strong>${assistantMetricDetail(metric,best.sheet,best.value)?` (${esc(assistantMetricDetail(metric,best.sheet,best.value))})`:''}.`;
+ }
+ if(sheet) return assistantSheetSummary(sheet);
+ if(assistantIncludesAny(text,['grafico','graficos'])) return assistantChartHelp(sheet);
+ return `Ainda não tenho uma resposta precisa para essa pergunta, mas consigo ajudar com dados do fechamento, KPIs, NPS, WhatsApp, abandono, atendimento, rankings, gráficos, Excel, bases mensais, usuários/admin e navegação. ${assistantCapabilities()}`;
+}
 function appendAssistantMessage(type,html){
  const list=document.getElementById('assistantMessages');
  if(!list) return;
