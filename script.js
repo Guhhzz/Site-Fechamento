@@ -2303,15 +2303,14 @@ function assistantAnswer(question){
 }
 ASSISTANT_QUICK_PROMPTS.splice(0,ASSISTANT_QUICK_PROMPTS.length,
  'Resumo executivo da base',
- 'Comparar os núcleos',
- 'Qual núcleo teve maior abandono?',
+ 'Comparar núcleos',
+ 'Maior abandono',
  'Como está o NPS?',
- 'Maior volume de WhatsApp',
- 'Top rankings do núcleo atual',
- 'Como exportar Excel?',
- 'Como trocar a base mensal?',
- 'Como usar o tutorial?',
- 'O que só admin consegue fazer?'
+ 'Volume WhatsApp',
+ 'Top rankings',
+ 'Exportar Excel',
+ 'Trocar base mensal',
+ 'Ver tutorial'
 );
 function assistantIncludesAny(text,terms){ return terms.some(term=>text.includes(term)); }
 function assistantCurrentSheet(){
@@ -2550,18 +2549,14 @@ function assistantPurposeHelp(){
  </ul>`;
 }
 function assistantCapabilities(){
- return `Posso responder perguntas sobre dados, navegação e uso do painel ativo. Exemplos:
+ return `Posso responder perguntas sobre dados, navegação e uso do painel ativo. Algumas ideias:
  <div class="assistantHintGrid">
   <span>Resumo executivo</span>
   <span>Comparar núcleos</span>
   <span>Maior abandono</span>
   <span>NPS por núcleo</span>
-  <span>Top rankings</span>
   <span>Volume WhatsApp</span>
-  <span>Como exportar Excel</span>
   <span>Bases mensais</span>
-  <span>Usuários e admin</span>
-  <span>Objetivo do painel</span>
  </div>`;
 }
 function assistantAnswer(question){
@@ -2601,7 +2596,7 @@ function assistantAnswer(question){
  }
  if(sheet) return assistantSheetSummary(sheet);
  if(assistantIncludesAny(text,['grafico','graficos'])) return assistantChartHelp(sheet);
- return `Ainda não tenho uma resposta precisa para essa pergunta, mas consigo ajudar com dados do fechamento, KPIs, NPS, WhatsApp, abandono, atendimento, rankings, gráficos, Excel, bases mensais, usuários/admin e navegação. ${assistantCapabilities()}`;
+ return `Ainda não tenho uma resposta precisa para essa pergunta, mas consigo ajudar com dados do fechamento, KPIs, NPS, WhatsApp, abandono, atendimento, rankings, gráficos, Excel, bases mensais e navegação. ${assistantCapabilities()}`;
 }
 function appendAssistantMessage(type,html){
  const list=document.getElementById('assistantMessages');

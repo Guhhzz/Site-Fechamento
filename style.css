@@ -2430,9 +2430,12 @@ body.darkMode .tourMeta #welcomeSceneCounter{
 .assistantIdentity h3{margin:0;color:#061A36;font-size:23px;line-height:1.05}
 .assistantIdentity p{margin:5px 0 0;color:#526A86;font-size:13px;line-height:1.35}
 .assistantIdentity p:after{content:"Online · dados do painel";display:inline-flex;margin-left:8px;padding:3px 8px;border-radius:999px;color:#0065C8;background:#DFF0FF;font-size:10px;font-weight:1000;text-transform:uppercase;vertical-align:middle}
-.assistantQuickActions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:14px 22px;border-bottom:1px solid #E8F1FB;background:linear-gradient(180deg,#FFFFFF,#F7FBFF);scrollbar-width:none}
-.assistantQuickActions button{min-width:0;border:1px solid rgba(0,87,184,.14);border-radius:14px;padding:10px 12px;color:#0057B8;background:linear-gradient(180deg,#FFFFFF,#EAF4FF);font-size:12px;font-weight:950;cursor:pointer;transition:.18s;text-align:left;box-shadow:0 10px 22px rgba(0,87,184,.08)}
-.assistantQuickActions button:hover{transform:translateY(-2px);background:linear-gradient(180deg,#FFFFFF,#DFF0FF);box-shadow:0 14px 28px rgba(0,87,184,.16),0 0 0 1px rgba(0,163,255,.12) inset}
+.assistantQuickActions{display:flex;gap:8px;padding:12px 22px;border-bottom:1px solid #E8F1FB;background:linear-gradient(180deg,#FFFFFF,#F7FBFF);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#B9D7F3 transparent}
+.assistantQuickActions::-webkit-scrollbar{height:6px}
+.assistantQuickActions::-webkit-scrollbar-track{background:transparent}
+.assistantQuickActions::-webkit-scrollbar-thumb{background:#B9D7F3;border-radius:999px}
+.assistantQuickActions button{flex:0 0 auto;min-width:max-content;border:1px solid rgba(0,87,184,.14);border-radius:999px;padding:8px 12px;color:#0057B8;background:rgba(234,244,255,.78);font-size:12px;font-weight:950;cursor:pointer;transition:.18s;text-align:center;box-shadow:0 8px 18px rgba(0,87,184,.07);scroll-snap-align:start;white-space:nowrap}
+.assistantQuickActions button:hover{transform:translateY(-1px);background:linear-gradient(180deg,#FFFFFF,#DFF0FF);box-shadow:0 12px 24px rgba(0,87,184,.13),0 0 0 1px rgba(0,163,255,.10) inset}
 .assistantMessages{flex:1;min-height:0;overflow:auto;padding:20px 22px;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg,#F8FBFF,#FFFFFF)}
 .assistantMsg{max-width:82%;border-radius:20px;padding:13px 15px;line-height:1.48;font-size:14px;box-shadow:0 12px 28px rgba(6,26,54,.07);animation:assistantMessageIn .22s ease both}
 .assistantMsg.user{align-self:flex-end;background:linear-gradient(135deg,#0057B8,#0072CE);color:#fff;border-bottom-right-radius:8px}
@@ -2440,8 +2443,9 @@ body.darkMode .tourMeta #welcomeSceneCounter{
 .assistantMsg strong{font-weight:1000}
 .assistantMsg ul{margin:8px 0 0;padding-left:18px}
 .assistantMsg li{margin:4px 0}
-.assistantHintGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-.assistantHintGrid span{border-radius:13px;padding:9px 10px;background:#EAF4FF;color:#0057B8;font-size:12px;font-weight:950}
+.assistantHintGrid{display:flex;gap:7px;margin-top:10px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}
+.assistantHintGrid::-webkit-scrollbar{display:none}
+.assistantHintGrid span{flex:0 0 auto;border-radius:999px;padding:7px 10px;background:#EAF4FF;color:#0057B8;font-size:11px;font-weight:950;white-space:nowrap}
 .assistantForm{display:flex;gap:10px;padding:16px 22px 20px;border-top:1px solid #E2EEFB;background:#FFFFFF}
 .assistantForm input{flex:1;min-width:0;border:1px solid #CFE2F6;border-radius:16px;padding:13px 14px;color:#061A36;background:#FFFFFF;font-size:14px;font-weight:850;outline:none}
 .assistantForm input:focus{border-color:#00A3FF;box-shadow:0 0 0 4px rgba(0,163,255,.12)}
@@ -2469,10 +2473,10 @@ body.darkMode .assistantForm input{background:#FFFFFF;color:#061A36;-webkit-text
   .assistantIdentity p{font-size:12px}
   .assistantIdentity p:after{display:flex;width:max-content;margin:5px 0 0}
   .assistantHead .closeBtn{min-width:auto;padding:9px 12px}
-  .assistantQuickActions{padding:12px 14px;grid-template-columns:1fr 1fr}
+  .assistantQuickActions{padding:10px 14px}
   .assistantMessages{padding:14px}
   .assistantMsg{max-width:94%;font-size:13px}
-  .assistantHintGrid{grid-template-columns:1fr}
+  .assistantHintGrid{margin-top:8px}
   .assistantForm{padding:12px 14px 14px;display:grid;grid-template-columns:1fr}
   .assistantForm .authPrimary{height:44px}
 }
