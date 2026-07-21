@@ -124,6 +124,13 @@ function hasSeenWelcome(email){
  const key=normalizeEmail(email);
  return !!(key && readWelcomeSeen()[key]);
 }
+function isPasswordAuthFlow(){
+ const authReturn=String(location.hash+location.search).toLowerCase();
+ return authReturn.includes('type=recovery') || authReturn.includes('type=invite');
+}
+function isPasswordRecoveryOpen(){
+ return !!document.getElementById('passwordRecoveryModal')?.classList.contains('open');
+}
 function isAdminEmail(email){ return ADMIN_EMAILS.map(normalizeEmail).includes(normalizeEmail(email)); }
 function canManageHistory(){ return !!(CURRENT_USER && CURRENT_USER.ativo !== false && (CURRENT_USER.perfil === 'admin' || isAdminEmail(CURRENT_USER.email))); }
 function applyTheme(mode){
@@ -639,6 +646,7 @@ function closeWelcomeModal(){
 }
 function maybeShowWelcome(){
  if(!CURRENT_USER || welcomeTourShownThisSession) return;
+ if(isPasswordAuthFlow() || isPasswordRecoveryOpen()) return;
  if(hasSeenWelcome(CURRENT_USER.email)) return;
  welcomeTourShownThisSession=true;
  markWelcomeSeen(CURRENT_USER.email);
@@ -1209,6 +1217,7 @@ function setupAdminUsers(){
 function openPasswordRecoveryModal(){
  const modal=document.getElementById('passwordRecoveryModal');
  if(!modal) return;
+ if(isWelcomeOpen()) closeWelcomeModal();
  const isInvite=String(location.hash+location.search).includes('type=invite');
  const title=modal.querySelector('.modalHead h3');
  const subtitle=modal.querySelector('.modalHead p');
@@ -1243,7 +1252,10 @@ function setupPasswordRecoveryModal(){
   form.reset();
   if(status) status.textContent='Senha atualizada com sucesso.';
   if(history.replaceState) history.replaceState({},document.title,location.pathname);
-  setTimeout(closePasswordRecoveryModal,900);
+  setTimeout(()=>{
+   closePasswordRecoveryModal();
+   maybeShowWelcome();
+  },900);
  });
  const authReturn=String(location.hash+location.search);
  if(authReturn.includes('type=recovery') || authReturn.includes('type=invite')) setTimeout(openPasswordRecoveryModal,800);
