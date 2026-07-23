@@ -2054,6 +2054,10 @@ function bindTips(el){
  el.querySelectorAll(tipSelector).forEach(x=>{
   x.classList.add('chartTipTarget');
   if(expanded) x.classList.add('expandedTipTarget');
+  if(expanded){
+   x.setAttribute('tabindex','0');
+   x.setAttribute('role','button');
+  }
   const activate=e=>{
    if(!x.dataset.tip) return;
    if(expanded){
@@ -2064,11 +2068,21 @@ function bindTips(el){
   };
   x.addEventListener('mouseenter',activate);
   x.addEventListener('mousemove',activate);
+  x.addEventListener('focus',e=>{
+   const rect=x.getBoundingClientRect();
+   activate({clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2});
+  });
   x.addEventListener('click',e=>{
    if(!expanded) return;
    e.stopPropagation();
    activate(e);
   });
+  x.addEventListener('touchstart',e=>{
+   if(!expanded) return;
+   const touch=e.touches&&e.touches[0];
+   if(!touch) return;
+   activate({clientX:touch.clientX,clientY:touch.clientY});
+  },{passive:true});
   x.addEventListener('mouseleave',()=>{
    if(expanded) x.classList.remove('chartMarkActive');
    hideTip();
