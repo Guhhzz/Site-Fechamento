@@ -1801,7 +1801,7 @@ function barChart(el,data){
   const value=fmt.format(Math.round(+d.value||0));
   const valueX=Math.min(m.l+w+8,W-36);
   const tip=`${d.label}: ${value}`;
-  svg+=`<text x="${m.l-10}" y="${y+bh*.66}" text-anchor="end" font-size="${labelFont}" fill="${colors.muted}" font-weight="800">${esc(trunc(d.label,labelLimit))}</text><g class="bar barValueGroup" data-tip="${esc(tip)}"><rect x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text class="barValueLabel" x="${valueX}" y="${y+bh*.66}" font-size="${valueFont}" fill="${colors.label}" font-weight="950">${value}</text></g>`;
+  svg+=`<g class="bar barValueGroup" data-tip="${esc(tip)}"><rect x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text class="barCategoryLabel" x="${m.l-10}" y="${y+bh*.66}" text-anchor="end" font-size="${labelFont}" fill="${colors.muted}" font-weight="800">${esc(trunc(d.label,labelLimit))}</text><text class="barValueLabel" x="${valueX}" y="${y+bh*.66}" font-size="${valueFont}" fill="${colors.label}" font-weight="950">${value}</text></g>`;
  });
  svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
 }
@@ -2050,7 +2050,8 @@ function clearChartActiveTip(el){
 }
 function bindTips(el){
  const expanded=!!el?.classList?.contains('expandedChartCanvas');
- el.querySelectorAll('.bar').forEach(x=>{
+ const tipSelector='.bar:not(.ufMapPoint):not(.ufRankItem):not(.ufRealMapPoint)';
+ el.querySelectorAll(tipSelector).forEach(x=>{
   x.classList.add('chartTipTarget');
   if(expanded) x.classList.add('expandedTipTarget');
   const activate=e=>{
