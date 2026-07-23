@@ -1795,7 +1795,14 @@ function barChart(el,data){
  const max=Math.max(...data.map(d=>+d.value||0),1); let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" role="img">`;
  svg += `<defs><linearGradient id="barGrad" x1="0" x2="1"><stop offset="0" stop-color="#0057B8"/><stop offset="1" stop-color="#00A3FF"/></linearGradient><filter id="softShadow"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0057B8" flood-opacity=".18"/></filter></defs>`;
  const gap=11; const bh=Math.max(17,(H-m.t-m.b-(data.length-1)*gap)/data.length);
- data.forEach((d,i)=>{ const y=m.t+i*(bh+gap); const w=Math.max(0,(W-m.l-m.r)*(d.value/max)); svg+=`<text x="${m.l-10}" y="${y+bh*.66}" text-anchor="end" font-size="${labelFont}" fill="${colors.muted}" font-weight="800">${esc(trunc(d.label,labelLimit))}</text><rect class="bar" data-tip="${esc(d.label)}: ${fmt.format(Math.round(+d.value||0))}" x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text x="${Math.min(m.l+w+8,W-36)}" y="${y+bh*.66}" font-size="${valueFont}" fill="${colors.label}" font-weight="950">${fmt.format(Math.round(+d.value||0))}</text>`; });
+ data.forEach((d,i)=>{
+  const y=m.t+i*(bh+gap);
+  const w=Math.max(0,(W-m.l-m.r)*(d.value/max));
+  const value=fmt.format(Math.round(+d.value||0));
+  const valueX=Math.min(m.l+w+8,W-36);
+  const tip=`${d.label}: ${value}`;
+  svg+=`<text x="${m.l-10}" y="${y+bh*.66}" text-anchor="end" font-size="${labelFont}" fill="${colors.muted}" font-weight="800">${esc(trunc(d.label,labelLimit))}</text><g class="bar barValueGroup" data-tip="${esc(tip)}"><rect x="${m.l}" y="${y}" width="${Math.max(w,4)}" height="${bh}" rx="9" fill="url(#barGrad)" filter="url(#softShadow)"/><text class="barValueLabel" x="${valueX}" y="${y+bh*.66}" font-size="${valueFont}" fill="${colors.label}" font-weight="950">${value}</text></g>`;
+ });
  svg+=`</svg>`; el.innerHTML=svg; bindTips(el);
 }
 function groupedChart(el,data){

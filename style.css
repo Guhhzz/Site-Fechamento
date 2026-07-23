@@ -147,7 +147,14 @@ select{display:none}
 .lineChartCanvas{scrollbar-color:var(--gazin-blue) #E8F2FF;scrollbar-width:thin}
 .expandedChartCanvas .chartTipTarget{cursor:pointer;transition:opacity .16s ease,filter .16s ease,transform .16s ease,stroke-width .16s ease;transform-box:fill-box;transform-origin:center}
 .expandedChartCanvas .chartTipTarget:hover,
-.expandedChartCanvas .chartTipTarget.chartMarkActive{opacity:1;filter:drop-shadow(0 10px 16px rgba(0,87,184,.36));transform:scale(1.045);stroke:#FFFFFF;stroke-width:3.5}
+.expandedChartCanvas .chartTipTarget.chartMarkActive{opacity:1;filter:drop-shadow(0 10px 16px rgba(0,87,184,.36));transform:scale(1.045)}
+.expandedChartCanvas .chartTipTarget:hover > rect,
+.expandedChartCanvas .chartTipTarget.chartMarkActive > rect,
+.expandedChartCanvas rect.chartTipTarget:hover,
+.expandedChartCanvas rect.chartTipTarget.chartMarkActive{stroke:#FFFFFF;stroke-width:3.5}
+.expandedChartCanvas .barValueGroup .barValueLabel{transition:fill .16s ease,filter .16s ease}
+.expandedChartCanvas .barValueGroup:hover .barValueLabel,
+.expandedChartCanvas .barValueGroup.chartMarkActive .barValueLabel{filter:drop-shadow(0 2px 4px rgba(0,0,0,.24))}
 .expandedChartCanvas circle.chartTipTarget:hover,
 .expandedChartCanvas circle.chartTipTarget.chartMarkActive{transform:scale(1.45);filter:drop-shadow(0 8px 14px rgba(0,163,255,.48))}
 .expandedChartCanvas path.chartTipTarget:hover,
