@@ -145,6 +145,13 @@ select{display:none}
 .lineChartCanvas::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
 .lineChartCanvas::-webkit-scrollbar-thumb{background:linear-gradient(90deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
 .lineChartCanvas{scrollbar-color:var(--gazin-blue) #E8F2FF;scrollbar-width:thin}
+.expandedChartCanvas .chartTipTarget{cursor:pointer;transition:opacity .16s ease,filter .16s ease,transform .16s ease,stroke-width .16s ease;transform-box:fill-box;transform-origin:center}
+.expandedChartCanvas .chartTipTarget:hover,
+.expandedChartCanvas .chartTipTarget.chartMarkActive{opacity:1;filter:drop-shadow(0 10px 16px rgba(0,87,184,.36));transform:scale(1.045);stroke:#FFFFFF;stroke-width:3.5}
+.expandedChartCanvas circle.chartTipTarget:hover,
+.expandedChartCanvas circle.chartTipTarget.chartMarkActive{transform:scale(1.45);filter:drop-shadow(0 8px 14px rgba(0,163,255,.48))}
+.expandedChartCanvas path.chartTipTarget:hover,
+.expandedChartCanvas path.chartTipTarget.chartMarkActive{transform:scale(1.025);filter:drop-shadow(0 12px 20px rgba(0,87,184,.30))}
 
 body.darkMode{
   --gazin-dark:#EAF4FF;
@@ -579,7 +586,10 @@ body.darkMode .assistantDock{background:linear-gradient(145deg,rgba(0,163,255,.1
 @media (max-width:980px){.userInviteForm,.userRow{grid-template-columns:1fr}.userControls{grid-template-columns:1fr}.userControls button,.userInviteForm button{width:100%}}
 @media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}.usersPanel,.presencePanel{height:calc(100vh - 20px)}.usersToolbar,.presenceToolbar{display:grid}.usersToolbar .baseDownload,.presenceToolbar .baseDownload{width:100%}.userInviteForm{padding:12px}.presenceSummary{grid-template-columns:1fr}.presenceRow{grid-template-columns:auto minmax(0,1fr);align-items:start}.presenceStatus{grid-column:2;justify-self:start}.presenceSummary strong{font-size:26px}}
 
-.tooltip{position:fixed;pointer-events:none;background:#061A36;color:#fff;padding:8px 10px;border-radius:10px;font-size:12px;opacity:0;transform:translate(-50%,-120%);transition:opacity .1s;box-shadow:0 10px 28px rgba(0,0,0,.28);z-index:99}
+.tooltip{position:fixed;pointer-events:none;background:linear-gradient(180deg,#061A36,#0B2E5B);color:#fff;padding:10px 12px;border-radius:13px;font-size:12px;opacity:0;transform:translate(-50%,-120%);transition:opacity .1s,transform .1s;box-shadow:0 16px 38px rgba(0,0,0,.32),0 0 0 1px rgba(255,255,255,.10) inset;z-index:190;min-width:132px;text-align:left}
+.tooltip.below{transform:translate(-50%,0)}
+.tooltip strong{display:block;font-size:12px;font-weight:1000;line-height:1.2;color:#FFFFFF}
+.tooltip span{display:block;margin-top:4px;font-size:16px;font-weight:1000;line-height:1.1;color:#8FD3FF}
 .modal{position:fixed;inset:0;background:rgba(4,16,34,.70);z-index:120;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
 .modal.open{display:flex}
 .modalPanel{width:min(1520px,98vw);height:min(900px,96vh);background:#fff;border-radius:30px;box-shadow:0 34px 100px rgba(0,0,0,.38);display:flex;flex-direction:column;padding:26px;position:relative}

@@ -1555,7 +1555,29 @@ function dashboardForBaseItem(item){ return EMBEDDED_DASHBOARDS[dashboardKeyForI
 function activeHistoryItem(){ return allHistoryBases().find(x=>x.id===ACTIVE_HISTORY_ID); }
 function activeMonthLabel(){ return DATA?.month || activeHistoryItem()?.fechamento || 'Fechamento Mensal'; }
 function updateDocumentTitle(){ document.title=`Fechamento ${activeMonthLabel()} | Atendimento ao Cliente`; }
-function showTip(txt,x,y){tooltip.innerHTML=txt; tooltip.style.left=x+'px'; tooltip.style.top=y+'px'; tooltip.style.opacity=1;}
+function chartTipHtml(txt){
+ const raw=String(txt||'');
+ const idx=raw.lastIndexOf(': ');
+ if(idx>0) return `<strong>${esc(raw.slice(0,idx))}</strong><span>${esc(raw.slice(idx+2))}</span>`;
+ return esc(raw);
+}
+function showTip(txt,x,y){
+ if(!tooltip) return;
+ tooltip.innerHTML=chartTipHtml(txt);
+ tooltip.style.left=x+'px';
+ tooltip.style.top=y+'px';
+ tooltip.style.opacity=1;
+ requestAnimationFrame(()=>{
+  const rect=tooltip.getBoundingClientRect();
+  const pad=14;
+  const left=Math.min(Math.max(x,rect.width/2+pad),window.innerWidth-rect.width/2-pad);
+  const opensDown=y-rect.height-18<pad;
+  const top=opensDown ? Math.min(y+18,window.innerHeight-rect.height-pad) : y;
+  tooltip.style.left=left+'px';
+  tooltip.style.top=top+'px';
+  tooltip.classList.toggle('below',opensDown);
+ });
+}
 function hideTip(){tooltip.style.opacity=0;}
 const UF_CODES = new Set(['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']);
 function isUfDistributionChart(c){
@@ -1565,7 +1587,8 @@ function isUfDistributionChart(c){
 }
 function renderChart(el,c,expanded=false){
  if(!el) return;
- el.classList.remove('lineChartCanvas','lineChartExpanded');
+ el.classList.remove('lineChartCanvas','lineChartExpanded','expandedChartCanvas');
+ el.classList.toggle('expandedChartCanvas',!!expanded);
  const rows=chartData(c);
  if(c.type==='line') return lineChart(el,rows,expanded);
  if(c.type==='groupedBar') return groupedChart(el,rows);
@@ -2014,7 +2037,40 @@ closeModal.addEventListener('click',()=>{chartModal.classList.remove('open'); ch
 chartModal.addEventListener('click',e=>{if(e.target===chartModal) closeModal.click();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&chartModal.classList.contains('open')) closeModal.click();});
 function trunc(s,n){s=String(s); return s.length>n?s.slice(0,n-1)+'…':s;}
-function bindTips(el){el.querySelectorAll('.bar').forEach(x=>{x.addEventListener('mousemove',e=>showTip(x.dataset.tip,e.clientX,e.clientY)); x.addEventListener('mouseleave',hideTip);})}
+function clearChartActiveTip(el){
+ if(!el) return;
+ el.querySelectorAll('.chartMarkActive').forEach(item=>item.classList.remove('chartMarkActive'));
+}
+function bindTips(el){
+ const expanded=!!el?.classList?.contains('expandedChartCanvas');
+ el.querySelectorAll('.bar').forEach(x=>{
+  x.classList.add('chartTipTarget');
+  if(expanded) x.classList.add('expandedTipTarget');
+  const activate=e=>{
+   if(!x.dataset.tip) return;
+   if(expanded){
+    clearChartActiveTip(el);
+    x.classList.add('chartMarkActive');
+   }
+   showTip(x.dataset.tip,e.clientX,e.clientY);
+  };
+  x.addEventListener('mouseenter',activate);
+  x.addEventListener('mousemove',activate);
+  x.addEventListener('click',e=>{
+   if(!expanded) return;
+   e.stopPropagation();
+   activate(e);
+  });
+  x.addEventListener('mouseleave',()=>{
+   if(expanded) x.classList.remove('chartMarkActive');
+   hideTip();
+  });
+  x.addEventListener('blur',()=>{
+   if(expanded) x.classList.remove('chartMarkActive');
+   hideTip();
+  });
+ });
+}
 
 function bytesToSize(bytes){ const n=+bytes||0; if(n<1024) return n+' B'; if(n<1024*1024) return (n/1024).toFixed(1).replace('.',',')+' KB'; return (n/1024/1024).toFixed(1).replace('.',',')+' MB'; }
 function getLocalBases(){ try{return JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY)||'[]')}catch(e){return []} }
