@@ -2520,3 +2520,196 @@ body.darkMode .assistantForm input{background:#FFFFFF;color:#061A36;-webkit-text
 @keyframes assistantAvatarFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-5px) rotate(-1deg)}}
 @keyframes assistantAura{0%,100%{opacity:.72;transform:scale(.96)}50%{opacity:1;transform:scale(1.06)}}
 @keyframes assistantSheen{0%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
+/* Executive hero refresh */
+.executiveHero{
+  padding:0;
+  min-height:160px;
+  border-radius:28px;
+  background:
+    radial-gradient(circle at 86% 18%,rgba(0,163,255,.22),transparent 22%),
+    linear-gradient(135deg,#073C7C 0%,#052B5B 48%,#07172A 100%);
+  border:1px solid rgba(124,194,255,.18);
+  box-shadow:0 24px 70px rgba(6,26,54,.18),inset 0 1px 0 rgba(255,255,255,.10);
+}
+.executiveHero:before{
+  right:-58px;
+  top:-118px;
+  width:330px;
+  height:330px;
+  background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.03));
+}
+.executiveHero:after{
+  right:52px;
+  bottom:-168px;
+  width:390px;
+  height:390px;
+  background:radial-gradient(circle,rgba(0,163,255,.22),rgba(0,114,206,.10) 48%,transparent 70%);
+}
+.executiveHero .heroContent{
+  min-height:160px;
+  padding:30px 34px;
+  align-items:center;
+}
+.heroCopy{
+  position:relative;
+  max-width:820px;
+  padding-left:18px;
+}
+.heroCopy:before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:4px;
+  bottom:6px;
+  width:4px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#00A3FF,#66D6FF 44%,rgba(255,255,255,.16));
+  box-shadow:0 0 22px rgba(0,163,255,.48);
+}
+.heroKicker{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  margin-bottom:8px;
+}
+.heroSignal{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#00D1FF;
+  box-shadow:0 0 0 5px rgba(0,209,255,.12),0 0 18px rgba(0,209,255,.78);
+}
+.executiveHero .eyebrow{
+  color:#CDEAFF;
+  letter-spacing:.16em;
+  font-size:11px;
+}
+.executiveHero h2{
+  width:max-content;
+  max-width:100%;
+  margin:0;
+  color:#FFFFFF;
+  font-size:36px;
+  line-height:1.02;
+  letter-spacing:-.02em;
+  text-shadow:0 12px 34px rgba(0,0,0,.18);
+  position:relative;
+}
+.executiveHero h2:after{
+  content:"";
+  display:block;
+  width:42%;
+  min-width:92px;
+  height:3px;
+  margin-top:12px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#00A3FF,#BFE1FF,transparent);
+}
+.executiveHero p{
+  margin-top:13px;
+  color:#D8EDFF;
+  font-size:14px;
+  line-height:1.55;
+  max-width:720px;
+}
+.executiveHero .heroActions{
+  align-self:stretch;
+  justify-content:center;
+}
+.heroActionCard{
+  min-width:180px;
+  display:grid;
+  gap:10px;
+  justify-items:end;
+  padding:14px;
+  border-radius:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 18px 42px rgba(0,10,28,.18);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.heroActionLabel{
+  color:#BFE1FF;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.executiveHero .badge{
+  margin:0;
+  padding:10px 14px;
+  border-radius:15px;
+  background:rgba(255,255,255,.18);
+  border-color:rgba(255,255,255,.26);
+  color:#FFFFFF;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
+}
+.executiveHero .tourReplayBtn{
+  padding:10px 16px;
+  background:linear-gradient(180deg,#FFFFFF,#EAF4FF);
+  color:#053F84;
+  border-color:rgba(255,255,255,.52);
+}
+body.darkMode .executiveHero{
+  background:
+    radial-gradient(circle at 86% 18%,rgba(0,163,255,.18),transparent 22%),
+    linear-gradient(135deg,#08284F 0%,#071D3A 48%,#050B14 100%);
+  border-color:rgba(124,194,255,.14);
+  box-shadow:0 24px 70px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);
+}
+@media (max-width:760px){
+  .executiveHero{
+    min-height:0;
+    border-radius:22px;
+  }
+  .executiveHero .heroContent{
+    min-height:0;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+    padding:22px;
+  }
+  .heroCopy{padding-left:14px}
+  .executiveHero h2{
+    width:auto;
+    font-size:27px;
+  }
+  .executiveHero p{
+    display:block;
+    font-size:13px;
+    margin-top:10px;
+  }
+  .executiveHero .heroActions{
+    align-items:stretch;
+    align-self:auto;
+  }
+  .heroActionCard{
+    min-width:0;
+    grid-template-columns:1fr auto;
+    align-items:center;
+    justify-items:start;
+    gap:8px 10px;
+    padding:12px;
+  }
+  .heroActionLabel{grid-column:1 / -1}
+  .executiveHero .badge{
+    padding:9px 12px;
+    white-space:nowrap;
+  }
+  .executiveHero .tourReplayBtn{
+    padding:9px 12px;
+  }
+}
+@media (orientation:landscape) and (max-height:520px) and (max-width:960px){
+  .executiveHero .heroContent{
+    display:flex;
+    padding:18px;
+  }
+  .executiveHero p{display:none}
+  .heroActionCard{
+    grid-template-columns:1fr;
+    justify-items:end;
+  }
+}
