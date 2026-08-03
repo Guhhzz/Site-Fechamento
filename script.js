@@ -1289,8 +1289,10 @@ function chartTheme(){
 function kpiCard(label,value,sub,extra=''){return `<div class="kpi"><div class="label">${esc(label)}</div><div class="value">${fmt.format(Math.round(+value||0))}</div><div class="sub">${esc(sub||'')}</div>${extra||''}</div>`}
 function pct(v){ return (v||0).toFixed(1).replace('.',',')+'%'; }
 function rateBadge(value, label, goodWhen='above'){
- const cls = goodWhen==='below' ? 'warn' : (value>=90?'good':'warn');
- return `<div class="kpiRate ${cls}">${pct(value)} · ${esc(label)}</div>${goodWhen==='above'?'<span class="kpiGoal">Meta mínima: 90% atendidas</span>':''}`;
+ const isAbandonment = goodWhen === 'below';
+ const cls = isAbandonment ? (value <= 5 ? 'good' : 'warn') : (value >= 90 ? 'good' : 'warn');
+ const goalText = isAbandonment ? 'Meta máxima: 5% de abandonadas' : 'Meta mínima: 90% atendidas';
+ return `<div class="kpiRate ${cls}">${pct(value)} · ${esc(label)}</div><span class="kpiGoal">${goalText}</span>`;
 }
 function hasNps(channel){ return Number.isFinite(Number(channel?.nps)); }
 function formatNps(value){ return fmt.format(Math.round(+value||0)); }
