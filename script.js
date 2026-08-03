@@ -18,6 +18,7 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_P2r-rZDvR2kcUaAm2ueN9g_SvLnybxr
 const ADMIN_USERS_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-users`;
 const ADMIN_EMAILS = [
   'gustavo.salomao@gazin.com.br',
+  'cassia.brito@gazin.com.br',
   'email-da-gerente@gazin.com.br',
   'email-da-coordenadora@gazin.com.br'
 ];
@@ -43,12 +44,14 @@ function getSupabaseClient(){
 }
 function supabaseProfile(user){
  const meta=user?.user_metadata || {};
+ const appMeta=user?.app_metadata || {};
  const email=normalizeEmail(user?.email);
  return {
   id:user?.id || email,
   name:String(meta.display_name || meta.name || meta.full_name || email.split('@')[0] || 'Usuário').trim(),
   email,
   perfil:String(meta.perfil || 'usuario').trim().toLowerCase(),
+  allowedNucleos:normalizeAllowedNucleos(appMeta.allowed_nucleos || appMeta.allowedNucleos || meta.allowed_nucleos || meta.allowedNucleos),
   ativo:true,
   provider:'supabase'
  };
@@ -133,6 +136,39 @@ function isPasswordRecoveryOpen(){
 }
 function isAdminEmail(email){ return ADMIN_EMAILS.map(normalizeEmail).includes(normalizeEmail(email)); }
 function canManageHistory(){ return !!(CURRENT_USER && CURRENT_USER.ativo !== false && (CURRENT_USER.perfil === 'admin' || isAdminEmail(CURRENT_USER.email))); }
+function normalizeAllowedNucleos(value){
+ if(!value) return [];
+ const list=Array.isArray(value) ? value : String(value).split(',');
+ return Array.from(new Set(list.map(item=>String(item||'').trim()).filter(Boolean)));
+}
+function accessOptionList(){
+ return [{key:'geral',name:'Visão Geral'}].concat((DATA?.sheets||[]).map(sheet=>({key:sheet.name,name:sheet.name,status:sheet.status})));
+}
+function canAccessView(key){
+ if(!CURRENT_USER) return true;
+ if(CURRENT_USER.ativo === false) return false;
+ if(canManageHistory()) return true;
+ const allowed=normalizeAllowedNucleos(CURRENT_USER.allowedNucleos);
+ return allowed.includes(key);
+}
+function firstAccessibleView(){
+ const opts=accessOptionList();
+ return opts.find(opt=>canAccessView(opt.key))?.key || '';
+}
+function accessDeniedView(key=''){
+ const name=key==='geral'?'Visão Geral':((DATA.sheets||[]).find(s=>s.name===key)?.name||key||'esta tela');
+ pageTitle.textContent='Acesso restrito';
+ pageDesc.textContent='Esta tela depende de liberação do administrador.';
+ activeBadge.textContent=activeMonthLabel();
+ content.innerHTML=`<section class="accessDeniedPanel"><div class="accessDeniedIcon">🔒</div><h3>Acesso bloqueado</h3><p>Seu usuário ainda não possui liberação para visualizar <strong>${esc(name)}</strong>. Solicite ao administrador a permissão para este núcleo.</p></section>`;
+ updateDocumentTitle();
+}
+function ensureCurrentViewAccess(){
+ if(!CURRENT_USER || canAccessView(currentViewKey||'geral')) return;
+ const first=firstAccessibleView();
+ if(first) setView(first);
+ else accessDeniedView(currentViewKey||'geral');
+}
 function applyTheme(mode){
  const isDark=mode==='dark';
  document.body.classList.toggle('darkMode',isDark);
@@ -183,6 +219,8 @@ function setSignedInUser(user){
  if(isLogged) startPresenceTracking();
  else stopPresenceTracking();
  if(typeof renderHistoryBases === 'function') renderHistoryBases();
+ if(typeof buildMenu === 'function') buildMenu();
+ if(typeof ensureCurrentViewAccess === 'function') ensureCurrentViewAccess();
 }
 const WELCOME_TOUR_STEPS=[
  {
@@ -1066,6 +1104,30 @@ function usersEmpty(message){
  const list=document.getElementById('usersList');
  if(list) list.innerHTML=`<div class="usersEmpty">${esc(message)}</div>`;
 }
+function userAllowedNucleos(user){
+ return normalizeAllowedNucleos(user.allowedNucleos || user.allowed_nucleos || user.app_metadata?.allowed_nucleos);
+}
+function renderUserAccessControls(user,isAdmin,isCurrentUser){
+ const allowed=userAllowedNucleos(user);
+ const role=isAdmin?'admin':'usuario';
+ const roleButton=(value,label)=>{
+  const active=role===value;
+  const disabled=isCurrentUser && value!=='admin' && isAdmin ? 'disabled title="Você não pode remover o próprio perfil admin."' : '';
+  return `<button class="userRoleOption ${active?'active':''}" type="button" data-action="role-option" data-role="${value}" aria-pressed="${active?'true':'false'}" ${disabled}>${esc(label)}</button>`;
+ };
+ const checks=accessOptionList().map(option=>{
+  const checked=isAdmin || allowed.includes(option.key);
+  return `<label class="accessChip ${checked?'checked':''}"><input type="checkbox" value="${esc(option.key)}" ${checked?'checked':''} ${isAdmin?'disabled':''} /><span>${esc(option.name)}</span></label>`;
+ }).join('');
+ return `<div class="userAccessBlock">
+   <div class="userAccessTop">
+     <label>Perfil<span class="userRolePicker">${roleButton('usuario','Visualização')}${roleButton('admin','Admin')}</span></label>
+     <button type="button" data-action="save-access">Salvar acesso</button>
+   </div>
+   <div class="userAccessMatrix" aria-label="Telas liberadas">${checks}</div>
+   <small>${isAdmin?'Perfil admin: acesso liberado para todas as telas.':'Marque somente as telas que este usuário pode visualizar.'}</small>
+ </div>`;
+}
 function renderAdminUsers(users){
  const list=document.getElementById('usersList');
  if(!list) return;
@@ -1091,6 +1153,7 @@ function renderAdminUsers(users){
       <button type="button" data-action="reset-password">Enviar redefinição</button>
       ${deleteButton}
     </div>
+    ${renderUserAccessControls(user,admin,isCurrentUser)}
   </article>`;
  }).join('');
 }
@@ -1181,6 +1244,45 @@ function setupAdminUsers(){
   if(!row) return;
   const status=document.getElementById('usersStatus');
   const action=btn.dataset.action;
+  if(action==='role-option'){
+   const picker=btn.closest('.userRolePicker');
+   if(!picker || btn.disabled) return;
+   picker.querySelectorAll('.userRoleOption').forEach(option=>{
+    const active=option===btn;
+    option.classList.toggle('active',active);
+    option.setAttribute('aria-pressed',active?'true':'false');
+   });
+   const block=btn.closest('.userAccessBlock');
+   const isAdmin=btn.dataset.role==='admin';
+   block?.querySelectorAll('.accessChip input').forEach(input=>{
+    input.disabled=isAdmin;
+    if(isAdmin) input.checked=true;
+    input.closest('.accessChip')?.classList.toggle('checked',input.checked);
+   });
+   const hint=block?.querySelector('small');
+   if(hint) hint.textContent=isAdmin ? 'Perfil admin: acesso liberado para todas as telas.' : 'Marque somente as telas que este usuário pode visualizar.';
+   return;
+  }
+  if(action==='save-access'){
+   const perfil=row.querySelector('.userRoleOption.active')?.dataset.role === 'admin' ? 'admin' : 'usuario';
+   const allowedNucleos=Array.from(row.querySelectorAll('.userAccessMatrix input:checked')).map(input=>input.value);
+   if(perfil!=='admin' && !allowedNucleos.length){
+    if(!confirm('Este usuario ficara sem acesso a nenhuma tela do painel. Deseja salvar mesmo assim?')) return;
+   }
+   btn.disabled=true;
+   try{
+    await callAdminUsers({action:'updateAccess',userId:row.dataset.userId,perfil,allowedNucleos});
+    if(status) status.textContent='Acesso atualizado com sucesso.';
+    await loadAdminUsers();
+   }catch(error){
+    const message=adminErrorMessage(error);
+    if(status) status.textContent=message;
+    alert(message);
+   }finally{
+    btn.disabled=false;
+   }
+   return;
+  }
   btn.disabled=true;
   try{
    if(action==='save-name'){
@@ -1209,9 +1311,14 @@ function setupAdminUsers(){
    const message=adminErrorMessage(error);
    if(status) status.textContent=message;
    alert(message);
-  }finally{
+ }finally{
    btn.disabled=false;
   }
+ });
+ if(list) list.addEventListener('change',e=>{
+  const input=e.target.closest('.accessChip input');
+  if(!input) return;
+  input.closest('.accessChip')?.classList.toggle('checked',input.checked);
  });
 }
 function openPasswordRecoveryModal(){
@@ -1387,17 +1494,28 @@ function generalInsights(){
 }
 function sectionHeader(title,desc){return `<div class="sectionHeader"><div><h3>${esc(title)}</h3>${desc?`<p>${esc(desc)}</p>`:''}</div></div>`}
 function buildMenu(){
- const opts=[{name:'Visão Geral',key:'geral'}].concat(DATA.sheets.map(s=>({name:s.name,key:s.name,status:s.status})));
- if(select) select.innerHTML=opts.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('');
- if(mobileNucleoSelect) mobileNucleoSelect.innerHTML=opts.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}${o.status==='parcial'?' - parcial':''}</option>`).join('');
- if(mobileNucleoMenu) mobileNucleoMenu.innerHTML=opts.map(o=>`<button type="button" class="mobileNucleoOption" role="option" data-key="${escAttr(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<small>parcial</small>':''}</button>`).join('');
- if(customSelectMenu) customSelectMenu.innerHTML=opts.map(o=>`<button type="button" class="customOption" data-key="${escAttr(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<span class="miniPill">parcial</span>':''}</button>`).join('');
- nav.innerHTML=opts.map(o=>`<button data-key="${esc(o.key)}"><span>${esc(o.name)}</span>${o.status==='parcial'?'<span class="pill">parcial</span>':''}</button>`).join('');
- nav.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.key)));
+ const opts=accessOptionList().map(o=>({...o,locked:!canAccessView(o.key)}));
+ if(select) select.innerHTML=opts.map(o=>`<option value="${esc(o.key)}" ${o.locked?'disabled':''}>${o.locked?'🔒 ':''}${esc(o.name)}</option>`).join('');
+ if(mobileNucleoSelect) mobileNucleoSelect.innerHTML=opts.map(o=>`<option value="${esc(o.key)}" ${o.locked?'disabled':''}>${o.locked?'🔒 ':''}${esc(o.name)}${o.status==='parcial'?' - parcial':''}</option>`).join('');
+ if(mobileNucleoMenu) mobileNucleoMenu.innerHTML=opts.map(o=>`<button type="button" class="mobileNucleoOption ${o.locked?'locked':''}" role="option" data-key="${escAttr(o.key)}" aria-disabled="${o.locked?'true':'false'}"><span>${o.locked?'🔒 ':''}${esc(o.name)}</span>${o.status==='parcial'?'<small>parcial</small>':''}${o.locked?'<small class="locked">bloqueado</small>':''}</button>`).join('');
+ if(customSelectMenu) customSelectMenu.innerHTML=opts.map(o=>`<button type="button" class="customOption ${o.locked?'locked':''}" data-key="${escAttr(o.key)}" aria-disabled="${o.locked?'true':'false'}"><span>${o.locked?'🔒 ':''}${esc(o.name)}</span>${o.status==='parcial'?'<span class="miniPill">parcial</span>':''}${o.locked?'<span class="miniPill locked">bloqueado</span>':''}</button>`).join('');
+ nav.innerHTML=opts.map(o=>`<button data-key="${esc(o.key)}" class="${o.locked?'locked':''}" aria-disabled="${o.locked?'true':'false'}"><span>${o.locked?'🔒 ':''}${esc(o.name)}</span>${o.status==='parcial'?'<span class="pill">parcial</span>':''}${o.locked?'<span class="pill locked">bloqueado</span>':''}</button>`).join('');
+ nav.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+   if(btn.classList.contains('locked')) return;
+   setView(btn.dataset.key);
+ }));
  if(mobileNucleoSelect) mobileNucleoSelect.onchange=e=>setView(e.target.value);
- if(mobileNucleoMenu) mobileNucleoMenu.querySelectorAll('.mobileNucleoOption').forEach(btn=>btn.addEventListener('click',()=>{closeMobileNucleoMenu();setView(btn.dataset.key);}));
+ if(mobileNucleoMenu) mobileNucleoMenu.querySelectorAll('.mobileNucleoOption').forEach(btn=>btn.addEventListener('click',()=>{
+   if(btn.classList.contains('locked')) return;
+   closeMobileNucleoMenu();
+   setView(btn.dataset.key);
+ }));
  if(customSelectMenu && customSelect){
-   customSelectMenu.querySelectorAll('.customOption').forEach(btn=>btn.addEventListener('click',()=>{customSelect.classList.remove('open');setView(btn.dataset.key);}));
+   customSelectMenu.querySelectorAll('.customOption').forEach(btn=>btn.addEventListener('click',()=>{
+     if(btn.classList.contains('locked')) return;
+     customSelect.classList.remove('open');
+     setView(btn.dataset.key);
+   }));
  }
  if(!menuBaseEventsBound){
    if(customSelectBtn && customSelect) customSelectBtn.addEventListener('click',()=>customSelect.classList.toggle('open'));
@@ -2854,7 +2972,16 @@ setupPasswordRecoveryModal();
 setupAssistantTech();
 setupMobileTopButton();
 setView(initialViewFromHash());
-function setView(key){ key==='geral'?generalView():nucleoView(key); window.scrollTo({top:0,behavior:'smooth'}); trackPresenceNow(); }
+function setView(key){
+ if(CURRENT_USER && !canAccessView(key)){
+  accessDeniedView(key);
+  trackPresenceNow();
+  return;
+ }
+ key==='geral'?generalView():nucleoView(key);
+ window.scrollTo({top:0,behavior:'smooth'});
+ trackPresenceNow();
+}
 function initialViewFromHash(){
  const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,'')).trim();
  if(!raw || raw.toLowerCase()==='geral') return 'geral';

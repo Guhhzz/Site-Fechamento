@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const ADMIN_EMAILS = [
   'gustavo.salomao@gazin.com.br',
+  'cassia.brito@gazin.com.br',
   'email-da-gerente@gazin.com.br',
   'email-da-coordenadora@gazin.com.br',
 ].map((email) => email.toLowerCase());
@@ -44,12 +45,24 @@ function profileName(user: any, profile?: any) {
   return String(meta.display_name || meta.name || meta.full_name || user?.email?.split('@')[0] || 'Usuario').trim();
 }
 
+function normalizeAllowedNucleos(value: any) {
+  if (!value) return [];
+  const list = Array.isArray(value) ? value : String(value).split(',');
+  return Array.from(new Set(
+    list
+      .map((item) => String(item || '').trim())
+      .filter(Boolean),
+  ));
+}
+
 function publicUser(user: any, profile?: any) {
+  const appMeta = user?.app_metadata || {};
   return {
     id: user.id,
     email: user.email,
     name: profileName(user, profile),
     perfil: profile?.perfil || 'usuario',
+    allowedNucleos: normalizeAllowedNucleos(appMeta.allowed_nucleos || appMeta.allowedNucleos),
     ativo: profile?.ativo !== false,
     created_at: user.created_at,
     last_sign_in_at: user.last_sign_in_at,
@@ -130,6 +143,7 @@ Deno.serve(async (req) => {
       const email = String(body.email || '').trim().toLowerCase();
       const name = String(body.name || '').trim();
       const perfil = String(body.perfil || 'usuario').trim().toLowerCase() === 'admin' ? 'admin' : 'usuario';
+      const allowedNucleos = perfil === 'admin' ? [] : normalizeAllowedNucleos(body.allowedNucleos);
       if (!email) return json({ error: 'Informe o e-mail para enviar o convite.' }, 400);
 
       const displayName = name || email.split('@')[0] || 'Usuario';
@@ -158,6 +172,22 @@ Deno.serve(async (req) => {
 
       const invitedUser = data?.user;
       if (invitedUser?.id) {
+        const currentUserMeta = invitedUser.user_metadata || {};
+        const currentAppMeta = invitedUser.app_metadata || {};
+        await adminClient.auth.admin.updateUserById(invitedUser.id, {
+          user_metadata: {
+            ...currentUserMeta,
+            name: displayName,
+            display_name: displayName,
+            full_name: displayName,
+            perfil,
+          },
+          app_metadata: {
+            ...currentAppMeta,
+            allowed_nucleos: allowedNucleos,
+          },
+        });
+
         const { error: profileUpsertError } = await adminClient
           .from('profiles')
           .upsert({
@@ -171,7 +201,44 @@ Deno.serve(async (req) => {
         if (profileUpsertError) throw profileUpsertError;
       }
 
-      return json({ ok: true, user: invitedUser ? publicUser(invitedUser, { nome: displayName, email, perfil, ativo: true }) : null });
+      return json({ ok: true, user: invitedUser ? publicUser({ ...invitedUser, app_metadata: { ...(invitedUser.app_metadata || {}), allowed_nucleos: allowedNucleos } }, { nome: displayName, email, perfil, ativo: true }) : null });
+    }
+
+    if (body.action === 'updateAccess') {
+      const userId = String(body.userId || '').trim();
+      const perfil = String(body.perfil || 'usuario').trim().toLowerCase() === 'admin' ? 'admin' : 'usuario';
+      const allowedNucleos = perfil === 'admin' ? [] : normalizeAllowedNucleos(body.allowedNucleos);
+      if (!userId) return json({ error: 'Informe o usuario que deve receber a permissao.' }, 400);
+      if (userId === requester.id && perfil !== 'admin') {
+        return json({ error: 'Voce nao pode remover o proprio perfil admin logado.' }, 400);
+      }
+
+      const { data: currentData, error: getError } = await adminClient.auth.admin.getUserById(userId);
+      if (getError) throw getError;
+      const currentUser = currentData?.user;
+      if (!currentUser) return json({ error: 'Usuario nao encontrado.' }, 404);
+
+      const currentMeta = currentUser.user_metadata || {};
+      const currentAppMeta = currentUser.app_metadata || {};
+      const { data, error } = await adminClient.auth.admin.updateUserById(userId, {
+        user_metadata: { ...currentMeta, perfil },
+        app_metadata: { ...currentAppMeta, allowed_nucleos: allowedNucleos },
+      });
+      if (error) throw error;
+
+      const { error: profileError } = await adminClient
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: currentUser.email,
+          nome: profileName(currentUser),
+          perfil,
+          ativo: true,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+      if (profileError) throw profileError;
+
+      return json({ user: publicUser(data.user, { perfil, ativo: true }) });
     }
 
     if (body.action === 'updateName') {

@@ -51,7 +51,10 @@ select{display:none}
 .customOption{width:100%;border:none;background:transparent;color:#143D69;border-radius:13px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;font-weight:850;cursor:pointer;transition:.15s}
 .customOption:hover{background:#EAF4FF;color:#0057B8;transform:translateX(2px)}
 .customOption.active{background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;box-shadow:0 10px 22px rgba(0,87,184,.24)}
+.customOption.locked,.mobileNucleoOption.locked,.nav button.locked{opacity:.68;cursor:not-allowed;filter:saturate(.78)}
+.customOption.locked:hover,.mobileNucleoOption.locked:hover,.nav button.locked:hover{transform:none;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .customOption .miniPill{font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(0,87,184,.10);color:#0057B8;font-weight:950;text-transform:lowercase}
+.customOption .miniPill.locked,.pill.locked,.mobileNucleoOption small.locked{background:#FFF3D8;color:#A15C00;border:1px solid rgba(161,92,0,.14)}
 .customOption.active .miniPill{background:rgba(255,255,255,.20);color:#fff}
 .nav{display:flex;flex-direction:column;gap:10px;margin-top:8px}
 .nav button{cursor:pointer;border:1px solid rgba(255,255,255,.08);text-align:left;padding:13px 15px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));color:#E6F1FF;font-weight:850;letter-spacing:.01em;transition:transform .2s ease, background .2s ease, box-shadow .2s ease, border-color .2s ease;color: #E6F1FF;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);position:relative;overflow:hidden}
@@ -334,6 +337,22 @@ body.darkMode .inviteRolePicker{background:linear-gradient(180deg,#132845,#0E1E3
 body.darkMode .inviteRoleOption{color:#A9BCD4}
 body.darkMode .inviteRoleOption:hover{color:#FFFFFF;background:rgba(0,114,206,.18)}
 body.darkMode .inviteRoleOption.active{color:#FFFFFF;background:linear-gradient(135deg,#0057B8,#0072CE);box-shadow:0 10px 20px rgba(0,87,184,.24),inset 0 1px 0 rgba(255,255,255,.12)}
+body.darkMode .userAccessBlock{border-color:#263C5F}
+body.darkMode .userAccessTop label,
+body.darkMode .userAccessBlock small{color:#A9BCD4}
+body.darkMode .userRolePicker{background:linear-gradient(180deg,#132845,#0E1E36);border-color:#263C5F;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+body.darkMode .userRoleOption{color:#A9BCD4}
+body.darkMode .userRoleOption:hover{color:#FFFFFF;background:rgba(0,114,206,.18)}
+body.darkMode .userRoleOption.active{color:#FFFFFF;background:linear-gradient(135deg,#0057B8,#0072CE);box-shadow:0 10px 20px rgba(0,87,184,.24),inset 0 1px 0 rgba(255,255,255,.12)}
+body.darkMode .accessChip{background:#132845;border-color:#263C5F;color:#DCEBFF}
+body.darkMode .accessChip:hover{border-color:rgba(96,190,255,.38);background:#173556}
+body.darkMode .accessChip.checked{background:linear-gradient(180deg,#123A66,#10233F);border-color:rgba(96,190,255,.42);color:#FFFFFF;box-shadow:0 10px 18px rgba(0,0,0,.18)}
+body.darkMode .accessDeniedPanel{background:radial-gradient(circle at 50% 12%,rgba(0,163,255,.16),transparent 36%),linear-gradient(180deg,#101D33,#071120);border-color:#263C5F;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+body.darkMode .accessDeniedPanel h3{color:#F4F9FF}
+body.darkMode .accessDeniedPanel p{color:#A9BCD4}
+body.darkMode .customOption .miniPill.locked,
+body.darkMode .pill.locked,
+body.darkMode .mobileNucleoOption small.locked{background:#2C230D;color:#FFD47A;border-color:rgba(255,212,122,.18)}
 body.darkMode .passwordRecoveryForm label{color:#DCEBFF}
 body.darkMode .lineChartCanvas::-webkit-scrollbar-track{background:#162843}
 body.darkMode .lineChartCanvas{scrollbar-color:#2E9BFF #162843}
@@ -597,6 +616,23 @@ body.darkMode .assistantDock{background:linear-gradient(145deg,rgba(0,163,255,.1
 .userControls button[data-action="delete-user"]{background:linear-gradient(135deg,#E05252,#B42318);box-shadow:0 10px 20px rgba(224,82,82,.18)}
 .userControls button:disabled{opacity:.62;cursor:progress}
 .userControls button[data-action="delete-user"]:disabled{cursor:not-allowed;background:linear-gradient(135deg,#B9C7D8,#8EA1B8);box-shadow:none}
+.userAccessBlock{grid-column:1 / -1;display:grid;gap:12px;padding-top:14px;border-top:1px solid #D8E9FA}
+.userAccessTop{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.userAccessTop label{display:grid;gap:7px;font-size:11px;font-weight:950;color:#5E748D;text-transform:uppercase;letter-spacing:.04em}
+.userRolePicker{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:250px;padding:4px;border:1px solid #D8E9FA;border-radius:16px;background:linear-gradient(180deg,#EAF4FF,#F8FBFF);box-shadow:inset 0 1px 0 rgba(255,255,255,.95)}
+.userRoleOption{border:0;border-radius:12px;padding:10px 12px;background:transparent;color:#315879;font-size:13px;font-weight:950;cursor:pointer;transition:.18s;white-space:nowrap}
+.userRoleOption:hover{color:#0057B8;background:rgba(255,255,255,.72)}
+.userRoleOption.active{color:#FFFFFF;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));box-shadow:0 10px 20px rgba(0,87,184,.18),inset 0 1px 0 rgba(255,255,255,.16)}
+.userRoleOption:disabled{opacity:.62;cursor:not-allowed}
+.userAccessTop>button{border:0;border-radius:14px;padding:11px 14px;font-weight:950;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));box-shadow:0 10px 20px rgba(0,87,184,.16)}
+.userAccessTop>button:disabled{opacity:.62;cursor:progress}
+.userAccessMatrix{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.accessChip{display:flex;align-items:center;gap:8px;min-height:42px;border:1px solid #D8E9FA;border-radius:14px;background:#F8FBFF;color:#315879;padding:9px 10px;font-size:12px;font-weight:900;cursor:pointer;transition:.18s}
+.accessChip:hover{border-color:#9CCBFF;background:#EEF7FF;transform:translateY(-1px)}
+.accessChip.checked{border-color:rgba(0,114,206,.38);background:linear-gradient(180deg,#EAF4FF,#FFFFFF);color:#0057B8;box-shadow:0 10px 18px rgba(0,87,184,.08)}
+.accessChip input{accent-color:#0072CE}
+.accessChip input:disabled{cursor:not-allowed}
+.userAccessBlock small{color:#6B7F98;font-size:12px;font-weight:800;line-height:1.35}
 .userInviteForm button:disabled{opacity:.62;cursor:progress}
 .passwordRecoveryForm{display:grid;gap:10px}
 .passwordRecoveryForm label{font-size:12px;font-weight:950;color:#315879}
@@ -620,6 +656,10 @@ body.darkMode .assistantDock{background:linear-gradient(145deg,rgba(0,163,255,.1
 .presenceStatus.offline{color:#6B7F98;background:#EEF4FA;border-color:#D8E9FA}
 .presenceEmpty{white-space:pre-line;padding:24px;border-radius:20px;background:#F8FBFF;border:1px dashed #B9CDE5;color:#5E748D;font-weight:800;line-height:1.45;text-align:center}
 .presenceNote{margin:12px 2px 0;color:#6B7F98;font-size:12px;line-height:1.45}
+.accessDeniedPanel{min-height:360px;display:grid;place-items:center;text-align:center;padding:34px;border-radius:28px;border:1px solid #D8E9FA;background:radial-gradient(circle at 50% 12%,rgba(0,114,206,.12),transparent 36%),linear-gradient(180deg,#FFFFFF,#F8FBFF);box-shadow:0 22px 56px rgba(6,26,54,.10)}
+.accessDeniedPanel h3{margin:10px 0 8px;color:#061A36;font-size:26px}
+.accessDeniedPanel p{max-width:560px;margin:0;color:#405873;line-height:1.55;font-weight:750}
+.accessDeniedIcon{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));box-shadow:0 18px 36px rgba(0,87,184,.24);font-size:32px}
 @media (max-width:980px){.userInviteForm,.userRow{grid-template-columns:1fr}.userControls{grid-template-columns:1fr}.userControls button,.userInviteForm button{width:100%}}
 @media (max-width:680px){.historyIntro{grid-template-columns:1fr}.historyPanel{min-height:480px}.historyDock{margin-top:18px}.usersPanel,.presencePanel{height:calc(100vh - 20px)}.usersToolbar,.presenceToolbar{display:grid}.usersToolbar .baseDownload,.presenceToolbar .baseDownload{width:100%}.userInviteForm{padding:12px}.presenceSummary{grid-template-columns:1fr}.presenceRow{grid-template-columns:auto minmax(0,1fr);align-items:start}.presenceStatus{grid-column:2;justify-self:start}.presenceSummary strong{font-size:26px}}
 
