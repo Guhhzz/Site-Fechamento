@@ -2,9 +2,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const ADMIN_EMAILS = [
   'gustavo.salomao@gazin.com.br',
-  'cassia.brito@gazin.com.br',
-  'email-da-gerente@gazin.com.br',
-  'email-da-coordenadora@gazin.com.br',
 ].map((email) => email.toLowerCase());
 
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://guhhzz.github.io/Site-Fechamento/';
@@ -57,11 +54,12 @@ function normalizeAllowedNucleos(value: any) {
 
 function publicUser(user: any, profile?: any) {
   const appMeta = user?.app_metadata || {};
+  const isCodeAdmin = ADMIN_EMAILS.includes(String(user?.email || '').toLowerCase());
   return {
     id: user.id,
     email: user.email,
     name: profileName(user, profile),
-    perfil: profile?.perfil || 'usuario',
+    perfil: isCodeAdmin ? 'admin' : 'usuario',
     allowedNucleos: normalizeAllowedNucleos(appMeta.allowed_nucleos || appMeta.allowedNucleos),
     ativo: profile?.ativo !== false,
     created_at: user.created_at,
@@ -95,16 +93,15 @@ Deno.serve(async (req) => {
   const requester = sessionData?.user;
   if (sessionError || !requester?.email) return json({ error: 'Sessao invalida.' }, 401);
   const isFallbackAdmin = ADMIN_EMAILS.includes(requester.email.toLowerCase());
+  if (!isFallbackAdmin) return json({ error: 'Acesso restrito ao administrador principal.' }, 403);
 
   const { data: requesterProfile, error: profileError } = await adminClient
     .from('profiles')
     .select('perfil, ativo')
     .eq('id', requester.id)
     .maybeSingle();
-  if (profileError && !isFallbackAdmin) return json({ error: profileError.message || 'Nao foi possivel validar o perfil administrativo.' }, 500);
-
-  const isProfileAdmin = requesterProfile?.perfil === 'admin' && requesterProfile?.ativo !== false;
-  if (!isProfileAdmin && !isFallbackAdmin) return json({ error: 'Acesso restrito a administradores.' }, 403);
+  if (profileError) return json({ error: profileError.message || 'Nao foi possivel validar o perfil administrativo.' }, 500);
+  if (requesterProfile?.ativo === false) return json({ error: 'Usuario administrativo inativo.' }, 403);
 
   let body: any = req.method === 'GET' ? { action: 'list' } : {};
   if (req.method === 'POST') {
@@ -142,7 +139,8 @@ Deno.serve(async (req) => {
     if (body.action === 'inviteUser') {
       const email = String(body.email || '').trim().toLowerCase();
       const name = String(body.name || '').trim();
-      const perfil = String(body.perfil || 'usuario').trim().toLowerCase() === 'admin' ? 'admin' : 'usuario';
+      const requestedPerfil = String(body.perfil || 'usuario').trim().toLowerCase() === 'admin' ? 'admin' : 'usuario';
+      const perfil = ADMIN_EMAILS.includes(email) && requestedPerfil === 'admin' ? 'admin' : 'usuario';
       const allowedNucleos = perfil === 'admin' ? [] : normalizeAllowedNucleos(body.allowedNucleos);
       if (!email) return json({ error: 'Informe o e-mail para enviar o convite.' }, 400);
 
@@ -206,17 +204,19 @@ Deno.serve(async (req) => {
 
     if (body.action === 'updateAccess') {
       const userId = String(body.userId || '').trim();
-      const perfil = String(body.perfil || 'usuario').trim().toLowerCase() === 'admin' ? 'admin' : 'usuario';
-      const allowedNucleos = perfil === 'admin' ? [] : normalizeAllowedNucleos(body.allowedNucleos);
+      const requestedPerfil = String(body.perfil || 'usuario').trim().toLowerCase() === 'admin' ? 'admin' : 'usuario';
       if (!userId) return json({ error: 'Informe o usuario que deve receber a permissao.' }, 400);
-      if (userId === requester.id && perfil !== 'admin') {
-        return json({ error: 'Voce nao pode remover o proprio perfil admin logado.' }, 400);
-      }
 
       const { data: currentData, error: getError } = await adminClient.auth.admin.getUserById(userId);
       if (getError) throw getError;
       const currentUser = currentData?.user;
       if (!currentUser) return json({ error: 'Usuario nao encontrado.' }, 404);
+      const targetEmail = String(currentUser.email || '').toLowerCase();
+      const perfil = ADMIN_EMAILS.includes(targetEmail) && requestedPerfil === 'admin' ? 'admin' : 'usuario';
+      const allowedNucleos = perfil === 'admin' ? [] : normalizeAllowedNucleos(body.allowedNucleos);
+      if (userId === requester.id && perfil !== 'admin') {
+        return json({ error: 'Voce nao pode remover o proprio perfil admin logado.' }, 400);
+      }
 
       const currentMeta = currentUser.user_metadata || {};
       const currentAppMeta = currentUser.app_metadata || {};

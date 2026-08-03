@@ -17,10 +17,7 @@ const SUPABASE_URL = 'https://evpjwlvozywnpsxgczxg.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_P2r-rZDvR2kcUaAm2ueN9g_SvLnybxr';
 const ADMIN_USERS_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-users`;
 const ADMIN_EMAILS = [
-  'gustavo.salomao@gazin.com.br',
-  'cassia.brito@gazin.com.br',
-  'email-da-gerente@gazin.com.br',
-  'email-da-coordenadora@gazin.com.br'
+  'gustavo.salomao@gazin.com.br'
 ];
 let CURRENT_USER = null;
 let SUPABASE_CLIENT = null;
@@ -135,7 +132,7 @@ function isPasswordRecoveryOpen(){
  return !!document.getElementById('passwordRecoveryModal')?.classList.contains('open');
 }
 function isAdminEmail(email){ return ADMIN_EMAILS.map(normalizeEmail).includes(normalizeEmail(email)); }
-function canManageHistory(){ return !!(CURRENT_USER && CURRENT_USER.ativo !== false && (CURRENT_USER.perfil === 'admin' || isAdminEmail(CURRENT_USER.email))); }
+function canManageHistory(){ return !!(CURRENT_USER && CURRENT_USER.ativo !== false && isAdminEmail(CURRENT_USER.email)); }
 function normalizeAllowedNucleos(value){
  if(!value) return [];
  const list=Array.isArray(value) ? value : String(value).split(',');
@@ -1112,7 +1109,9 @@ function renderUserAccessControls(user,isAdmin,isCurrentUser){
  const role=isAdmin?'admin':'usuario';
  const roleButton=(value,label)=>{
   const active=role===value;
-  const disabled=isCurrentUser && value!=='admin' && isAdmin ? 'disabled title="Você não pode remover o próprio perfil admin."' : '';
+  const isLockedAdminChoice=value==='admin' && !isAdmin;
+  const isSelfAdminDowngrade=isCurrentUser && value!=='admin' && isAdmin;
+  const disabled=isLockedAdminChoice || isSelfAdminDowngrade ? 'disabled title="Somente Gustavo Tech pode ser administrador."' : '';
   return `<button class="userRoleOption ${active?'active':''}" type="button" data-action="role-option" data-role="${value}" aria-pressed="${active?'true':'false'}" ${disabled}>${esc(label)}</button>`;
  };
  const checks=accessOptionList().map(option=>{
@@ -1134,7 +1133,7 @@ function renderAdminUsers(users){
  if(!users?.length){ usersEmpty('Nenhum usuário cadastrado foi retornado pelo Supabase.'); return; }
  list.innerHTML=users.map(user=>{
   const name=user.name || user.email || 'Usuário';
-  const admin=user.perfil === 'admin' || isAdminEmail(user.email);
+  const admin=isAdminEmail(user.email);
   const active=user.ativo !== false;
   const confirmed=user.email_confirmed_at ? 'Confirmado' : 'Pendente';
   const isCurrentUser=normalizeEmail(CURRENT_USER?.email)===normalizeEmail(user.email) || String(CURRENT_USER?.id||'')===String(user.id||'');
