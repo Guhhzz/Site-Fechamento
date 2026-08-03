@@ -2747,6 +2747,11 @@ function setupAssistantTech(){
 initTheme();
 initAuth();
 registerMonthlyDashboardBundles();
+const defaultDashboardItem = allHistoryBases().find(x=>x.id==='fechamento-julho-2026');
+if(defaultDashboardItem && dashboardForBaseItem(defaultDashboardItem)){
+ DATA=cloneDashboard(dashboardForBaseItem(defaultDashboardItem));
+ ACTIVE_HISTORY_ID=defaultDashboardItem.id;
+}
 buildMenu();
 setupHistoryModal();
 setupAdminUsers();
