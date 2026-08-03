@@ -1316,7 +1316,7 @@ function executiveSummary(channel,mode='general'){
  const atPct=of?at/of*100:0, abPct=of?ab/of*100:0;
  const metrics=[
    metricLine('Atendimento',pct(atPct),`${fmt.format(Math.round(at))} atendidas`,atPct>=90?'good':'warn'),
-   metricLine('Abandono',pct(abPct),`${fmt.format(Math.round(ab))} chamadas`,abPct<=10?'good':'danger')
+   metricLine('Abandono',pct(abPct),`${fmt.format(Math.round(ab))} chamadas`,abPct<=5?'good':'danger')
  ];
  if(hasNps(channel)){
    const info=npsInfo(channel.nps);
