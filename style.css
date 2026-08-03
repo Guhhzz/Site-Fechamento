@@ -280,6 +280,11 @@ body.darkMode .executiveTable tr td:last-child,
 body.darkMode .executiveTable.brandTable tr td:first-child,
 body.darkMode .executiveTable.brandTable tr td:last-child{color:#F4F9FF}
 body.darkMode .executiveTable th{color:#A9BCD4}
+body.darkMode .genericTableScroll{scrollbar-color:#2E9BFF #162843}
+body.darkMode .genericTableScroll::-webkit-scrollbar-track{background:#162843}
+body.darkMode .genericTableScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2E9BFF,#0072CE)}
+body.darkMode .genericDataTable tr td:first-child,
+body.darkMode .genericDataTable tr td:last-child{color:#F4F9FF}
 body.darkMode .progress{background:#203653}
 body.darkMode .empty,
 body.darkMode .note,
@@ -445,6 +450,13 @@ body.darkMode .ufMapPopup{background:rgba(9,27,49,.97);border-color:rgba(142,202
 .executiveTable td{background:#fff;padding:13px 14px;border-top:1px solid #E3EFFB;border-bottom:1px solid #E3EFFB;font-weight:800;color:#17395F}
 .executiveTable tr td:first-child{border-left:1px solid #E3EFFB;border-radius:14px 0 0 14px;color:#0057B8;width:70px;text-align:center}
 .executiveTable tr td:last-child{border-right:1px solid #E3EFFB;border-radius:0 14px 14px 0;text-align:right;color:#061A36}
+.genericTableScroll{width:100%;max-height:520px;overflow:auto;position:relative;z-index:2;padding-bottom:8px;scrollbar-color:var(--gazin-blue) #E8F2FF;scrollbar-width:thin}
+.genericTableScroll::-webkit-scrollbar{width:12px;height:8px}
+.genericTableScroll::-webkit-scrollbar-track{background:#E8F2FF;border-radius:999px}
+.genericTableScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gazin-blue),var(--gazin-blue-2));border-radius:999px}
+.genericDataTable{min-width:760px}
+.genericDataTable tr td:first-child{width:auto;text-align:left;color:#061A36}
+.genericDataTable tr td:last-child{text-align:right;color:#0057B8}
 .progressCell{min-width:180px}
 .progress{height:9px;background:#EAF2FC;border-radius:999px;overflow:hidden;margin-top:6px}
 .progress span{display:block;height:100%;background:linear-gradient(90deg,var(--gazin-blue),var(--gazin-blue-3));border-radius:999px}
@@ -623,7 +635,7 @@ body.darkMode .assistantDock{background:linear-gradient(145deg,rgba(0,163,255,.1
 .closeBtn{border:none;background:#EEF5FF;color:var(--gazin-blue);font-weight:950;border-radius:14px;padding:10px 14px;cursor:pointer}
 #modalCanvas{flex:1;min-height:680px}
 @media (max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:680px){.kpis{grid-template-columns:1fr}.heroContent{display:block}.hero h2{font-size:27px}.chartTop,.tableHead{display:block}.chartActions{justify-content:flex-start;margin-top:10px}.executiveTable{font-size:12px}}
+@media (max-width:680px){.kpis{grid-template-columns:1fr}.heroContent{display:block}.hero h2{font-size:27px}.chartTop,.tableHead{display:block}.chartActions{justify-content:flex-start;margin-top:10px}.executiveTable{font-size:12px}.genericDataTable{min-width:620px}.genericTableScroll{max-height:420px}}
 
 .historyUpload{display:none;}
 body.adminUnlocked .historyUpload{display:inline-flex;}

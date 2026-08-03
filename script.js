@@ -1337,12 +1337,13 @@ function averageNps(sheets=DATA.sheets||[]){
  const entries=getNpsEntries(sheets);
  return entries.length ? entries.reduce((sum,item)=>sum+item.value,0)/entries.length : null;
 }
-function kpisForChannel(channel){
+function kpisForChannel(channel,sheet=null){
  const of=+channel.ofertadas||0, at=+channel.atendidas||0, ab=+channel.abandonadas||0, cb=+channel.callback||0;
  const atPct=of?at/of*100:0, abPct=of?ab/of*100:0;
  const cbCard = cb>0 ? kpiCard(labels.callback,cb,'Retornos registrados na fila do núcleo') : '';
  const npsCard = hasNps(channel) ? kpiCard(labels.nps,channel.nps,'Indicador de experiência do cliente',npsBadge(channel.nps)) : '';
- return `${kpiCard(labels.ofertadas,of,'Chamadas recebidas no período')}${kpiCard(labels.atendidas,at,'Chamadas efetivamente atendidas',rateBadge(atPct,'atendidas','above'))}${kpiCard(labels.abandonadas,ab,'Chamadas abandonadas',rateBadge(abPct,'abandonadas','below'))}${cbCard}${kpiCard(labels.whatsapp,channel.whatsapp||0,'Tickets via WhatsApp')}${npsCard}`;
+  const extraCards=(sheet?.extraKpis||[]).map(kpi=>kpiCard(kpi.label,kpi.value,kpi.sub||'Indicador adicional do fechamento',kpi.extra||'')).join('');
+  return `${kpiCard(labels.ofertadas,of,'Chamadas recebidas no período')}${kpiCard(labels.atendidas,at,'Chamadas efetivamente atendidas',rateBadge(atPct,'atendidas','above'))}${kpiCard(labels.abandonadas,ab,'Chamadas abandonadas',rateBadge(abPct,'abandonadas','below'))}${cbCard}${kpiCard(labels.whatsapp,channel.whatsapp||0,'Tickets via WhatsApp')}${npsCard}${extraCards}`;
 }
 function chartByTitle(sheet,titlePart){ const s=DATA.sheets.find(x=>x.name===sheet); return s?.charts?.find(c=>String(c.title).toLowerCase().includes(String(titlePart).toLowerCase())); }
 function insightCard(tag,title,text,value){ return `<article class="insightCard"><span class="insightTag">${esc(tag)}</span><h4 class="insightTitle">${esc(title)}</h4><p class="insightText">${text}</p>${value?`<div class="insightValue">${esc(value)}</div>`:''}</article>`; }
@@ -1456,9 +1457,12 @@ function mobileChartPreview(c){
 function nucleoView(name){
  const s=DATA.sheets.find(x=>x.name===name); if(!s) return generalView(); setActive(name);
  pageTitle.textContent=s.name; pageDesc.textContent='Indicadores, gráficos e destaques específicos do núcleo selecionado.'; activeBadge.textContent=s.status==='parcial'?'Dados parciais':activeMonthLabel(); updateDocumentTitle();
- let kpis = (s.channel && Object.values(s.channel).some(v=>+v)) ? kpisForChannel(s.channel) : '';
- // KPI de Total do período removido dos núcleos; o total permanece visível nos gráficos.
- const hasCharts=!!(s.charts && s.charts.length), hasTable=s.name==='Assistência' && (s.brandTable||[]).length;
+  const hasChannelKpis=!!(s.channel && Object.values(s.channel).some(v=>+v));
+  const extraOnlyKpis=(s.extraKpis||[]).map(kpi=>kpiCard(kpi.label,kpi.value,kpi.sub||'Indicador adicional do fechamento',kpi.extra||'')).join('');
+  let kpis = hasChannelKpis ? kpisForChannel(s.channel,s) : extraOnlyKpis;
+  // KPI de Total do período removido dos núcleos; o total permanece visível nos gráficos.
+  const genericTables=s.tables||[];
+  const hasCharts=!!(s.charts && s.charts.length), hasBrandTable=s.name==='Assistência' && (s.brandTable||[]).length, hasTable=hasBrandTable||genericTables.length;
  let html = mobileSectionNav([{id:'kpisSection',label:'KPIs'},...(hasCharts?[{id:'chartsSection',label:'Gráficos'}]:[]),...(hasTable?[{id:'tablesSection',label:'Tabela'}]:[])]) +
  `<section id="kpisSection">` + sectionHeader('Resumo do Núcleo','Ao selecionar um núcleo, a visão geral sai de tela e entram os indicadores específicos disponíveis.') + (kpis?`<div class="kpis">${kpis}</div>`:'<div class="empty"><strong>Sem KPIs de canal preenchidos</strong>Esta aba não possui os campos consolidados de ligações/WhatsApp no arquivo atual.</div>') + `</section>`;
  if(s.charts && s.charts.length){
@@ -1468,11 +1472,11 @@ function nucleoView(name){
      const expandAction = isMapChart ? '' : `<button class="expandBtn" onclick="openChartModal('${escAttr(s.name)}',${i})">⤢ Expandir</button>`;
      return `<article class="chartCard"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">Total: ${fmt.format(Math.round(chartTotal(c)))}</div><button class="exportBtn" onclick="exportChartExcel('${escAttr(s.name)}',${i})">⬇ Excel</button>${expandAction}</div></div><div class="chartCanvas ${(c.data||[]).length>10?'tall':''}" id="chart_${slug(s.name)}_${i}"></div></article>`;
    }).join('') + `</div></section>`;
-   if(s.name==='Assistência') html += `<section id="tablesSection">${assistanceBrandTable(s)}</section>`;
- } else {
-   html += `<div class="empty" style="margin-top:20px"><strong>Gráficos pendentes</strong>Não foram encontrados dados tabulados suficientes para montar gráficos nesta aba. Os KPIs disponíveis acima foram preservados.</div>`;
- }
- content.innerHTML=html;
+  } else {
+    html += `<div class="empty" style="margin-top:20px"><strong>Gráficos pendentes</strong>Não foram encontrados dados tabulados suficientes para montar gráficos nesta aba. Os KPIs disponíveis acima foram preservados.</div>`;
+  }
+  if(hasTable) html += `<section id="tablesSection">${hasBrandTable?assistanceBrandTable(s):''}${genericTables.map((table,i)=>genericDataTable(s,table,i)).join('')}</section>`;
+  content.innerHTML=html;
  requestAnimationFrame(()=>{ (s.charts||[]).forEach((c,i)=>renderChart(document.getElementById(`chart_${slug(s.name)}_${i}`),c)); });
 }
 function assistanceTable(s){
@@ -1484,14 +1488,28 @@ function assistanceTable(s){
 }
 
 function assistanceBrandTable(s){
- const rowsData=s.brandTable||[];
- if(!rowsData.length) return '';
+  const rowsData=s.brandTable||[];
+  if(!rowsData.length) return '';
  const totalOS=rowsData.reduce((a,d)=>a+(+d.quantidadeOS||0),0);
  const totalVendas=rowsData.reduce((a,d)=>a+(+d.quantidadeVendas||0),0);
  const totalFaturamento=rowsData.reduce((a,d)=>a+(+d.faturamento||0),0);
  const totalCusto=rowsData.reduce((a,d)=>a+(+d.custoMedioOS||0),0);
  const rows=rowsData.map((d,i)=>`<tr><td><div class="brandName"><span class="brandRank">${i+1}</span><span class="brandLabel">${esc(d.marca)}</span></div></td><td>${fmt.format(Math.round(+d.quantidadeOS||0))}</td><td>${fmt.format(Math.round(+d.quantidadeVendas||0))}</td><td><span class="percentBadge">${brPercent.format(+d.osPorFaturamento||0)}</span></td><td class="moneyCell">${brMoney.format(+d.custoMedioOS||0)}</td><td class="moneyCell">${brMoney.format(+d.faturamento||0)}</td><td><span class="percentBadge">${brPercent.format(+d.custoOSPorFaturamento||0)}</span></td></tr>`).join('');
- return `<section class="tableCard brandTableCard"><div class="tableHead"><div><h4>Tabela Executiva &middot; Top 20 Marcas</h4><p>Ranking por marca na Assist&ecirc;ncia, com os IDs removidos para deixar a leitura mais limpa e executiva.</p></div><div class="chartActions"><div class="chartTotal">O.S: ${fmt.format(totalOS)}</div><div class="chartTotal">Vendas: ${fmt.format(totalVendas)}</div><button class="exportBtn" onclick="exportBrandTableExcel()">&#11015; Excel</button></div></div><div class="tableCaption">Faturamento total apresentado: <strong>${brMoney.format(totalFaturamento)}</strong> &middot; Custo m&eacute;dio de O.S somado: <strong>${brMoney.format(totalCusto)}</strong></div><div class="brandGridScroll brandFitScroll"><table class="brandFitTable" aria-label="Tabela Executiva Top 20 Marcas"><colgroup><col><col><col><col><col><col><col></colgroup><thead><tr><th>Marca</th><th>Quantidade de O.S</th><th>Quantidade de Vendas</th><th>Qtde. O.S por Faturamento</th><th>Custo M&eacute;dio de O.S</th><th>Faturamento</th><th>Custo O.S por Faturamento</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  return `<section class="tableCard brandTableCard"><div class="tableHead"><div><h4>Tabela Executiva &middot; Top 20 Marcas</h4><p>Ranking por marca na Assist&ecirc;ncia, com os IDs removidos para deixar a leitura mais limpa e executiva.</p></div><div class="chartActions"><div class="chartTotal">O.S: ${fmt.format(totalOS)}</div><div class="chartTotal">Vendas: ${fmt.format(totalVendas)}</div><button class="exportBtn" onclick="exportBrandTableExcel()">&#11015; Excel</button></div></div><div class="tableCaption">Faturamento total apresentado: <strong>${brMoney.format(totalFaturamento)}</strong> &middot; Custo m&eacute;dio de O.S somado: <strong>${brMoney.format(totalCusto)}</strong></div><div class="brandGridScroll brandFitScroll"><table class="brandFitTable" aria-label="Tabela Executiva Top 20 Marcas"><colgroup><col><col><col><col><col><col><col></colgroup><thead><tr><th>Marca</th><th>Quantidade de O.S</th><th>Quantidade de Vendas</th><th>Qtde. O.S por Faturamento</th><th>Custo M&eacute;dio de O.S</th><th>Faturamento</th><th>Custo O.S por Faturamento</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+
+function genericDataTable(sheet,table,index=0){
+  const columns=table.columns||[];
+  const rows=table.rows||[];
+  if(!columns.length||!rows.length) return '';
+  const totals=(table.totals||[]).map(item=>`<div class="chartTotal">${esc(item.label)}: ${fmt.format(Math.round(+item.value||0))}</div>`).join('');
+  const head=columns.map(col=>`<th>${esc(col)}</th>`).join('');
+  const body=rows.map(row=>`<tr>${columns.map((col,i)=>{
+    const raw=Array.isArray(row) ? row[i] : row[col];
+    const value=typeof raw==='number' ? fmt.format(Math.round(raw)) : esc(raw??'');
+    return `<td>${value}</td>`;
+  }).join('')}</tr>`).join('');
+  return `<section class="tableCard genericDataTableCard"><div class="tableHead"><div><h4>${esc(table.title||'Tabela')}</h4><p>${esc(table.subtitle||'Dados complementares do fechamento mensal.')}</p></div><div class="chartActions">${totals}<button class="exportBtn" onclick="exportGenericTableExcel('${escAttr(sheet.name)}',${index})">&#11015; Excel</button></div></div><div class="genericTableScroll"><table class="executiveTable genericDataTable"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ')}
@@ -1506,10 +1524,63 @@ function chartTotal(c){
 }
 function slug(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]/g,'_')}
 function historyIdFromLabel(label){
- const clean=String(label||'fechamento').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
- return clean.startsWith('fechamento-') ? clean : `fechamento-${clean}`;
+  const clean=String(label||'fechamento').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return clean.startsWith('fechamento-') ? clean : `fechamento-${clean}`;
 }
-function cloneDashboard(dashboard){ return JSON.parse(JSON.stringify(dashboard)); }
+function dashboardTextKey(value){
+ return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+function dashboardFindSheet(dashboard,name){
+ const key=dashboardTextKey(name);
+ return (dashboard?.sheets||[]).find(sheet=>dashboardTextKey(sheet.name)===key);
+}
+function ensureExtraKpi(sheet,kpi){
+ if(!sheet) return;
+ sheet.extraKpis=sheet.extraKpis||[];
+ const key=kpi.key||dashboardTextKey(kpi.label);
+ if(sheet.extraKpis.some(item=>(item.key||dashboardTextKey(item.label))===key)) return;
+ sheet.extraKpis.push({...kpi,key});
+}
+function ensureDashboardTable(sheet,table){
+ if(!sheet) return;
+ sheet.tables=sheet.tables||[];
+ const key=table.key||dashboardTextKey(table.title);
+ if(sheet.tables.some(item=>(item.key||dashboardTextKey(item.title))===key)) return;
+ sheet.tables.push({...table,key});
+}
+function enrichDashboard(dashboard){
+ if(!dashboard || !Array.isArray(dashboard.sheets)) return dashboard;
+ if(dashboardTextKey(dashboard.month)==='julho 2026'){
+  const ecommerce=dashboardFindSheet(dashboard,'E-commerce');
+  ensureExtraKpi(ecommerce,{key:'tickets-zoho-julho-2026',label:'Tickets Zoho',value:675,sub:'Tickets registrados no Zoho'});
+
+  const tele=dashboardFindSheet(dashboard,'Teleatendimento');
+  ensureDashboardTable(tele,{
+   key:'pesquisas-teleatendimento-julho-2026',
+   title:'Tabela de Pesquisas',
+   subtitle:'Pesquisas e respostas registradas no período.',
+   totals:[
+    {label:'Finalizadas',value:9},
+    {label:'Pendentes',value:6},
+    {label:'Solicitadas',value:15}
+   ],
+   columns:['Pesquisa','Quantidade de respostas'],
+   rows:[
+    ['Pesquisa de satisfação com o serviço de entrega e montagem',528],
+    ['Pesquisa Pós Venda Indústria - Holding',231],
+    ['Pesquisa Pós Venda Varejo - Holding',264],
+    ['Pesquisa Validação de Compra de Serviços',95],
+    ['Pesquisa Auditoria Filial 46',18],
+    ['Pesquisa Pós Venda Atacado - Holding',263],
+    ['Levantamento de bicicletas e triciclos elétricos',169],
+    ['Deslocamento para o VEX 26',298],
+    ['Total',1866]
+   ]
+  });
+ }
+ return dashboard;
+}
+function cloneDashboard(dashboard){ return enrichDashboard(JSON.parse(JSON.stringify(dashboard))); }
 function normalizeDashboardBundle(bundle,index=0){
  const dashboard=bundle?.dashboard || bundle?.data || bundle?.DATA;
  if(!dashboard || !dashboard.general || !Array.isArray(dashboard.sheets)) return null;
@@ -2007,8 +2078,8 @@ function buildChartXlsx(title,subtitle,pack,c){
  return zipStore(files);
 }
 function exportBrandTableExcel(sheetName='Assistência'){
- const s=DATA.sheets.find(x=>x.name===sheetName);
- const rows=s?.brandTable||[];
+  const s=DATA.sheets.find(x=>x.name===sheetName);
+  const rows=s?.brandTable||[];
  if(!rows.length) return;
  const headers=['Rank','Marca','Quantidade de O.S','Quantidade de Vendas','Qtde. O.S por Faturamento','Custo Médio de O.S','Faturamento','Custo O.S por Faturamento'];
  const tableRows=rows.map((d,i)=>[
@@ -2025,10 +2096,25 @@ function exportBrandTableExcel(sheetName='Assistência'){
  const rowsHtml=tableRows.map(row=>`<tr>${row.map(v=>`<td>${excelCell(v)}</td>`).join('')}</tr>`).join('');
  const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse}th{background:#0057B8;color:#fff;font-weight:bold}th,td{border:1px solid #C9DDF3;padding:8px 10px}h2{color:#061A36}</style></head><body><h2>Tabela Executiva - Top 20 Marcas</h2><p>${excelCell(sheetName)} - ${excelCell(activeMonthLabel())}</p><table><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
  const blob=new Blob(['﻿',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
- const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(sheetName)}_Top_20_Marcas.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(sheetName)}_Top_20_Marcas.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function exportGenericTableExcel(sheetName,index=0){
+ const s=DATA.sheets.find(x=>x.name===sheetName);
+ const table=s?.tables?.[index];
+ if(!table) return;
+ const columns=table.columns||[];
+ const rows=table.rows||[];
+ const headerHtml=columns.map(h=>`<th>${excelCell(h)}</th>`).join('');
+ const rowsHtml=rows.map(row=>`<tr>${columns.map((col,i)=>{
+  const value=Array.isArray(row) ? row[i] : row[col];
+  return `<td>${excelCell(value??'')}</td>`;
+ }).join('')}</tr>`).join('');
+ const html=`<!doctype html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse}th{background:#0057B8;color:#fff;font-weight:bold}th,td{border:1px solid #C9DDF3;padding:8px 10px}h2{color:#061A36}</style></head><body><h2>${excelCell(table.title||'Tabela')}</h2><p>${excelCell(s.name)} - ${excelCell(activeMonthLabel())}</p><table><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
+ const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
+ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${safeFileName(s.name)}_${safeFileName(table.title||'Tabela')}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function exportChartExcel(sheetName,index){
- const s=DATA.sheets.find(x=>x.name===sheetName); if(!s || !s.charts[index]) return;
+  const s=DATA.sheets.find(x=>x.name===sheetName); if(!s || !s.charts[index]) return;
  const c=s.charts[index]; const pack=chartRowsForExcel(c);
  const title=`${s.name} - ${c.title}`;
  const bytes=buildChartXlsx(title,c.subtitle||'',pack,c);
@@ -2230,26 +2316,29 @@ function normalizeAssistantText(value){
  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9%]+/g,' ').trim();
 }
 function assistantMetricValue(sheet,metric){
- const c=sheet?.channel||{};
- if(metric==='taxa_atendimento') return c.ofertadas ? (c.atendidas||0)/(c.ofertadas||1)*100 : null;
- if(metric==='taxa_abandono') return c.ofertadas ? (c.abandonadas||0)/(c.ofertadas||1)*100 : null;
- return Number.isFinite(Number(c[metric])) ? Number(c[metric]) : null;
+  const c=sheet?.channel||{};
+  if(metric==='taxa_atendimento') return c.ofertadas ? (c.atendidas||0)/(c.ofertadas||1)*100 : null;
+  if(metric==='taxa_abandono') return c.ofertadas ? (c.abandonadas||0)/(c.ofertadas||1)*100 : null;
+  if(metric==='zoho') return Number((sheet?.extraKpis||[]).find(kpi=>dashboardTextKey(kpi.label).includes('zoho'))?.value ?? c.zoho);
+  return Number.isFinite(Number(c[metric])) ? Number(c[metric]) : null;
 }
 function assistantMetricLabel(metric){
  return {
   ofertadas:'ligações ofertadas',
   atendidas:'ligações atendidas',
   abandonadas:'ligações abandonadas',
-  callback:'callbacks',
-  whatsapp:'tickets via WhatsApp',
+   callback:'callbacks',
+   zoho:'tickets Zoho',
+   whatsapp:'tickets via WhatsApp',
   nps:'NPS',
   taxa_atendimento:'taxa de atendimento',
   taxa_abandono:'taxa de abandono'
  }[metric] || metric;
 }
 function assistantDetectMetric(text){
- if(text.includes('nps')) return 'nps';
- if(text.includes('whatsapp') || text.includes('ticket')) return 'whatsapp';
+  if(text.includes('nps')) return 'nps';
+  if(text.includes('zoho') || text.includes('zorro') || text.includes('zorros')) return 'zoho';
+  if(text.includes('whatsapp') || text.includes('ticket')) return 'whatsapp';
  if(text.includes('callback') || text.includes('call back') || text.includes('retorno')) return 'callback';
  if(text.includes('abandono') || text.includes('abandonada')) return text.includes('taxa') || text.includes('%') || text.includes('maior') || text.includes('menor') ? 'taxa_abandono' : 'abandonadas';
  if(text.includes('atendimento') || text.includes('atendida')) return text.includes('taxa') || text.includes('%') ? 'taxa_atendimento' : 'atendidas';
@@ -2410,26 +2499,29 @@ function assistantCurrentSheet(){
 }
 function assistantVisibleSheets(){ return DATA.sheets || []; }
 function assistantMetricValue(sheet,metric){
- const c=sheet?.channel||{};
- if(metric==='taxa_atendimento') return c.ofertadas ? (c.atendidas||0)/(c.ofertadas||1)*100 : null;
- if(metric==='taxa_abandono') return c.ofertadas ? (c.abandonadas||0)/(c.ofertadas||1)*100 : null;
- return Number.isFinite(Number(c[metric])) ? Number(c[metric]) : null;
+  const c=sheet?.channel||{};
+  if(metric==='taxa_atendimento') return c.ofertadas ? (c.atendidas||0)/(c.ofertadas||1)*100 : null;
+  if(metric==='taxa_abandono') return c.ofertadas ? (c.abandonadas||0)/(c.ofertadas||1)*100 : null;
+  if(metric==='zoho') return Number((sheet?.extraKpis||[]).find(kpi=>dashboardTextKey(kpi.label).includes('zoho'))?.value ?? c.zoho);
+  return Number.isFinite(Number(c[metric])) ? Number(c[metric]) : null;
 }
 function assistantMetricLabel(metric){
  return {
   ofertadas:'ligações ofertadas',
   atendidas:'ligações atendidas',
   abandonadas:'ligações abandonadas',
-  callback:'callbacks',
-  whatsapp:'tickets via WhatsApp',
+   callback:'callbacks',
+   zoho:'tickets Zoho',
+   whatsapp:'tickets via WhatsApp',
   nps:'NPS',
   taxa_atendimento:'taxa de atendimento',
   taxa_abandono:'taxa de abandono'
  }[metric] || metric;
 }
 function assistantDetectMetric(text){
- if(text.includes('nps') || text.includes('experiencia')) return 'nps';
- if(text.includes('whatsapp') || text.includes('zap') || text.includes('ticket digital')) return 'whatsapp';
+  if(text.includes('nps') || text.includes('experiencia')) return 'nps';
+  if(text.includes('zoho') || text.includes('zorro') || text.includes('zorros')) return 'zoho';
+  if(text.includes('whatsapp') || text.includes('zap') || text.includes('ticket digital')) return 'whatsapp';
  if(text.includes('callback') || text.includes('call back') || text.includes('retorno') || text.includes('fila')) return 'callback';
  if(text.includes('abandono') || text.includes('abandonada') || text.includes('abandonadas')) return assistantIncludesAny(text,['taxa','%','percentual','maior','menor','melhor','pior']) ? 'taxa_abandono' : 'abandonadas';
  if(text.includes('atendimento') || text.includes('atendida') || text.includes('atendidas') || text.includes('eficiencia')) return assistantIncludesAny(text,['taxa','%','percentual','eficiencia','melhor','pior']) ? 'taxa_atendimento' : 'atendidas';
