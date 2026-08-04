@@ -1456,10 +1456,12 @@ function averageNps(sheets=DATA.sheets||[]){
 function kpisForChannel(channel,sheet=null){
  const of=+channel.ofertadas||0, at=+channel.atendidas||0, ab=+channel.abandonadas||0, cb=+channel.callback||0;
  const atPct=of?at/of*100:0, abPct=of?ab/of*100:0;
+ const sheetKey=dashboardTextKey(sheet?.name);
+ const whatsappExtra=sheetKey==='e-commerce' ? '<span class="kpiGoal">Composi&ccedil;&atilde;o: Marketplace + Gazin.com</span>' : '';
  const cbCard = cb>0 ? kpiCard(labels.callback,cb,'Retornos registrados na fila do núcleo') : '';
  const npsCard = hasNps(channel) ? kpiCard(labels.nps,channel.nps,'Indicador de experiência do cliente',npsBadge(channel.nps)) : '';
   const extraCards=(sheet?.extraKpis||[]).map(kpi=>kpiCard(kpi.label,kpi.value,kpi.sub||'Indicador adicional do fechamento',kpi.extra||'')).join('');
-  return `${kpiCard(labels.ofertadas,of,'Chamadas recebidas no período')}${kpiCard(labels.atendidas,at,'Chamadas efetivamente atendidas',rateBadge(atPct,'atendidas','above'))}${kpiCard(labels.abandonadas,ab,'Chamadas abandonadas',rateBadge(abPct,'abandonadas','below'))}${cbCard}${kpiCard(labels.whatsapp,channel.whatsapp||0,'Tickets via WhatsApp')}${npsCard}${extraCards}`;
+  return `${kpiCard(labels.ofertadas,of,'Chamadas recebidas no período')}${kpiCard(labels.atendidas,at,'Chamadas efetivamente atendidas',rateBadge(atPct,'atendidas','above'))}${kpiCard(labels.abandonadas,ab,'Chamadas abandonadas',rateBadge(abPct,'abandonadas','below'))}${cbCard}${kpiCard(labels.whatsapp,channel.whatsapp||0,'Tickets via WhatsApp',whatsappExtra)}${npsCard}${extraCards}`;
 }
 const COMPARISON_MONTH_ORDER={janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
 const COMPARISON_METRICS=[
@@ -1949,12 +1951,17 @@ function isUfDistributionChart(c){
  const rows=chartData(c);
  return title.includes('distribuicao por uf') && rows.length>0 && rows.every(d=>UF_CODES.has(String(d.uf||d.label||'').toUpperCase().trim()));
 }
+function isMarketplaceChart(c){
+ const key=dashboardTextKey(`${c?.title||''} ${c?.subtitle||''}`);
+ return key.includes('atendimentos marketplace') || (key.includes('marketplace') && key.includes('canal de atendimento'));
+}
 function renderChart(el,c,expanded=false){
  if(!el) return;
- el.classList.remove('lineChartCanvas','lineChartExpanded','expandedChartCanvas','comparisonLaneCanvas');
+ el.classList.remove('lineChartCanvas','lineChartExpanded','expandedChartCanvas','comparisonLaneCanvas','marketplaceCanvas','marketplaceExpanded');
  el.classList.toggle('expandedChartCanvas',!!expanded);
  if(c.type==='multiLine') return multiLineChart(el,c,expanded);
  const rows=chartData(c);
+ if(isMarketplaceChart(c)) return marketplaceCard(el,rows,expanded);
  if(c.type==='line') return lineChart(el,rows,expanded);
  if(c.type==='groupedBar') return groupedChart(el,rows);
  if(c.type==='groupedColumn') return groupedColumnChart(el,rows);
@@ -1977,11 +1984,34 @@ function marketLabelPretty(label){
  };
  return map[label] || label;
 }
-function marketplaceCard(el,data){
- const rows=(data||[]).map(d=>({label:marketLabelPretty(d.label),value:+d.value||0}));
+function marketplaceBrandMeta(label){
+ const key=dashboardTextKey(label);
+ if(key.includes('magalu')) return {brand:'Magalu',channel:'Protocolos',initials:'MG',className:'magalu'};
+ if(key.includes('via varejo')) return {brand:'Via Varejo',channel:'Protocolos',initials:'VV',className:'via'};
+ if(key.includes('shopee')) return {brand:'Shopee',channel:'Mensageria',initials:'SP',className:'shopee'};
+ if(key.includes('amazon')) return {brand:'Amazon',channel:'Mensageria',initials:'AZ',className:'amazon'};
+ if(key.includes('kabum')) return {brand:'KaBuM!',channel:'Mensageria',initials:'KB',className:'kabum'};
+ if(key.includes('mediacoes') && key.includes('meli')) return {brand:'Mercado Livre',channel:'Mediações',initials:'ML',className:'meli'};
+ if(key.includes('reclamacoes') && key.includes('meli')) return {brand:'Mercado Livre',channel:'Reclamações',initials:'ML',className:'meli'};
+ if(key.includes('meli')) return {brand:'Mercado Livre',channel:'Mensageria',initials:'ML',className:'meli'};
+ const pretty=marketLabelPretty(label);
+ return {brand:pretty,channel:'Canal marketplace',initials:pretty.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'MK',className:'default'};
+}
+function marketplaceCard(el,data,expanded=false){
+ const rows=(data||[]).map(d=>({label:String(d.label||''),value:+d.value||0})).filter(d=>d.value>0).sort((a,b)=>b.value-a.value);
  const total=rows.reduce((a,d)=>a+d.value,0);
- const body=rows.map(d=>`<div class="marketplaceRow"><span class="marketLabel">${esc(d.label)}</span><span class="marketValue">${fmt.format(Math.round(d.value))}</span></div>`).join('');
- el.innerHTML=`<div class="marketplaceCardWrap"><div class="marketplaceExecutiveCard"><div class="marketplaceBadge">MKT<span>place</span></div><h4>Atendimentos</h4><div class="marketplaceList">${body}</div><div class="marketplaceTotal"><span>Total de atendimentos:</span><strong>${fmt.format(Math.round(total))}</strong></div></div></div>`;
+ const max=Math.max(...rows.map(d=>d.value),1);
+ const cards=rows.map((d,i)=>{
+  const meta=marketplaceBrandMeta(d.label);
+  const share=total ? d.value/total*100 : 0;
+  const width=Math.max(6,d.value/max*100);
+  const tip=`${meta.brand} · ${meta.channel}: ${fmt.format(Math.round(d.value))} atendimentos (${pct(share)} do total)`;
+  return `<article class="marketplaceItem ${meta.className} bar" data-tip="${esc(tip)}"><div class="marketplaceItemHeader"><div class="marketplaceLogo"><strong>${esc(meta.initials)}</strong><small>${esc(meta.brand)}</small></div><div><span>#${i+1}</span><h4>${esc(meta.brand)}</h4><p>${esc(meta.channel)}</p></div></div><div class="marketplaceMetric"><strong>${fmt.format(Math.round(d.value))}</strong><span>${pct(share)} do total</span></div><div class="marketplaceProgress"><span style="width:${width.toFixed(1)}%"></span></div></article>`;
+ }).join('');
+ el.classList.add('marketplaceCanvas');
+ el.classList.toggle('marketplaceExpanded',!!expanded);
+ el.innerHTML=`<div class="marketplaceCardWrap"><div class="marketplaceSummary"><div><span>Marketplace</span><strong>Canais digitais por atendimento</strong><p>Leitura por origem, com participação no volume total informado.</p></div><div class="marketplaceTotal"><small>Total</small><strong>${fmt.format(Math.round(total))}</strong></div></div><div class="marketplaceCards">${cards}</div></div>`;
+ bindTips(el);
 }
 
 const UF_MAP_VIEWBOX={w:560,h:740};

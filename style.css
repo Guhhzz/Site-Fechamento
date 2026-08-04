@@ -446,16 +446,28 @@ body.darkMode #modalCanvas svg circle[fill="#fff"]{fill:#071120!important}
 .sliceLabel{font-size:12px;font-weight:950;fill:#fff;paint-order:stroke;stroke:rgba(11,46,94,.28);stroke-width:3px;stroke-linejoin:round}
 @media (max-width:900px){.pieWrap{padding-top:4px;gap:18px}.pieCenter{width:112px;height:112px}.pieCenter strong{font-size:24px}.pieLegend{max-width:none}}
 
-.marketplaceCardWrap{height:100%;min-height:330px;display:flex;align-items:center;justify-content:center;padding:28px 10px 16px;position:relative;z-index:2}
-.marketplaceExecutiveCard{width:min(520px,92%);border-radius:34px;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(240,247,255,.92));border:1px solid rgba(0,87,184,.13);box-shadow:0 22px 44px rgba(6,26,54,.16), inset 0 1px 0 rgba(255,255,255,.95);padding:54px 34px 28px;text-align:center;position:relative;overflow:visible}
-.marketplaceExecutiveCard:before{content:"";position:absolute;inset:-1px;border-radius:34px;background:radial-gradient(circle at 50% 0%,rgba(0,163,255,.18),transparent 34%);pointer-events:none}
-.marketplaceBadge{position:absolute;left:50%;top:-44px;transform:translateX(-50%);width:92px;height:92px;border-radius:50%;background:linear-gradient(145deg,#00A3FF,#0057B8);box-shadow:0 18px 38px rgba(0,87,184,.32),0 0 0 10px rgba(0,87,184,.08);display:grid;place-items:center;color:#fff;font-weight:1000;font-size:24px;letter-spacing:.02em}
-.marketplaceBadge span{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-top:2px;color:#DFF2FF}
-.marketplaceExecutiveCard h4{margin:0 0 18px;color:#3D4E66;font-size:25px;line-height:1.1;font-weight:950}
-.marketplaceList{display:flex;flex-direction:column;gap:9px;margin:0 auto;max-width:430px}
-.marketplaceRow{display:flex;align-items:baseline;justify-content:space-between;gap:14px;color:#40566F;font-size:19px;line-height:1.25}
-.marketplaceRow .marketLabel{text-align:left;font-weight:700}.marketplaceRow .marketValue{font-weight:850;color:#243B59;white-space:nowrap}.marketplaceTotal{margin-top:18px;padding-top:14px;border-top:1px solid rgba(0,87,184,.13);font-size:20px;color:#334A66;font-weight:950;display:flex;justify-content:center;gap:8px}.marketplaceTotal strong{color:#243B59}
-@media (max-width:900px){.marketplaceRow{font-size:16px}.marketplaceExecutiveCard{padding-left:22px;padding-right:22px}.marketplaceBadge{width:78px;height:78px;font-size:20px;top:-38px}}
+.marketplaceCanvas{min-height:430px}
+.marketplaceCardWrap{height:100%;min-height:390px;display:flex;flex-direction:column;gap:16px;padding:18px 4px 8px;position:relative;z-index:2}
+.marketplaceSummary{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;padding:18px;border-radius:24px;background:linear-gradient(135deg,rgba(234,244,255,.96),rgba(255,255,255,.92));border:1px solid rgba(0,87,184,.12);box-shadow:0 18px 38px rgba(6,26,54,.09),inset 0 1px 0 rgba(255,255,255,.9)}
+.marketplaceSummary span{font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.1em;color:#0072CE}
+.marketplaceSummary strong{display:block;margin-top:4px;font-size:20px;line-height:1.15;color:#0B2E5E;font-weight:1000}
+.marketplaceSummary p{margin:6px 0 0;color:#55708F;font-size:12px}
+.marketplaceTotal{min-width:112px;padding:12px 14px;border-radius:18px;text-align:center;background:linear-gradient(145deg,#0057B8,#00A3FF);color:#fff;box-shadow:0 14px 28px rgba(0,87,184,.2)}
+.marketplaceTotal small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:950;color:#DFF2FF}.marketplaceTotal strong{font-size:24px;color:#fff;margin:1px 0 0}
+.marketplaceCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:14px}
+.marketplaceItem{position:relative;overflow:hidden;border-radius:22px;padding:15px;background:linear-gradient(180deg,#FFFFFF,#F6FAFF);border:1px solid rgba(0,87,184,.13);box-shadow:0 12px 28px rgba(6,26,54,.09);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.marketplaceItem:before{content:"";position:absolute;right:-32px;top:-42px;width:112px;height:112px;border-radius:50%;background:radial-gradient(circle,rgba(0,163,255,.17),transparent 68%);pointer-events:none}
+.marketplaceItem:hover{transform:translateY(-3px);border-color:rgba(0,163,255,.32);box-shadow:0 20px 38px rgba(0,87,184,.16)}
+.marketplaceItemHeader{display:flex;align-items:center;gap:12px;position:relative;z-index:2}
+.marketplaceItemHeader span{font-size:11px;font-weight:950;color:#0072CE}.marketplaceItem h4{margin:3px 0 0;color:#0B2E5E;font-size:17px;line-height:1.08;font-weight:1000}.marketplaceItem p{margin:3px 0 0;color:#607C9C;font-size:12px;font-weight:750}
+.marketplaceLogo{width:58px;height:58px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;color:#fff;background:linear-gradient(145deg,#0072CE,#00A3FF);box-shadow:0 12px 22px rgba(0,87,184,.20);flex:0 0 auto}
+.marketplaceLogo strong{font-size:18px;line-height:1;font-weight:1000}.marketplaceLogo small{font-size:8px;line-height:1;max-width:48px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
+.marketplaceMetric{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:18px;position:relative;z-index:2}.marketplaceMetric strong{font-size:28px;line-height:1;color:#0057B8;font-weight:1000}.marketplaceMetric span{font-size:11px;color:#607C9C;font-weight:900;white-space:nowrap}
+.marketplaceProgress{height:8px;margin-top:11px;border-radius:999px;background:#E3EFFB;overflow:hidden;position:relative;z-index:2}.marketplaceProgress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#0057B8,#00A3FF);box-shadow:0 0 18px rgba(0,163,255,.22)}
+.marketplaceItem.magalu .marketplaceLogo{background:linear-gradient(145deg,#FFE55C,#FFB800);color:#083A7A}.marketplaceItem.meli .marketplaceLogo{background:linear-gradient(145deg,#FFE866,#2A70D6);color:#073369}.marketplaceItem.via .marketplaceLogo{background:linear-gradient(145deg,#4B5FFF,#8138FF)}.marketplaceItem.shopee .marketplaceLogo{background:linear-gradient(145deg,#FF7A45,#EE4D2D)}.marketplaceItem.amazon .marketplaceLogo{background:linear-gradient(145deg,#172033,#111827);color:#FFB84D}.marketplaceItem.kabum .marketplaceLogo{background:linear-gradient(145deg,#FF8A00,#0057B8)}
+body.darkMode .marketplaceSummary,body.darkMode .marketplaceItem{background:linear-gradient(180deg,rgba(16,38,67,.96),rgba(9,18,34,.96));border-color:rgba(130,190,255,.16);box-shadow:0 18px 42px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.05)}
+body.darkMode .marketplaceSummary strong,body.darkMode .marketplaceItem h4,body.darkMode .marketplaceMetric strong{color:#F4F9FF}body.darkMode .marketplaceSummary p,body.darkMode .marketplaceItem p,body.darkMode .marketplaceMetric span{color:#B9CCE4}body.darkMode .marketplaceProgress{background:rgba(124,194,255,.16)}
+@media (max-width:900px){.marketplaceCanvas{min-height:520px}.marketplaceCardWrap{min-height:460px;padding:12px 0 6px}.marketplaceCards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.marketplaceItem{padding:13px;border-radius:18px}.marketplaceLogo{width:50px;height:50px;border-radius:15px}.marketplaceMetric strong{font-size:23px}.marketplaceSummary{grid-template-columns:1fr;border-radius:20px}.marketplaceTotal{width:100%}}
 
 .ufMapLegend{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;color:#3C628D;font-size:12px;font-weight:800}.ufMapLegend .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:4px}.ufMapNote{margin-top:8px;color:#57708f;font-size:12px}.ufMapEmpty{fill:#CFE1F7;stroke:#A9C7EA;stroke-width:1.3}.ufMapTile{stroke:#FFFFFF;stroke-width:2.5;filter:drop-shadow(0 8px 18px rgba(0,87,184,.16))}.ufMapLabel{font-weight:950;fill:#0E345D}.ufMapValue{font-weight:900}.ufMapStateOnly{font-size:11px;fill:#5E7FA5;font-weight:800}.ufMapRegion{font-size:10px;fill:#6E8CB0;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.ufMapBg{fill:url(#ufMapBg);stroke:#D7E7F7;stroke-width:1.5}.ufMapWrapper{position:relative;width:100%;max-width:680px;margin:8px auto 0;aspect-ratio:1/1}
 .ufMapBase{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 10px 18px rgba(0,53,115,.10))}
@@ -1781,15 +1793,11 @@ body.darkMode .welcomeContent p{color:#405873}
     grid-column:2;
     text-align:left;
   }
-  .marketplaceCardWrap{min-height:300px;padding:24px 0 10px}
-  .marketplaceExecutiveCard{
-    width:100%;
-    border-radius:24px;
-    padding:44px 18px 22px;
-  }
-  .marketplaceExecutiveCard h4{font-size:21px}
-  .marketplaceRow{font-size:15px;gap:10px}
-  .marketplaceTotal{font-size:17px}
+  .marketplaceCanvas{min-height:560px}
+  .marketplaceCards{grid-template-columns:1fr}
+  .marketplaceSummary{padding:15px}
+  .marketplaceSummary strong{font-size:18px}
+  .marketplaceItemHeader{align-items:flex-start}
   .ufMapWrapper{max-width:420px}
   .ufMapRanking{padding:12px;margin-top:12px;border-radius:16px}
   .ufRankHead{display:block}
@@ -2358,8 +2366,10 @@ body.darkMode .tourMeta #welcomeSceneCounter{
   .expandBtn{padding:7px 9px}
   .chartCanvas{min-height:280px}
   .chartCanvas.tall{min-height:360px}
-  .marketplaceRow{font-size:14px}
-  .marketplaceBadge{width:70px;height:70px;font-size:18px}
+  .marketplaceCanvas{min-height:560px}
+  .marketplaceCards{grid-template-columns:1fr}
+  .marketplaceMetric{display:block}
+  .marketplaceMetric span{display:block;margin-top:4px}
   .authPanel{border-radius:22px}
 }
 
