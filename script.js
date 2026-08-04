@@ -2241,7 +2241,7 @@ function multiLineChart(el,c,expanded=false){
  const compact=W<560 || mobileLandscape;
  const laneMode=c.layout==='lanes' && series.length>1;
  const m=laneMode
-  ? (compact ? (expanded?{t:78,r:48,b:98,l:102}:{t:64,r:44,b:62,l:98}) : (expanded?{t:96,r:94,b:122,l:118}:{t:70,r:80,b:58,l:112}))
+  ? (compact ? (expanded?{t:78,r:48,b:98,l:62}:{t:64,r:44,b:62,l:58}) : (expanded?{t:96,r:94,b:122,l:84}:{t:70,r:80,b:58,l:76}))
   : (compact ? (expanded?{t:78,r:48,b:98,l:48}:{t:64,r:44,b:62,l:42}) : (expanded?{t:96,r:94,b:122,l:88}:{t:70,r:80,b:58,l:82}));
  const pointSpacing=compact ? (expanded?58:50) : (expanded?78:68);
  const chartW=Math.max(W, m.l+m.r+Math.max(rows.length-1,1)*pointSpacing);
@@ -2285,10 +2285,8 @@ function multiLineChart(el,c,expanded=false){
  if(laneMode){
   series.forEach((item,seriesIndex)=>{
    const laneTop=m.t+seriesIndex*laneH;
-   const laneMid=laneTop+laneH*.5;
    const laneBase=laneTop+laneH;
    svg+=`<line x1="${m.l}" y1="${laneBase}" x2="${chartW-m.r}" y2="${laneBase}" stroke="${colors.baseline}" stroke-opacity=".42" stroke-width="1"/>`;
-   svg+=`<text x="${m.l-14}" y="${laneMid+4}" text-anchor="end" font-size="${compact?10:11}" fill="${item.color}" font-weight="950">${esc(item.label)}</text>`;
   });
  }
  const labelOffsets=[-18,18,-34,34,-50,50];
