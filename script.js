@@ -146,7 +146,7 @@ function isComparisonKey(key){ return key===COMPARISON_GENERAL_KEY || String(key
 function comparisonScopeFromKey(key){ return key===COMPARISON_GENERAL_KEY ? 'geral' : String(key||'').slice(COMPARISON_PREFIX.length); }
 function comparisonBaseAccessKey(key){ const scope=comparisonScopeFromKey(key); return scope==='geral' ? 'geral' : scope; }
 function accessOptionList(){
- return [{key:'geral',name:'Visão Geral'},{key:COMPARISON_GENERAL_KEY,name:'Comparativo Mensal'}].concat((DATA?.sheets||[]).map(sheet=>({key:sheet.name,name:sheet.name,status:sheet.status})));
+ return [{key:'geral',name:'Visão Geral'}].concat((DATA?.sheets||[]).map(sheet=>({key:sheet.name,name:sheet.name,status:sheet.status})));
 }
 function canAccessView(key){
  if(isComparisonKey(key)) key=comparisonBaseAccessKey(key);
@@ -1472,6 +1472,21 @@ const COMPARISON_METRICS=[
  {key:'taxaAtendimento',title:'Taxa de atendimento',subtitle:'Atendidas sobre ligações ofertadas',format:'percent',value:channel=>channel?.ofertadas?(+channel.atendidas||0)/(+channel.ofertadas||1)*100:null},
  {key:'taxaAbandono',title:'Taxa de abandono',subtitle:'Abandonadas sobre ligações ofertadas',format:'percent',value:channel=>channel?.ofertadas?(+channel.abandonadas||0)/(+channel.ofertadas||1)*100:null}
 ];
+const COMPARISON_CHART_GROUPS=[
+ {title:'Volume de ligações',subtitle:'Ofertadas, atendidas e abandonadas no mesmo acompanhamento mensal.',format:'number',series:[
+  {key:'ofertadas',label:'Ofertadas',color:'#00A3FF'},
+  {key:'atendidas',label:'Atendidas',color:'#16A34A'},
+  {key:'abandonadas',label:'Abandonadas',color:'#EF4444'}
+ ]},
+ {title:'Taxas de atendimento e abandono',subtitle:'Atendimento em azul e abandono em vermelho para leitura de eficiência.',format:'percent',series:[
+  {key:'taxaAtendimento',label:'Taxa de atendimento',color:'#0072CE'},
+  {key:'taxaAbandono',label:'Taxa de abandono',color:'#EF4444'}
+ ]},
+ {title:'Canais digitais e retornos',subtitle:'Tickets via WhatsApp e Call Back reunidos para acompanhar demanda digital e retorno.',format:'number',series:[
+  {key:'whatsapp',label:'WhatsApp',color:'#00A3FF'},
+  {key:'callback',label:'Call Back',color:'#7C3AED',optional:true}
+ ]}
+];
 function comparisonMonthIndex(label){
  const key=dashboardTextKey(label).replace(/ç/g,'c');
  const yearMatch=key.match(/(20\d{2})/);
@@ -1509,35 +1524,46 @@ function comparisonMetricValue(def,channel){
  const value=def.value ? def.value(channel) : Number(channel?.[def.key]);
  return Number.isFinite(value) ? value : null;
 }
+function comparisonMetricDef(key){
+ return COMPARISON_METRICS.find(def=>def.key===key);
+}
+function buildComparisonGroupChart(group,series,scope){
+ const activeSeries=group.series.map(item=>({...item,def:comparisonMetricDef(item.key)})).filter(item=>{
+  if(!item.def) return false;
+  const values=series.map(entry=>comparisonMetricValue(item.def,entry.channel)).filter(value=>value!==null);
+  if(values.length<2) return false;
+  return !(item.optional || item.def.optional) || values.some(value=>(+value||0)!==0);
+ });
+ if(!activeSeries.length) return null;
+ const rows=series.map(entry=>{
+  const values={}, displays={};
+  activeSeries.forEach(item=>{
+   const value=comparisonMetricValue(item.def,entry.channel);
+   if(value!==null){
+    values[item.key]=value;
+    displays[item.key]=comparisonDisplayValue(value,item.def.format || group.format);
+   }
+  });
+  return {label:entry.label,values,displays};
+ }).filter(row=>activeSeries.some(item=>Number.isFinite(Number(row.values[item.key]))));
+ if(rows.length<2) return null;
+ return {type:'multiLine',title:group.title,subtitle:group.subtitle,data:rows,series:activeSeries.map(({def,...item})=>item),valueFormat:group.format,comparisonScope:scope};
+}
 function buildComparisonCharts(scope){
  const series=comparisonSeries(scope);
- return COMPARISON_METRICS.map(def=>{
+ const grouped=COMPARISON_CHART_GROUPS.map(group=>buildComparisonGroupChart(group,series,scope)).filter(Boolean);
+ const npsDef=comparisonMetricDef('nps');
+ const npsChart=npsDef ? (()=>{
   const rows=series.map(entry=>{
-   const value=comparisonMetricValue(def,entry.channel);
+   const value=comparisonMetricValue(npsDef,entry.channel);
    if(value===null) return null;
-   return {label:entry.label,value,displayValue:comparisonDisplayValue(value,def.format)};
+   return {label:entry.label,value,displayValue:comparisonDisplayValue(value,npsDef.format)};
   }).filter(Boolean);
   const hasMeaningfulValue=rows.some(row=>(+row.value||0)!==0);
-  if(rows.length<2 || (!hasMeaningfulValue && def.optional)) return null;
-  return {type:'line',title:def.title,subtitle:def.subtitle,data:rows,valueFormat:def.format,comparisonScope:scope};
- }).filter(Boolean);
-}
-function comparisonDelta(current,previous,format){
- if(!Number.isFinite(current) || !Number.isFinite(previous)) return 'Sem mês anterior';
- const diff=current-previous;
- const sign=diff>0?'+':'';
- return `${sign}${comparisonDisplayValue(diff,format)} vs mês anterior`;
-}
-function comparisonSummaryCards(scope){
- const series=comparisonSeries(scope);
- const last=series[series.length-1], prev=series[series.length-2];
- const main=COMPARISON_METRICS.filter(def=>['ofertadas','atendidas','abandonadas','whatsapp','nps'].includes(def.key));
- return main.map(def=>{
-  const current=comparisonMetricValue(def,last?.channel);
-  if(current===null) return '';
-  const previous=comparisonMetricValue(def,prev?.channel);
-  return `<article class="comparisonKpi"><span>${esc(def.title)}</span><strong>${esc(comparisonDisplayValue(current,def.format))}</strong><small>${esc(last?.label||'Última base')} · ${esc(comparisonDelta(current,previous,def.format))}</small></article>`;
- }).join('');
+  if(rows.length<2 || (!hasMeaningfulValue && npsDef.optional)) return null;
+  return {type:'line',title:npsDef.title,subtitle:npsDef.subtitle,data:rows,valueFormat:npsDef.format,comparisonScope:scope};
+ })() : null;
+ return grouped.concat(npsChart?[npsChart]:[]);
 }
 function comparisonShortcut(key,title='Comparativo mensal',desc='Acompanhe a evolução dos principais KPIs entre as bases publicadas.'){
  return `<section class="comparisonShortcut" id="comparisonShortcut"><div><span>Análise temporal</span><strong>${esc(title)}</strong><p>${esc(desc)}</p></div><button type="button" onclick="setView('${escAttr(key)}')">Ver comparativo</button></section>`;
@@ -1555,10 +1581,8 @@ function comparisonView(scope='geral'){
  updateDocumentTitle();
  const backKey=isGeneral?'geral':scope;
  const empty=`<div class="empty"><strong>Comparativo ainda indisponível</strong>Publique pelo menos duas bases mensais com indicadores compatíveis para montar a evolução.</div>`;
- const cards=comparisonSummaryCards(scope);
- let html=mobileSectionNav([{id:'comparisonSummary',label:'Resumo'},{id:'comparisonCharts',label:'Gráficos'}]);
- html+=`<section id="comparisonSummary">${sectionHeader(isGeneral?'Resumo comparativo geral':`Resumo comparativo · ${scope}`,'Leitura rápida da última base publicada contra o mês anterior disponível.')}<div class="comparisonToolbar"><button type="button" class="comparisonBackBtn" onclick="setView('${escAttr(backKey)}')">Voltar ao painel</button><span>${esc(baseItems.map(item=>item.label).join(' · '))}</span></div>${cards?`<div class="comparisonKpiGrid">${cards}</div>`:empty}</section>`;
- html+=`<section id="comparisonCharts">${sectionHeader('Linha do tempo dos KPIs','Os gráficos acompanham automaticamente os meses publicados no histórico do site.')}${charts.length?`<div class="chartGrid comparisonChartGrid">${charts.map((c,i)=>`<article class="chartCard comparisonChartCard"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">${fmt.format(c.data.length)} bases</div><button class="exportBtn" onclick="exportComparisonChartExcel(${i})">⬇ Excel</button><button class="expandBtn" onclick="openComparisonChartModal(${i})">⤢ Expandir</button></div></div><div class="chartCanvas comparisonLineCanvas" id="comparison_chart_${i}"></div></article>`).join('')}</div>`:empty}</section>`;
+ let html=mobileSectionNav([{id:'comparisonCharts',label:'Gráficos'}]);
+ html+=`<section id="comparisonCharts">${sectionHeader('Linha do tempo dos KPIs','Os gráficos acompanham automaticamente os meses publicados no histórico do site.')}<div class="comparisonToolbar"><button type="button" class="comparisonBackBtn" onclick="setView('${escAttr(backKey)}')">Voltar ao painel</button><span>${esc(baseItems.map(item=>item.label).join(' · '))}</span></div>${charts.length?`<div class="chartGrid comparisonChartGrid">${charts.map((c,i)=>`<article class="chartCard comparisonChartCard"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">${fmt.format(c.data.length)} bases</div><button class="exportBtn" onclick="exportComparisonChartExcel(${i})">⬇ Excel</button><button class="expandBtn" onclick="openComparisonChartModal(${i})">⤢ Expandir</button></div></div><div class="chartCanvas comparisonLineCanvas" id="comparison_chart_${i}"></div></article>`).join('')}</div>`:empty}</section>`;
  content.innerHTML=html;
  requestAnimationFrame(()=>charts.forEach((c,i)=>renderChart(document.getElementById(`comparison_chart_${i}`),c)));
 }
@@ -1929,6 +1953,7 @@ function renderChart(el,c,expanded=false){
  if(!el) return;
  el.classList.remove('lineChartCanvas','lineChartExpanded','expandedChartCanvas');
  el.classList.toggle('expandedChartCanvas',!!expanded);
+ if(c.type==='multiLine') return multiLineChart(el,c,expanded);
  const rows=chartData(c);
  if(c.type==='line') return lineChart(el,rows,expanded);
  if(c.type==='groupedBar') return groupedChart(el,rows);
@@ -2204,6 +2229,92 @@ function groupedColumnChart(el,data){
  el.innerHTML=svg; bindTips(el);
 }
 
+function multiLineChart(el,c,expanded=false){
+ const rows=(c?.data||[]).filter(row=>row && row.values);
+ const series=(c?.series||[]).filter(item=>rows.some(row=>Number.isFinite(Number(row.values?.[item.key]))));
+ if(!rows.length || !series.length){
+  el.innerHTML='<div class="empty"><strong>Sem dados</strong>Não há valores disponíveis para este gráfico.</div>';
+  return;
+ }
+ const W=el.clientWidth||980,H=el.clientHeight||380;
+ const mobileLandscape=window.matchMedia('(orientation: landscape) and (max-height: 520px) and (max-width: 960px)').matches;
+ const compact=W<560 || mobileLandscape;
+ const m=compact ? (expanded?{t:78,r:48,b:98,l:40}:{t:64,r:44,b:62,l:36}) : (expanded?{t:92,r:86,b:122,l:68}:{t:64,r:70,b:54,l:58});
+ const pointSpacing=compact ? (expanded?58:50) : (expanded?78:68);
+ const chartW=Math.max(W, m.l+m.r+Math.max(rows.length-1,1)*pointSpacing);
+ const colors=chartTheme();
+ el.classList.add('lineChartCanvas');
+ if(expanded) el.classList.add('lineChartExpanded');
+ const values=rows.flatMap(row=>series.map(item=>Number(row.values?.[item.key])).filter(Number.isFinite));
+ const maxBase=Math.max(...values,1);
+ const max=c.valueFormat==='percent' ? 100 : maxBase;
+ const min=0;
+ const range=Math.max(max-min,1);
+ const innerH=H-m.t-m.b;
+ const stepX=(chartW-m.l-m.r)/Math.max(rows.length-1,1);
+ const xAt=i=>m.l+i*stepX;
+ const yAt=v=>H-m.b-((v-min)/range)*innerH;
+ const legend=series.map((item,i)=>{
+  const x=m.l+(compact?(i%2)*150:i*220);
+  const y=compact?18+Math.floor(i/2)*18:24;
+  return `<g><circle cx="${x}" cy="${y-4}" r="5" fill="${item.color}"/><text x="${x+10}" y="${y}" font-size="${compact?10:12}" fill="${colors.label}" font-weight="950">${esc(item.label)}</text></g>`;
+ }).join('');
+ let svg=`<svg viewBox="0 0 ${chartW} ${H}" width="${chartW}" height="100%" role="img" aria-label="${esc(c.title||'Comparativo')}"><defs><linearGradient id="multiArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${colors.area}" stop-opacity=".12"/><stop offset="1" stop-color="${colors.area}" stop-opacity="0"/></linearGradient></defs>`;
+ svg+=legend;
+ [0,.25,.5,.75,1].forEach(rate=>{
+  const gy=m.t+(1-rate)*innerH;
+  svg+=`<line x1="${m.l}" y1="${gy}" x2="${chartW-m.r}" y2="${gy}" stroke="${colors.baseline}" stroke-opacity="${rate===0?'.7':'.22'}" stroke-width="${rate===0?2:1}"/>`;
+ });
+ const labelOffsets=[-18,18,-34,34,-50,50];
+ series.forEach((item,seriesIndex)=>{
+  const points=rows.map((row,i)=>{
+   const value=Number(row.values?.[item.key]);
+   return Number.isFinite(value) ? {x:xAt(i),y:yAt(value),row,value,display:row.displays?.[item.key] || comparisonDisplayValue(value,c.valueFormat)} : null;
+  });
+  const segments=[]; let current=[];
+  points.forEach(point=>{
+   if(point) current.push(point);
+   else if(current.length){ segments.push(current); current=[]; }
+  });
+  if(current.length) segments.push(current);
+  segments.forEach(segment=>{
+   if(segment.length===1) return;
+   svg+=`<path d="M ${segment.map(p=>`${p.x} ${p.y}`).join(' L ')}" fill="none" stroke="${item.color}" stroke-width="${expanded?4:3.4}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+  points.forEach(point=>{
+   if(!point) return;
+   const tip=`${point.row.label} · ${item.label}: ${point.display}`;
+   svg+=`<circle class="bar" data-tip="${esc(tip)}" cx="${point.x}" cy="${point.y}" r="${expanded?4.6:4.2}" fill="${colors.pointFill}" stroke="${item.color}" stroke-width="3"/>`;
+   const labelText=point.display;
+   const labelFont=expanded?12:11;
+   let textY=point.y+(labelOffsets[seriesIndex%labelOffsets.length]||-18);
+   if(textY<m.t+18) textY=point.y+22+seriesIndex*4;
+   if(textY>H-m.b-10) textY=point.y-18-seriesIndex*4;
+   const estimatedLabelW=Math.max(24,String(labelText).length*7+12);
+   const labelX=Math.min(Math.max(point.x,estimatedLabelW/2+4),chartW-estimatedLabelW/2-4);
+   if(colors.dark){
+    const pillW=estimatedLabelW, pillH=17;
+    svg+=`<rect x="${labelX-pillW/2}" y="${textY-pillH+4}" width="${pillW}" height="${pillH}" rx="8.5" fill="${colors.labelPill}" stroke="${colors.labelPillStroke}" stroke-width="1"/>`;
+    svg+=`<text x="${labelX}" y="${textY}" text-anchor="middle" font-size="${labelFont}" fill="${colors.label}" font-weight="950">${esc(labelText)}</text>`;
+   } else {
+    svg+=`<text x="${labelX}" y="${textY}" text-anchor="middle" font-size="${labelFont}" fill="${colors.label}" font-weight="950" style="paint-order:stroke;stroke:${colors.halo};stroke-width:6px;stroke-linejoin:round">${esc(labelText)}</text>`;
+   }
+  });
+ });
+ rows.forEach((row,i)=>{
+  const x=xAt(i);
+  if(expanded){
+   svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="${colors.axis}" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(row.label)}</text>`;
+  } else {
+   const axisAnchor=i===0?'start':(i===rows.length-1?'end':'middle');
+   svg+=`<text x="${x}" y="${H-20}" text-anchor="${axisAnchor}" font-size="11" fill="${colors.axis}" font-weight="900">${esc(row.label)}</text>`;
+  }
+ });
+ svg+=`</svg>`;
+ el.innerHTML=`<div class="lineChartScroll">${svg}</div>`;
+ bindTips(el);
+}
+
 function lineChart(el,data,expanded=false){
   const W=el.clientWidth||980,H=el.clientHeight||380;
   const mobileLandscape=window.matchMedia('(orientation: landscape) and (max-height: 520px) and (max-width: 960px)').matches;
@@ -2255,6 +2366,16 @@ function excelCell(v){ return String(v??'').replace(/[&<>]/g,m=>({'&':'&amp;','<
 function safeFileName(s){ return String(s||'exportacao').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,90) || 'exportacao'; }
 function chartRowsForExcel(c){
  if(!c || !Array.isArray(c.data)) return {headers:['Indicador','Valor'], rows:[]};
+ if(c.type==='multiLine'){
+   const series=(c.series||[]).filter(item=>(c.data||[]).some(row=>Number.isFinite(Number(row.values?.[item.key]))));
+   return {headers:['Período',...series.map(item=>item.label)], rows:c.data.map(row=>[
+    row.label,
+    ...series.map(item=>{
+     const value=Number(row.values?.[item.key]);
+     return Number.isFinite(value)?+(value.toFixed(1)):0;
+    })
+   ])};
+ }
  if(c.type==='line'){
    const valueHeader=c.valueFormat==='percent'?'Percentual':(c.valueFormat==='nps'?'NPS':'Quantidade');
    return {headers:['Período',valueHeader], rows:c.data.map(d=>[d.label, Number.isFinite(+d.value)?+(+d.value).toFixed(1):0])};
@@ -2287,10 +2408,17 @@ function xlsxChartXml(c,pack){
  const title=xlsxXml(c.title||'Grafico');
  const end=pack.rows.length+1;
  const cats=pack.rows.map(r=>r[0]);
- const type=c.type==='line'?'line':(c.type==='groupedBar'||c.type==='groupedColumn'?'grouped':(c.type==='pie'?'pie':'bar'));
+ const type=(c.type==='line'||c.type==='multiLine')?'line':(c.type==='groupedBar'||c.type==='groupedColumn'?'grouped':(c.type==='pie'?'pie':'bar'));
  const color1='0070C0', color2='EF4E5A';
  let plot='';
- if(type==='line'){
+ if(c.type==='multiLine'){
+  const chartColors=['0070C0','16A34A','EF4E5A','7C3AED','00A3FF'];
+  const seriesXml=pack.headers.slice(1).map((header,idx)=>{
+   const values=pack.rows.map(r=>+r[idx+1]||0);
+   return xlsxSer(idx,header,cats,values,xlsxRange(1,2,end),xlsxRange(idx+2,2,end),chartColors[idx%chartColors.length]);
+  }).join('');
+  plot=`<c:lineChart><c:grouping val="standard"/>${seriesXml}<c:marker val="1"/><c:smooth val="0"/><c:axId val="1001"/><c:axId val="1002"/></c:lineChart>`;
+ } else if(type==='line'){
   const values=pack.rows.map(r=>+r[1]||0);
   plot=`<c:lineChart><c:grouping val="standard"/>${xlsxSer(0,pack.headers[1]||'Quantidade',cats,values,xlsxRange(1,2,end),xlsxRange(2,2,end),color1)}<c:marker val="1"/><c:smooth val="0"/><c:axId val="1001"/><c:axId val="1002"/></c:lineChart>`;
  } else if(type==='grouped'){
@@ -2307,7 +2435,7 @@ function xlsxChartXml(c,pack){
  const valPos=type==='bar'?'b':'l';
  const catOrientation=type==='bar'?'maxMin':'minMax';
  const axes=type==='pie'?'':`<c:catAx><c:axId val="1001"/><c:scaling><c:orientation val="${catOrientation}"/></c:scaling><c:delete val="0"/><c:axPos val="${catPos}"/><c:tickLblPos val="nextTo"/><c:crossAx val="1002"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/></c:catAx><c:valAx><c:axId val="1002"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="${valPos}"/><c:majorGridlines/><c:numFmt formatCode="General" sourceLinked="1"/><c:tickLblPos val="nextTo"/><c:crossAx val="1001"/><c:crosses val="autoZero"/></c:valAx>`;
- const legend=type==='grouped'?'<c:legend><c:legendPos val="b"/><c:layout/></c:legend>':'';
+ const legend=(type==='grouped'||c.type==='multiLine')?'<c:legend><c:legendPos val="b"/><c:layout/></c:legend>':'';
  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><c:date1904 val="0"/><c:lang val="pt-BR"/><c:chart><c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="pt-BR" sz="1400" b="1"/><a:t>${title}</a:t></a:r></a:p></c:rich></c:tx><c:layout/></c:title><c:plotArea><c:layout/>${plot}${axes}</c:plotArea>${legend}<c:plotVisOnly val="1"/></c:chart><c:printSettings><c:headerFooter/><c:pageMargins b="0.75" l="0.7" r="0.7" t="0.75" header="0.3" footer="0.3"/><c:pageSetup/></c:printSettings></c:chartSpace>`;
 }
 function crc32(bytes){

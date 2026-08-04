@@ -99,11 +99,6 @@ select{display:none}
 .comparisonShortcut button,.comparisonBackBtn{border:0;cursor:pointer;border-radius:999px;padding:11px 15px;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;font-weight:950;box-shadow:0 14px 28px rgba(0,87,184,.22);white-space:nowrap}
 .comparisonToolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 16px;color:var(--muted);font-size:13px}
 .comparisonBackBtn{background:#EAF4FF;color:var(--gazin-blue);box-shadow:none;border:1px solid rgba(0,87,184,.12)}
-.comparisonKpiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:20px}
-.comparisonKpi{padding:16px;border-radius:20px;background:linear-gradient(180deg,#fff,#F7FBFF);border:1px solid rgba(0,87,184,.12);box-shadow:0 12px 28px rgba(9,42,86,.07)}
-.comparisonKpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:950}
-.comparisonKpi strong{display:block;margin-top:6px;font-size:28px;color:var(--gazin-blue);font-weight:950}
-.comparisonKpi small{display:block;margin-top:4px;color:var(--muted);font-weight:800}
 .comparisonChartGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .comparisonChartCard{min-height:360px}
 .comparisonLineCanvas{min-height:260px}
@@ -233,17 +228,14 @@ body.darkMode .kpi:after,
 body.darkMode .insightCard:after{background:linear-gradient(120deg,transparent 22%,rgba(68,166,255,.18) 48%,transparent 70%)}
 body.darkMode .kpi:hover,
 body.darkMode .insightCard:hover{border-color:rgba(96,190,255,.34);box-shadow:0 22px 52px rgba(0,0,0,.34),0 0 0 1px rgba(0,163,255,.12) inset,0 0 28px rgba(0,114,206,.12)}
-body.darkMode .comparisonShortcut,
-body.darkMode .comparisonKpi{
+body.darkMode .comparisonShortcut{
   background:linear-gradient(180deg,rgba(16,43,74,.96),rgba(9,18,34,.96));
   border-color:rgba(120,188,255,.22);
   box-shadow:0 18px 42px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);
 }
-body.darkMode .comparisonShortcut strong,
-body.darkMode .comparisonKpi strong{color:#F4F9FF}
+body.darkMode .comparisonShortcut strong{color:#F4F9FF}
 body.darkMode .comparisonShortcut p,
-body.darkMode .comparisonToolbar,
-body.darkMode .comparisonKpi small{color:#C8DCF6}
+body.darkMode .comparisonToolbar{color:#C8DCF6}
 body.darkMode .comparisonBackBtn{background:rgba(31,62,101,.92);color:#F4F9FF;border-color:rgba(151,204,255,.24)}
 body.darkMode .kpi:hover .value,
 body.darkMode .insightCard:hover .insightValue{color:#40B6FF}
@@ -745,9 +737,6 @@ body.darkMode .assistantDock{background:linear-gradient(145deg,rgba(0,163,255,.1
   .comparisonToolbar{display:block}
   .comparisonToolbar span{display:block;margin-top:8px;line-height:1.35}
   .comparisonBackBtn{width:100%}
-  .comparisonKpiGrid{grid-template-columns:1fr;gap:10px}
-  .comparisonKpi{padding:14px;border-radius:17px}
-  .comparisonKpi strong{font-size:24px}
   .comparisonChartCard{min-height:340px}
   .comparisonLineCanvas{min-height:230px}
 }
