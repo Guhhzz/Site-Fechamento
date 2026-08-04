@@ -1619,6 +1619,7 @@ function genericDataTable(sheet,table,index=0){
   const columns=table.columns||[];
   const rows=table.rows||[];
   if(!columns.length||!rows.length) return '';
+  if(isResearchTable(table)) return researchDataTable(sheet,table,index);
   const totals=(table.totals||[]).map(item=>`<div class="chartTotal">${esc(item.label)}: ${fmt.format(Math.round(+item.value||0))}</div>`).join('');
   const head=columns.map(col=>`<th>${esc(col)}</th>`).join('');
   const body=rows.map(row=>`<tr>${columns.map((col,i)=>{
@@ -1627,6 +1628,36 @@ function genericDataTable(sheet,table,index=0){
     return `<td>${value}</td>`;
   }).join('')}</tr>`).join('');
   return `<section class="tableCard genericDataTableCard"><div class="tableHead"><div><h4>${esc(table.title||'Tabela')}</h4><p>${esc(table.subtitle||'Dados complementares do fechamento mensal.')}</p></div><div class="chartActions">${totals}<button class="exportBtn" onclick="exportGenericTableExcel('${escAttr(sheet.name)}',${index})">&#11015; Excel</button></div></div><div class="genericTableScroll"><table class="executiveTable genericDataTable"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></section>`;
+}
+
+function isGenericTotalRow(row){
+ const label=Array.isArray(row) ? row[0] : (row?.Pesquisa || row?.pesquisa || row?.label || row?.nome);
+ return String(label||'').trim().toLowerCase()==='total';
+}
+function tableRowsWithoutTotal(table){ return (table?.rows||[]).filter(row=>!isGenericTotalRow(row)); }
+function isResearchTable(table){
+ const key=dashboardTextKey(`${table?.key||''} ${table?.title||''}`);
+ return key.includes('pesquisa');
+}
+function researchRowName(row){ return Array.isArray(row) ? row[0] : (row?.Pesquisa || row?.pesquisa || row?.nome || row?.label || 'Pesquisa'); }
+function researchRowValue(row){ return +(Array.isArray(row) ? row[1] : (row?.['Quantidade de respostas'] ?? row?.quantidade ?? row?.value)) || 0; }
+function researchDataTable(sheet,table,index=0){
+ const rows=tableRowsWithoutTotal(table);
+ const totalResponses=rows.reduce((sum,row)=>sum+researchRowValue(row),0);
+ const max=Math.max(...rows.map(researchRowValue),1);
+ const summaryItems=[
+  ...(table.totals||[]).map(item=>({label:item.label,value:+item.value||0,tone:dashboardTextKey(item.label)})),
+  {label:'Respostas',value:totalResponses,tone:'respostas'}
+ ];
+ const summary=summaryItems.map(item=>`<article class="researchSummaryCard ${escAttr(item.tone)}"><span>${esc(item.label)}</span><strong>${fmt.format(Math.round(item.value))}</strong></article>`).join('');
+ const body=rows.map((row,i)=>{
+  const name=researchRowName(row);
+  const value=researchRowValue(row);
+  const share=totalResponses ? value/totalResponses*100 : 0;
+  const width=Math.max(4,value/max*100);
+  return `<tr><td><div class="researchName"><span>${i+1}</span><strong>${esc(name)}</strong></div></td><td><div class="researchAmount"><strong>${fmt.format(Math.round(value))}</strong><small>${pct(share)} do total</small><div class="researchBar"><span style="width:${width.toFixed(2)}%"></span></div></div></td></tr>`;
+ }).join('');
+ return `<section class="tableCard genericDataTableCard researchTableCard"><div class="tableHead"><div><h4>${esc(table.title||'Tabela de Pesquisas')}</h4><p>${esc(table.subtitle||'Pesquisas e respostas registradas no período.')}</p></div><div class="chartActions"><button class="exportBtn" onclick="exportGenericTableExcel('${escAttr(sheet.name)}',${index})">&#11015; Excel</button></div></div><div class="researchSummary">${summary}</div><div class="genericTableScroll researchTableScroll"><table class="executiveTable genericDataTable researchDataTable"><thead><tr><th>Pesquisa</th><th>Quantidade de respostas</th></tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ')}
@@ -1690,8 +1721,7 @@ function enrichDashboard(dashboard){
     ['Pesquisa Auditoria Filial 46',18],
     ['Pesquisa Pós Venda Atacado - Holding',263],
     ['Levantamento de bicicletas e triciclos elétricos',169],
-    ['Deslocamento para o VEX 26',298],
-    ['Total',1866]
+    ['Deslocamento para o VEX 26',298]
    ]
   });
  }
@@ -2220,7 +2250,7 @@ function exportGenericTableExcel(sheetName,index=0){
  const table=s?.tables?.[index];
  if(!table) return;
  const columns=table.columns||[];
- const rows=table.rows||[];
+ const rows=isResearchTable(table) ? tableRowsWithoutTotal(table) : (table.rows||[]);
  const headerHtml=columns.map(h=>`<th>${excelCell(h)}</th>`).join('');
  const rowsHtml=rows.map(row=>`<tr>${columns.map((col,i)=>{
   const value=Array.isArray(row) ? row[i] : row[col];

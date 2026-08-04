@@ -288,6 +288,14 @@ body.darkMode .genericTableScroll::-webkit-scrollbar-track{background:#162843}
 body.darkMode .genericTableScroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2E9BFF,#0072CE)}
 body.darkMode .genericDataTable tr td:first-child,
 body.darkMode .genericDataTable tr td:last-child{color:#F4F9FF}
+body.darkMode .researchSummaryCard{background:linear-gradient(180deg,#132845,#0E1E36);border-color:#263C5F;box-shadow:0 14px 30px rgba(0,0,0,.22)}
+body.darkMode .researchSummaryCard:hover{border-color:rgba(96,190,255,.38);box-shadow:0 18px 38px rgba(0,0,0,.28),0 0 0 1px rgba(0,163,255,.10) inset}
+body.darkMode .researchSummaryCard span,
+body.darkMode .researchAmount small{color:#A9BCD4}
+body.darkMode .researchSummaryCard strong{color:#40B6FF}
+body.darkMode .researchName strong,
+body.darkMode .researchAmount strong{color:#F4F9FF}
+body.darkMode .researchBar{background:#203653}
 body.darkMode .progress{background:#203653}
 body.darkMode .empty,
 body.darkMode .note,
@@ -476,6 +484,25 @@ body.darkMode .ufMapPopup{background:rgba(9,27,49,.97);border-color:rgba(142,202
 .genericDataTable{min-width:760px}
 .genericDataTable tr td:first-child{width:auto;text-align:left;color:#061A36}
 .genericDataTable tr td:last-child{text-align:right;color:#0057B8}
+.researchTableCard{overflow:hidden}
+.researchSummary{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:8px 0 16px}
+.researchSummaryCard{border:1px solid #D8E9FA;border-radius:18px;background:linear-gradient(180deg,#F8FBFF,#FFFFFF);box-shadow:0 12px 24px rgba(6,26,54,.08);padding:14px 15px;min-height:74px;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.researchSummaryCard:hover{transform:translateY(-2px);border-color:#9CCBFF;box-shadow:0 18px 34px rgba(0,87,184,.13)}
+.researchSummaryCard span{display:block;font-size:11px;font-weight:1000;text-transform:uppercase;letter-spacing:.08em;color:#5A6E86}
+.researchSummaryCard strong{display:block;margin-top:7px;color:#0057B8;font-size:25px;line-height:1}
+.researchTableScroll{max-height:438px}
+.researchDataTable{min-width:760px}
+.researchDataTable tr{transition:transform .18s ease}
+.researchDataTable tr:hover{transform:translateX(3px)}
+.researchDataTable td{padding:12px 14px}
+.researchName{display:flex;align-items:center;gap:12px;min-width:0}
+.researchName span{flex:0 0 auto;width:31px;height:31px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,var(--gazin-blue),var(--gazin-blue-2));color:#fff;font-size:12px;font-weight:1000;box-shadow:0 10px 20px rgba(0,87,184,.18)}
+.researchName strong{min-width:0;color:#061A36;font-size:14px;font-weight:950;line-height:1.25}
+.researchAmount{min-width:230px;text-align:left}
+.researchAmount strong{display:inline-block;color:#061A36;font-size:16px;font-weight:1000}
+.researchAmount small{display:inline-block;margin-left:8px;color:#5E748D;font-size:11px;font-weight:900}
+.researchBar{height:8px;margin-top:7px;border-radius:999px;background:#EAF2FC;overflow:hidden}
+.researchBar span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gazin-blue),var(--gazin-blue-3));box-shadow:0 0 16px rgba(0,163,255,.24);transition:width .24s ease}
 .progressCell{min-width:180px}
 .progress{height:9px;background:#EAF2FC;border-radius:999px;overflow:hidden;margin-top:6px}
 .progress span{display:block;height:100%;background:linear-gradient(90deg,var(--gazin-blue),var(--gazin-blue-3));border-radius:999px}
@@ -675,7 +702,7 @@ body.darkMode .assistantDock{background:linear-gradient(145deg,rgba(0,163,255,.1
 .closeBtn{border:none;background:#EEF5FF;color:var(--gazin-blue);font-weight:950;border-radius:14px;padding:10px 14px;cursor:pointer}
 #modalCanvas{flex:1;min-height:680px}
 @media (max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:680px){.kpis{grid-template-columns:1fr}.heroContent{display:block}.hero h2{font-size:27px}.chartTop,.tableHead{display:block}.chartActions{justify-content:flex-start;margin-top:10px}.executiveTable{font-size:12px}.genericDataTable{min-width:620px}.genericTableScroll{max-height:420px}}
+@media (max-width:680px){.kpis{grid-template-columns:1fr}.heroContent{display:block}.hero h2{font-size:27px}.chartTop,.tableHead{display:block}.chartActions{justify-content:flex-start;margin-top:10px}.executiveTable{font-size:12px}.genericDataTable{min-width:620px}.genericTableScroll{max-height:420px}.researchSummary{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.researchSummaryCard{min-height:64px;padding:12px}.researchSummaryCard strong{font-size:21px}.researchDataTable{min-width:560px}.researchAmount{min-width:170px}.researchAmount small{display:block;margin:3px 0 0}.researchName strong{font-size:12px}}
 
 .historyUpload{display:none;}
 body.adminUnlocked .historyUpload{display:inline-flex;}
