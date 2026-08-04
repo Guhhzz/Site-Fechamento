@@ -1473,7 +1473,7 @@ const COMPARISON_METRICS=[
  {key:'taxaAbandono',title:'Taxa de abandono',subtitle:'Abandonadas sobre ligações ofertadas',format:'percent',value:channel=>channel?.ofertadas?(+channel.abandonadas||0)/(+channel.ofertadas||1)*100:null}
 ];
 const COMPARISON_CHART_GROUPS=[
- {title:'Volume de ligações',subtitle:'Ofertadas, atendidas e abandonadas no mesmo acompanhamento mensal.',format:'number',series:[
+ {title:'Volume de ligações',subtitle:'Ofertadas, atendidas e abandonadas no mesmo acompanhamento mensal.',format:'number',layout:'lanes',series:[
   {key:'ofertadas',label:'Ofertadas',color:'#00A3FF'},
   {key:'atendidas',label:'Atendidas',color:'#16A34A'},
   {key:'abandonadas',label:'Abandonadas',color:'#EF4444'}
@@ -1547,7 +1547,7 @@ function buildComparisonGroupChart(group,series,scope){
   return {label:entry.label,values,displays};
  }).filter(row=>activeSeries.some(item=>Number.isFinite(Number(row.values[item.key]))));
  if(rows.length<2) return null;
- return {type:'multiLine',title:group.title,subtitle:group.subtitle,data:rows,series:activeSeries.map(({def,...item})=>item),valueFormat:group.format,comparisonScope:scope};
+ return {type:'multiLine',title:group.title,subtitle:group.subtitle,data:rows,series:activeSeries.map(({def,...item})=>item),valueFormat:group.format,comparisonScope:scope,layout:group.layout||''};
 }
 function buildComparisonCharts(scope){
  const series=comparisonSeries(scope);
@@ -1951,7 +1951,7 @@ function isUfDistributionChart(c){
 }
 function renderChart(el,c,expanded=false){
  if(!el) return;
- el.classList.remove('lineChartCanvas','lineChartExpanded','expandedChartCanvas');
+ el.classList.remove('lineChartCanvas','lineChartExpanded','expandedChartCanvas','comparisonLaneCanvas');
  el.classList.toggle('expandedChartCanvas',!!expanded);
  if(c.type==='multiLine') return multiLineChart(el,c,expanded);
  const rows=chartData(c);
@@ -2239,11 +2239,15 @@ function multiLineChart(el,c,expanded=false){
  const W=el.clientWidth||980,H=el.clientHeight||380;
  const mobileLandscape=window.matchMedia('(orientation: landscape) and (max-height: 520px) and (max-width: 960px)').matches;
  const compact=W<560 || mobileLandscape;
- const m=compact ? (expanded?{t:78,r:48,b:98,l:40}:{t:64,r:44,b:62,l:36}) : (expanded?{t:92,r:86,b:122,l:68}:{t:64,r:70,b:54,l:58});
+ const laneMode=c.layout==='lanes' && series.length>1;
+ const m=laneMode
+  ? (compact ? (expanded?{t:78,r:48,b:98,l:102}:{t:64,r:44,b:62,l:98}) : (expanded?{t:96,r:94,b:122,l:118}:{t:70,r:80,b:58,l:112}))
+  : (compact ? (expanded?{t:78,r:48,b:98,l:48}:{t:64,r:44,b:62,l:42}) : (expanded?{t:96,r:94,b:122,l:88}:{t:70,r:80,b:58,l:82}));
  const pointSpacing=compact ? (expanded?58:50) : (expanded?78:68);
  const chartW=Math.max(W, m.l+m.r+Math.max(rows.length-1,1)*pointSpacing);
  const colors=chartTheme();
  el.classList.add('lineChartCanvas');
+ el.classList.toggle('comparisonLaneCanvas',laneMode);
  if(expanded) el.classList.add('lineChartExpanded');
  const values=rows.flatMap(row=>series.map(item=>Number(row.values?.[item.key])).filter(Number.isFinite));
  const maxBase=Math.max(...values,1);
@@ -2253,7 +2257,20 @@ function multiLineChart(el,c,expanded=false){
  const innerH=H-m.t-m.b;
  const stepX=(chartW-m.l-m.r)/Math.max(rows.length-1,1);
  const xAt=i=>m.l+i*stepX;
- const yAt=v=>H-m.b-((v-min)/range)*innerH;
+ const laneH=laneMode ? innerH/series.length : innerH;
+ const yAt=(v,item,seriesIndex)=>{
+  if(!laneMode) return H-m.b-((v-min)/range)*innerH;
+  const vals=rows.map(row=>Number(row.values?.[item.key])).filter(Number.isFinite);
+  const localMin=Math.min(...vals), localMax=Math.max(...vals);
+  const rawRange=Math.max(localMax-localMin,Math.max(localMax,1)*.08,1);
+  const paddedMin=Math.max(0,localMin-rawRange*.22);
+  const paddedMax=localMax+rawRange*.22;
+  const localRange=Math.max(paddedMax-paddedMin,1);
+  const laneTop=m.t+seriesIndex*laneH;
+  const lanePadding=Math.max(18,laneH*.2);
+  const usable=Math.max(28,laneH-lanePadding*2);
+  return laneTop+lanePadding+(1-((v-paddedMin)/localRange))*usable;
+ };
  const legend=series.map((item,i)=>{
   const x=m.l+(compact?(i%2)*150:i*220);
   const y=compact?18+Math.floor(i/2)*18:24;
@@ -2263,13 +2280,22 @@ function multiLineChart(el,c,expanded=false){
  svg+=legend;
  [0,.25,.5,.75,1].forEach(rate=>{
   const gy=m.t+(1-rate)*innerH;
-  svg+=`<line x1="${m.l}" y1="${gy}" x2="${chartW-m.r}" y2="${gy}" stroke="${colors.baseline}" stroke-opacity="${rate===0?'.7':'.22'}" stroke-width="${rate===0?2:1}"/>`;
+  if(!laneMode) svg+=`<line x1="${m.l}" y1="${gy}" x2="${chartW-m.r}" y2="${gy}" stroke="${colors.baseline}" stroke-opacity="${rate===0?'.7':'.22'}" stroke-width="${rate===0?2:1}"/>`;
  });
+ if(laneMode){
+  series.forEach((item,seriesIndex)=>{
+   const laneTop=m.t+seriesIndex*laneH;
+   const laneMid=laneTop+laneH*.5;
+   const laneBase=laneTop+laneH;
+   svg+=`<line x1="${m.l}" y1="${laneBase}" x2="${chartW-m.r}" y2="${laneBase}" stroke="${colors.baseline}" stroke-opacity=".42" stroke-width="1"/>`;
+   svg+=`<text x="${m.l-14}" y="${laneMid+4}" text-anchor="end" font-size="${compact?10:11}" fill="${item.color}" font-weight="950">${esc(item.label)}</text>`;
+  });
+ }
  const labelOffsets=[-18,18,-34,34,-50,50];
  series.forEach((item,seriesIndex)=>{
   const points=rows.map((row,i)=>{
    const value=Number(row.values?.[item.key]);
-   return Number.isFinite(value) ? {x:xAt(i),y:yAt(value),row,value,display:row.displays?.[item.key] || comparisonDisplayValue(value,c.valueFormat)} : null;
+   return Number.isFinite(value) ? {x:xAt(i),y:yAt(value,item,seriesIndex),row,value,display:row.displays?.[item.key] || comparisonDisplayValue(value,c.valueFormat)} : null;
   });
   const segments=[]; let current=[];
   points.forEach(point=>{
@@ -2287,7 +2313,7 @@ function multiLineChart(el,c,expanded=false){
    svg+=`<circle class="bar" data-tip="${esc(tip)}" cx="${point.x}" cy="${point.y}" r="${expanded?4.6:4.2}" fill="${colors.pointFill}" stroke="${item.color}" stroke-width="3"/>`;
    const labelText=point.display;
    const labelFont=expanded?12:11;
-   let textY=point.y+(labelOffsets[seriesIndex%labelOffsets.length]||-18);
+   let textY=point.y+(laneMode ? -16 : (labelOffsets[seriesIndex%labelOffsets.length]||-18));
    if(textY<m.t+18) textY=point.y+22+seriesIndex*4;
    if(textY>H-m.b-10) textY=point.y-18-seriesIndex*4;
    const estimatedLabelW=Math.max(24,String(labelText).length*7+12);

@@ -21,7 +21,10 @@ html,body{max-width:100%;overflow-x:hidden}
 body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(circle at 12% 0%,#DDEEFF 0,#F8FBFF 35%,#EEF6FF 100%);color:var(--text)}
 .app{--sidebar-width:330px;min-height:100vh;display:block}
 .app,.main,#content,.hero,.kpis,.kpi,.mobileExecutiveSummary,.mobileMetric,.mobileSectionNav,.insightsGrid,.insightCard,.chartGrid,.chartCard,.tableCard,.historyDock,.assistantDock{min-width:0}
-.sidebar{width:var(--sidebar-width);background:linear-gradient(180deg,var(--gazin-dark),#0B2E5E 54%,var(--gazin-blue));color:#fff;padding:28px 22px;position:fixed;left:0;top:0;bottom:0;height:100vh;overflow:hidden;box-shadow:18px 0 48px rgba(6,26,54,.18);z-index:50}
+.sidebar{width:var(--sidebar-width);background:linear-gradient(180deg,var(--gazin-dark),#0B2E5E 54%,var(--gazin-blue));color:#fff;padding:28px 22px;position:fixed;left:0;top:0;bottom:0;height:100vh;overflow-x:hidden;overflow-y:auto;scrollbar-gutter:stable;box-shadow:18px 0 48px rgba(6,26,54,.18);z-index:50}
+.sidebar::-webkit-scrollbar{width:8px}
+.sidebar::-webkit-scrollbar-track{background:rgba(255,255,255,.08);border-radius:999px}
+.sidebar::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#7CCBFF,#0072CE);border-radius:999px}
 .sidebar>.brand{display:none}
 .brand{display:flex;gap:12px;align-items:center;margin-bottom:22px;min-width:0}
 .logo{width:76px;height:76px;border-radius:22px;background:linear-gradient(145deg,#FFFFFF,#EEF6FF);display:grid;place-items:center;padding:7px;box-shadow:0 16px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.96);overflow:hidden;flex:0 0 auto}
@@ -102,6 +105,7 @@ select{display:none}
 .comparisonChartGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .comparisonChartCard{min-height:360px}
 .comparisonLineCanvas{min-height:260px}
+.comparisonLaneCanvas{min-height:390px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:18px}
 .kpi{background:rgba(255,255,255,.88);border:1px solid rgba(0,87,184,.10);box-shadow:0 13px 34px rgba(9,42,86,.08);border-radius:22px;padding:19px;position:relative;overflow:hidden;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease,background .22s ease;will-change:transform}
 .kpi:before{content:"";position:absolute;right:-34px;top:-38px;width:108px;height:108px;border-radius:50%;background:linear-gradient(135deg,rgba(0,87,184,.15),rgba(0,114,206,.05));transition:transform .22s ease,filter .22s ease}
@@ -739,6 +743,7 @@ body.darkMode .assistantDock{background:linear-gradient(145deg,rgba(0,163,255,.1
   .comparisonBackBtn{width:100%}
   .comparisonChartCard{min-height:340px}
   .comparisonLineCanvas{min-height:230px}
+  .comparisonLaneCanvas{min-height:340px}
 }
 
 .historyUpload{display:none;}
@@ -2374,12 +2379,24 @@ body.darkMode .tourMeta #welcomeSceneCounter{
     width:var(--sidebar-width) !important;
     height:100vh !important;
     max-height:100vh !important;
-    overflow:hidden !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
     overscroll-behavior:none;
   }
   .main{
     margin-left:var(--sidebar-width) !important;
   }
+}
+
+@media (min-width:761px) and (max-height:920px){
+  .sidebar{padding:18px 18px}
+  .userPanel{margin-bottom:12px;padding:10px;border-radius:16px}
+  .nav{gap:8px;margin-top:6px}
+  .nav button{padding:11px 14px;border-radius:15px}
+  .historyDock,.assistantDock{margin-top:12px;padding:13px;border-radius:22px}
+  .historyBtn,.assistantDockBtn{padding:11px 12px;border-radius:18px}
+  .historyIcon,.assistantDockIcon{width:34px;height:34px;border-radius:13px}
+  .historyDock p,.assistantDock p{font-size:11px;line-height:1.28;margin-top:9px}
 }
 
 @media (orientation:landscape) and (max-height:520px) and (max-width:960px){
