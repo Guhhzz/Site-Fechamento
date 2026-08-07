@@ -1464,6 +1464,7 @@ function kpisForChannel(channel,sheet=null){
   return `${kpiCard(labels.ofertadas,of,'Chamadas recebidas no período')}${kpiCard(labels.atendidas,at,'Chamadas efetivamente atendidas',rateBadge(atPct,'atendidas','above'))}${kpiCard(labels.abandonadas,ab,'Chamadas abandonadas',rateBadge(abPct,'abandonadas','below'))}${cbCard}${kpiCard(labels.whatsapp,channel.whatsapp||0,'Tickets via WhatsApp',whatsappExtra)}${npsCard}${extraCards}`;
 }
 const COMPARISON_MONTH_ORDER={janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+const COMPARISON_MONTH_LABELS={janeiro:'Janeiro',fevereiro:'Fevereiro',marco:'Março',abril:'Abril',maio:'Maio',junho:'Junho',julho:'Julho',agosto:'Agosto',setembro:'Setembro',outubro:'Outubro',novembro:'Novembro',dezembro:'Dezembro'};
 const COMPARISON_METRICS=[
  {key:'ofertadas',title:'Ligações ofertadas',subtitle:'Volume recebido em cada fechamento'},
  {key:'atendidas',title:'Ligações atendidas',subtitle:'Chamadas efetivamente atendidas por mês'},
@@ -1495,6 +1496,23 @@ function comparisonMonthIndex(label){
  const monthName=Object.keys(COMPARISON_MONTH_ORDER).find(name=>key.includes(name));
  const year=yearMatch?+yearMatch[1]:0, month=monthName?COMPARISON_MONTH_ORDER[monthName]:0;
  return year*12+month;
+}
+function comparisonYearFromLabel(label){
+ const match=String(label||'').match(/\b(20\d{2})\b/);
+ return match ? match[1] : '';
+}
+function comparisonShortLabel(label,allLabels=[]){
+ const raw=String(label||'').trim();
+ const key=dashboardTextKey(raw).replace(/ç/g,'c');
+ const monthName=Object.keys(COMPARISON_MONTH_ORDER).find(name=>key.includes(name));
+ const years=(allLabels||[]).map(comparisonYearFromLabel).filter(Boolean);
+ const sameYear=years.length>1 && years.every(year=>year===years[0]);
+ if(monthName){
+  const monthLabel=COMPARISON_MONTH_LABELS[monthName] || raw;
+  const year=comparisonYearFromLabel(raw);
+  return year && years.length>1 && !sameYear ? `${monthLabel}/${year.slice(-2)}` : monthLabel;
+ }
+ return raw.replace(/\s+\b20\d{2}\b/g,'').trim() || raw;
 }
 function comparisonBaseItems(){
  const byKey=new Map();
@@ -1537,6 +1555,7 @@ function buildComparisonGroupChart(group,series,scope){
   return !(item.optional || item.def.optional) || values.some(value=>(+value||0)!==0);
  });
  if(!activeSeries.length) return null;
+ const allLabels=series.map(entry=>entry.label);
  const rows=series.map(entry=>{
   const values={}, displays={};
   activeSeries.forEach(item=>{
@@ -1546,7 +1565,7 @@ function buildComparisonGroupChart(group,series,scope){
     displays[item.key]=comparisonDisplayValue(value,item.def.format || group.format);
    }
   });
-  return {label:entry.label,values,displays};
+  return {label:comparisonShortLabel(entry.label,allLabels),fullLabel:entry.label,values,displays};
  }).filter(row=>activeSeries.some(item=>Number.isFinite(Number(row.values[item.key]))));
  if(rows.length<2) return null;
  return {type:'multiLine',title:group.title,subtitle:group.subtitle,data:rows,series:activeSeries.map(({def,...item})=>item),valueFormat:group.format,comparisonScope:scope,layout:group.layout||''};
@@ -1556,10 +1575,11 @@ function buildComparisonCharts(scope){
  const grouped=COMPARISON_CHART_GROUPS.map(group=>buildComparisonGroupChart(group,series,scope)).filter(Boolean);
  const npsDef=comparisonMetricDef('nps');
  const npsChart=npsDef ? (()=>{
+  const allLabels=series.map(entry=>entry.label);
   const rows=series.map(entry=>{
    const value=comparisonMetricValue(npsDef,entry.channel);
    if(value===null) return null;
-   return {label:entry.label,value,displayValue:comparisonDisplayValue(value,npsDef.format)};
+   return {label:comparisonShortLabel(entry.label,allLabels),fullLabel:entry.label,value,displayValue:comparisonDisplayValue(value,npsDef.format)};
   }).filter(Boolean);
   const hasMeaningfulValue=rows.some(row=>(+row.value||0)!==0);
   if(rows.length<2 || (!hasMeaningfulValue && npsDef.optional)) return null;
@@ -1575,6 +1595,8 @@ function comparisonView(scope='geral'){
  setActive(key);
  const isGeneral=scope==='geral';
  const baseItems=comparisonBaseItems();
+ const baseLabels=baseItems.map(item=>item.label);
+ const baseDisplayLabels=baseItems.map(item=>comparisonShortLabel(item.label,baseLabels));
  const charts=buildComparisonCharts(scope);
  COMPARISON_CHARTS=charts;
  pageTitle.textContent=isGeneral?'Comparativo Mensal':`Comparativo Mensal · ${scope}`;
@@ -1584,7 +1606,7 @@ function comparisonView(scope='geral'){
  const backKey=isGeneral?'geral':scope;
  const empty=`<div class="empty"><strong>Comparativo ainda indisponível</strong>Publique pelo menos duas bases mensais com indicadores compatíveis para montar a evolução.</div>`;
  let html=mobileSectionNav([{id:'comparisonCharts',label:'Gráficos'}]);
- html+=`<section id="comparisonCharts">${sectionHeader('Linha do tempo dos KPIs','Os gráficos acompanham automaticamente os meses publicados no histórico do site.')}<div class="comparisonToolbar"><button type="button" class="comparisonBackBtn" onclick="setView('${escAttr(backKey)}')">Voltar ao painel</button><span>${esc(baseItems.map(item=>item.label).join(' · '))}</span></div>${charts.length?`<div class="chartGrid comparisonChartGrid">${charts.map((c,i)=>`<article class="chartCard comparisonChartCard"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">${fmt.format(c.data.length)} bases</div><button class="exportBtn" onclick="exportComparisonChartExcel(${i})">⬇ Excel</button><button class="expandBtn" onclick="openComparisonChartModal(${i})">⤢ Expandir</button></div></div><div class="chartCanvas comparisonLineCanvas" id="comparison_chart_${i}"></div></article>`).join('')}</div>`:empty}</section>`;
+ html+=`<section id="comparisonCharts">${sectionHeader('Linha do tempo dos KPIs','Os gráficos acompanham automaticamente os meses publicados no histórico do site.')}<div class="comparisonToolbar"><button type="button" class="comparisonBackBtn" onclick="setView('${escAttr(backKey)}')">Voltar ao painel</button><span>${esc(baseDisplayLabels.join(' · '))}</span></div>${charts.length?`<div class="chartGrid comparisonChartGrid">${charts.map((c,i)=>`<article class="chartCard comparisonChartCard"><div class="chartTop"><div><div class="chartTitle">${esc(c.title)}</div><div class="chartSubtitle">${esc(c.subtitle)}</div></div><div class="chartActions"><div class="chartTotal">${fmt.format(c.data.length)} bases</div><button class="exportBtn" onclick="exportComparisonChartExcel(${i})">⬇ Excel</button><button class="expandBtn" onclick="openComparisonChartModal(${i})">⤢ Expandir</button></div></div><div class="chartCanvas comparisonLineCanvas" id="comparison_chart_${i}"></div></article>`).join('')}</div>`:empty}</section>`;
  content.innerHTML=html;
  requestAnimationFrame(()=>charts.forEach((c,i)=>renderChart(document.getElementById(`comparison_chart_${i}`),c)));
 }
@@ -2337,7 +2359,7 @@ function multiLineChart(el,c,expanded=false){
   });
   points.forEach(point=>{
    if(!point) return;
-   const tip=`${point.row.label} · ${item.label}: ${point.display}`;
+   const tip=`${point.row.fullLabel || point.row.label} · ${item.label}: ${point.display}`;
    svg+=`<circle class="bar" data-tip="${esc(tip)}" cx="${point.x}" cy="${point.y}" r="${expanded?4.6:4.2}" fill="${colors.pointFill}" stroke="${item.color}" stroke-width="3"/>`;
    const labelText=point.display;
    const labelFont=expanded?12:11;
@@ -2355,13 +2377,14 @@ function multiLineChart(el,c,expanded=false){
    }
   });
  });
- rows.forEach((row,i)=>{
-  const x=xAt(i);
-  if(expanded){
-   svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="${colors.axis}" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(row.label)}</text>`;
-  } else {
-   const axisAnchor=i===0?'start':(i===rows.length-1?'end':'middle');
-   svg+=`<text x="${x}" y="${H-20}" text-anchor="${axisAnchor}" font-size="11" fill="${colors.axis}" font-weight="900">${esc(row.label)}</text>`;
+  const comparisonAxis=rows.some(row=>row.fullLabel);
+  rows.forEach((row,i)=>{
+   const x=xAt(i);
+   if(expanded && !comparisonAxis){
+    svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="${colors.axis}" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(row.label)}</text>`;
+   } else {
+    const axisAnchor=i===0?'start':(i===rows.length-1?'end':'middle');
+    svg+=`<text x="${x}" y="${H-20}" text-anchor="${axisAnchor}" font-size="11" fill="${colors.axis}" font-weight="900">${esc(row.label)}</text>`;
   }
  });
  svg+=`</svg>`;
@@ -2387,7 +2410,7 @@ function lineChart(el,data,expanded=false){
     const [x,yy]=pts[i];
     const r=expanded?4.5:5;
     const fullDisplay=d.displayValue || fmt.format(Math.round(+d.value||0));
-    svg+=`<circle class="bar" data-tip="${esc(d.label)}: ${esc(fullDisplay)}" cx="${x}" cy="${yy}" r="${r}" fill="${colors.pointFill}" stroke="${colors.line}" stroke-width="3"/>`;
+    svg+=`<circle class="bar" data-tip="${esc(d.fullLabel || d.label)}: ${esc(fullDisplay)}" cx="${x}" cy="${yy}" r="${r}" fill="${colors.pointFill}" stroke="${colors.line}" stroke-width="3"/>`;
      const valueLabel=d.displayValue || (expanded?fmt.format(Math.round(+d.value||0)):shortFmt.format(+d.value||0));
      const labelFont=expanded?12:12;
      let labelY = yy - (expanded?22:18);
@@ -2404,7 +2427,8 @@ function lineChart(el,data,expanded=false){
         const labelStyle = expanded ? `paint-order:stroke;stroke:${colors.halo};stroke-width:7px;stroke-linejoin:round` : `paint-order:stroke;stroke:${colors.halo};stroke-width:6px;stroke-linejoin:round`;
         svg+=`<text x="${labelX}" y="${textY}" text-anchor="middle" font-size="${labelFont}" fill="${colors.label}" font-weight="950" style="${labelStyle}">${valueLabel}</text>`;
       }
-      if(expanded){
+      const comparisonAxis=data.some(item=>item.fullLabel);
+      if(expanded && !comparisonAxis){
         svg+=`<text x="${x}" y="${H-34}" text-anchor="end" font-size="11" fill="${colors.axis}" font-weight="850" transform="rotate(-45 ${x} ${H-34})">${esc(d.label)}</text>`;
       } else {
         const axisAnchor=i===0?'start':(i===data.length-1?'end':'middle');
@@ -2422,8 +2446,8 @@ function chartRowsForExcel(c){
  if(!c || !Array.isArray(c.data)) return {headers:['Indicador','Valor'], rows:[]};
  if(c.type==='multiLine'){
    const series=(c.series||[]).filter(item=>(c.data||[]).some(row=>Number.isFinite(Number(row.values?.[item.key]))));
-   return {headers:['Período',...series.map(item=>item.label)], rows:c.data.map(row=>[
-    row.label,
+    return {headers:['Período',...series.map(item=>item.label)], rows:c.data.map(row=>[
+     row.fullLabel || row.label,
     ...series.map(item=>{
      const value=Number(row.values?.[item.key]);
      return Number.isFinite(value)?+(value.toFixed(1)):0;
@@ -2432,7 +2456,7 @@ function chartRowsForExcel(c){
  }
  if(c.type==='line'){
    const valueHeader=c.valueFormat==='percent'?'Percentual':(c.valueFormat==='nps'?'NPS':'Quantidade');
-   return {headers:['Período',valueHeader], rows:c.data.map(d=>[d.label, Number.isFinite(+d.value)?+(+d.value).toFixed(1):0])};
+    return {headers:['Período',valueHeader], rows:c.data.map(d=>[d.fullLabel || d.label, Number.isFinite(+d.value)?+(+d.value).toFixed(1):0])};
  }
  if(c.type==='groupedBar' || c.type==='groupedColumn'){
    return {headers:['Carteira','Finalizado com sucesso','Finalizado sem sucesso'], rows:c.data.map(d=>[d.label, Math.round(+d.sucesso||0), Math.round(+d.semSucesso||0)])};
